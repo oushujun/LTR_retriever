@@ -1,0 +1,457 @@
+#!/usr/bin/perl -w
+use strict;
+use Cwd 'abs_path';
+
+##Build base on GenomeTools/1.5.1, BLAST+/2.2.28, BLAST/2.2.25, HMMER/3.1b2, RepeatMasker/4.0.0 and Tandem Repeats Finder 4.07b
+
+my $help="
+###########################
+###### LTR_retriever ######
+###########################
+
+A program for accurate identification of LTR-RTs from outputs of LTRharvest, LTR_FINDER, and 
+	MGEScan-LTR and generating non-redundant LTR-RT library for genome annotations.
+
+Shujun Ou, Depeatment of Horticulture, Michigan State University, East Lansing, MI, 48824
+05/12/2017
+
+Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
+
+【Input Options】
+-genome      [File]	specify the genome sequence file (FASTA)
+-inharvest   [File]	LTR-RT candidates from LTRharvest
+-infinder    [File]	LTR-RT candidates from LTR_FINDER
+-inmgescan   [File]	LTR-RT candidates from MGEScan_LTR
+-nonTGCA     [File]	Non-canonical LTR-RT candidates from LTRharvest
+
+【Output options】
+-verbose		retain intermediate outputs (developer mode)
+-noanno			disable whole genome LTR-RT annotation (no GFF output)
+
+【Filter options】
+-misschar    [CHR]	specify the ambiguous character (default N)
+-Nscreen		disable filtering ambiguous sequence in candidates
+-missmax     [INT]	maximum number of ambiguous bp allowed in a candidate (default 10)
+-missrate    [0-1]	maximum percentage of ambiguous bp allowed in a candidate (default 0.8)
+-minlen      [INT]	minimum bp of the LTR region (default 100)
+-max_ratio   [FLOAT]	maximum length ratio of internal region/LTR region (default 50)
+-minscore    [INT]	minimum alignment length (INT/2) to identify tandem repeats (default 1000)
+-flankmiss   [1-60]	maximum ambiguous length (bp) allowed in 60bp-flanking sequences (default 25)
+-flanksim    [0-100]	minimum percentage of identity for flanking sequence alignment (default 60)
+-flankaln    [0-1]	maximum alignment portion allowed for 60bp-flanking sequences (default 0.6)
+-motif       [[STRING]]	specify non-canonical motifs to search for
+			(default -motif [TCCA TGCT TACA TACT TGGA TATA TGTA TGCA])
+-notrunc		Discard truncated LTR-RTs and nested LTR-RTs (will dampen sensitivity)
+-procovTE     [0-1]	maximum portion of allowed for cumulated DNA TE database and LINE database 
+			lignments (default 0.7)
+-procovPL     [0-1]	maximum portion allowed for cumulated plant protein database alignments (default 0.7)
+-prolensig   [INT]	minimum alignment length (bp) for LINE/DNA transposase alignment (default 90)
+
+【Library options】
+-blastclust  [[STRING]]	trigger to use blastclust and customize parameters 
+			(default -blastclust [-L .9 -b T -S 80])
+-cdhit       [[STRING]]	trigger to use cd-hit-est (default) and customize parameters 
+			(default -cdhit [-c 0.8 -G 0.8 -s 0.9 -T 20 -aL 0.9 -aS 0.9])
+-linelib     [FASTA]	provide LINE transposase database for LINE TE exclusion 
+			(default /database/Tpases020812LINE)
+-dnalib      [FASTA]	provide DNA TE transposase database for DNA TE exclusion 
+			(default /database/Tpases020812DNA)
+-plantprolib [FASTA]	provide plant protein database for coding sequence exclusion 
+			(default /database/alluniRefprexp082813)
+-TEhmm       [Pfam]	provide Pfam database for TE identification 
+			(default /database/TEfam.hmm)
+
+【Miscellaneous】
+-u           [FLOAT]	neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
+-threads     [INT]	number of threads (≤ total available threads, default 4)
+
+######Questions and Issues Please See: https://github.com/oushujun/LTR_retriever ######
+
+";
+
+my $script_path=`readlink -fn -- $0`;
+$script_path=~s/(.+)\/.+$/$1/;
+
+my $inharvest=''; #screen output of LTRharvest with -motif 'TGCA' control
+my $infinder=''; #screen output of LTR_finder
+my $inmgescan=''; # *.ltrloc output of MGEScan
+my $nonTGCA=''; #screen output of LTRharvest without -motif 'TGCA' control
+my $genome;
+my $Nscreen=" "; #blank enables filtering base on the number of missing characters; "-Nscreen" disable $n_count screening in cleanup.pl
+my $misschar="N"; #missing character 'N'
+my $missmax=10; #maximum missing characters in a sequence
+my $missrate=0.8; #maximum missing rate in a sequence
+my $minscore=1000; #minscore of tandem repeats finder
+my $minlen=100; #dft=100, minmum LTR region length
+my $max_ratio=50; #maximum internal/LTR region length ratio
+
+my $bondcorr=1; #1 means correct the boundary (strongly recommended); 0 means not.
+my $flanksim=60; #minimum percent similarity of flanking sequence alignment
+my $flankmiss=25; #minimum ambiguous characters in 50bp-flanking sequences
+my $flankaln=0.6; #
+my $tsdaln=" "; #blank means align the TSD (strongly recommended); "-tsdaln" means not.
+my @motif=qw/TCCA TGCT TACA TACT TGGA TATA TGTA TGCA/; #known motifs. The last one in the list (default TGCA) will be preferentially identified over the others
+
+my $procovTE=0.7; #for DNA TE and LINE alignment, propotional, cumulated alignment coverage more than this will be treated as protein contained
+my $procovPL=0.7; #for plant protein alignment, propotional, cumulated alignment coverage more than this will be treated as protein contained
+my $prolensig=90; #bp, hits with alignment length less than this number will not be counted.
+
+my $blastclust=0; #1 for using blastclust as clustering method, 0 for no.
+my $cdhit=1; #1 for using cdhit as clustering method, 0 for no.
+my $set_bclust="-L 0.9 -b T -S 80"; #set parameters for blastclust
+my $set_cdhit="-c 0.8 -G 0.8 -s 0.9 -aL 0.9 -aS 0.9 -M 0"; #set parameters for cdhit
+
+my $keep_trunc="1"; #1 will recycle information from truncated LTR; 0 will disable this module
+my $gff3=1; #0 will not make gff3 file; 1 will.
+my $verbose=0; #0 will delete intermediate files after analysis; 1 will not.
+my $annotation=1; #1 will not perform whole genome LTR annotation; 0 will
+
+my $LINE="$script_path/database/Tpases020812LINE";
+my $DNA="$script_path/database/Tpases020812DNA";
+my $PlantP="$script_path/database/alluniRefprexp082813";
+my $TEhmm="$script_path/database/TEfam.hmm";
+
+my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
+
+my $threads=4;
+my $scn=''; #store screen output information
+
+my $k=0;
+my $argv='';
+foreach (@ARGV){
+	$argv.="$_ ";
+	$inharvest=$ARGV[$k+1] if /^-inharvest$/i;
+	$infinder=$ARGV[$k+1] if /^-infinder$/i;
+	$inmgescan=$ARGV[$k+1] if /^-inMGEScan$/i;
+	$nonTGCA=$ARGV[$k+1] if /^-nonTGCA$/i;
+	$genome=$ARGV[$k+1] if /^-genome$/i;
+	$misschar=$ARGV[$k+1] if /^-misschar$/i;
+	$Nscreen="-Nscreen" if /^-Nscreen$/i;
+	$missmax=$ARGV[$k+1] if /^-missmax$/i;
+	$missrate=$ARGV[$k+1] if /^-missrate$/i;
+	$minscore=$ARGV[$k+1] if /^-minscore$/i;
+	$bondcorr=0 if /^-bondcorr$/i;
+	$flanksim=$ARGV[$k+1] if /^-flanksim$/i;
+	$flankmiss=$ARGV[$k+1] if /^-flankmiss$/i;
+	$flankaln=$ARGV[$k+1] if /^-flankaln$/i;
+	$minlen=$ARGV[$k+1] if /^-minlen$/i;
+	$max_ratio=$ARGV[$k+1] if /^-max_ratio$/i;
+	$tsdaln="-tsdaln" if /^-tsdaln$/i;
+	@motif=(split /\s+/, $1) if $argv=~/-motif\s+\[([atcgnx ]+)\]/i;
+	$procovPL=$ARGV[$k+1] if /^-procovPL$/i;
+	$procovTE=$ARGV[$k+1] if /^-procovTE$/i;
+	$prolensig=$ARGV[$k+1] if /^-prolensig$/i;
+	$LINE=$ARGV[$k+1] if /^-linelib$/i;
+	$DNA=$ARGV[$k+1] if /^-dnalib$/i;
+	$PlantP=$ARGV[$k+1] if /^-plantprolib$/i;
+	$TEhmm=$ARGV[$k+1] if /^-TEhmm$/i;
+	$miu=$ARGV[$k+1] if /^-u$/i;
+	$blastclust=1 if /^-blastclust$/i;
+	$set_bclust=$1 if $argv=~/-blastclust\s+\[(.+?)\]/i;
+	$cdhit=1 if /^-cdhit$/i;
+	$set_cdhit=$1 if $argv=~/-cdhit\s+\[(.+?)\]/i;
+	$keep_trunc=0 if $argv=~/-notrunc/i;
+	$annotation=0 if /^-noanno$/i;
+	$verbose=1 if /^-verbose|-v$/i;
+	$threads=$ARGV[$k+1] if /^-threads$/i;
+	die $help if /^--help|-h$/i;
+	$k++;
+        }
+
+die "Please specify the input sequence file!\n" unless (defined $genome);
+die "Please specify LTRharvest or LTR_finder screen output file!\n" unless (defined $inharvest or defined $infinder);
+
+##read paths to dependent programs
+my $blastplus='';
+my $repeatmasker='';
+my $hmmer='';
+my $blast='';
+my $cdhitpath='';
+
+open Path, "<$script_path/paths" or die "Fail to locate the paths file!\n";
+my %path = ("BLAST+"=>'', "HMMER"=>'', "BLAST"=>'', "CDHIT"=>'', "RepeatMasker"=>'');
+while (<Path>){
+	next if /^#/;
+	next if /^\s+$/;
+	next unless /=/;
+	chomp;
+	my ($program, $path)=(split /=/, $_, 2);
+	$path=~s/\s+?#.*$//;
+	$path{$program}=$path;
+	}
+close Path;
+$blastplus=$path{"BLAST+"};
+$repeatmasker=$path{"RepeatMasker"};
+$hmmer=$path{"HMMER"};
+$blast=$path{"BLAST"};
+$cdhitpath=$path{"CDHIT"};
+
+##test paths to dependent programs
+#makeblastdb
+$blastplus=`which makeblastdb 2>/dev/null` if $blastplus eq '';
+$blastplus=~s/makeblastdb\n//;
+die "makeblastdb is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
+#blastn
+$blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
+$blastplus=~s/blastn\n//;
+die "blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
+#blastx
+$blastplus=`which blastx 2>/dev/null` if $blastplus eq '';
+$blastplus=~s/blastx\n//;
+die "blastx is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
+#RepeatMasker
+$repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
+$repeatmasker=~s/RepeatMasker\n//;
+die "RepeatMasker is not exist in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
+#hmmsearch
+$hmmer=`which hmmsearch 2>/dev/null` if $hmmer eq '';
+$hmmer=~s/hmmsearch\n//;
+die "hmmsearch is not exist in the HMMER path $hmmer!\n" unless -X "${hmmer}hmmsearch";
+#blastclust
+$blast=`which blastclust 2>/dev/null` if $blast eq '';
+$blast=~s/blastclust\n//;
+die "blastclust is not exist in the BLAST path $blast!\n" if (!(-X "${blast}blastclust") and $blastclust);
+#cd-hit-est
+$cdhitpath=`which cd-hit-est 2>/dev/null` if $cdhitpath eq '';
+$cdhitpath=~s/cd-hit-est\n//;
+die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" if (!(-X "${cdhitpath}cd-hit-est") and $cdhit);
+die "neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}blastclust" or -X "${cdhitpath}cd-hit-est");
+
+if (1){
+$scn.=`${blastplus}makeblastdb -in $LINE -dbtype prot`;
+$scn.=`${blastplus}makeblastdb -in $DNA -dbtype prot`;
+$scn.=`${blastplus}makeblastdb -in $PlantP -dbtype prot`;
+my $date=`date +"%m-%d-%y_%H%M"`;
+chomp ($date);
+$scn.=`mkdir LTRretriever-pre$date; mv $genome*.LDI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* LTRretriever-pre$date/ 2>/dev/null` if `ls $genome*|wc -l`>15;
+}
+
+
+###################################################################
+######### To retrieve high quality LTRs with TGCA motif ############
+###################################################################
+
+my $index=$genome;
+if (1){
+
+##obtain initial LTR candidates from LTRharvest and/or LTR_finder screen outputs
+`perl $script_path/bin/convert_ltr_finder.pl $infinder > $index.retriever.scn` if $infinder ne '';
+`perl $script_path/bin/convert_MGEScan.pl $inmgescan >> $index.retriever.scn` if $inmgescan ne '';
+`cat $inharvest >> $index.retriever.scn` if $inharvest ne '';
+`perl $script_path/bin/get_range.pl 1 $index.retriever.scn $genome -f -g -max_ratio $max_ratio`;
+`cat $index.retriever.scn.full|sort -fu >$index.retriever.scn.full.uniq; mv $index.retriever.scn.full.uniq $index.retriever.scn.full`;
+`perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.full -C $genome > $index.ltrTE.fa`;
+
+##cleanup the NNNs and tandem sequence
+&cleanTandem($index);
+
+##Major program, align the boundaries
+&Identifier($index);
+
+##Recycle truncated candidates, mask candidates by false LTR
+&trunc($index);
+
+##clean up protein coding sequence from DNA TE, LINE, and normal plant genes
+&proMask($index);
+
+##generate non-redudant library for pass LTR candidates
+&makeLib("$index.ltrTE");
+
+`perl $script_path/bin/annotate_lib.pl $index.retriever.scn.adj $index.ltrTE.clust > $index.prelib`;
+}
+
+###################################################################
+####### To retrieve high quality LTRs with non-TGCA motif ##########
+###################################################################
+
+goto End if $nonTGCA eq '';
+my $index2="$index.nmtf";
+`cp $nonTGCA $index2.retriever.scn`;
+
+##get LTR regions from non-TGCA raw candidates (original internal boundary)
+&getLTR($index2);
+
+if ((-e "$index.ltrTE.pass.list") and !(-z "$index.ltrTE.pass.list")){ 
+##get LTR regions from TGCA pass candidates and mask LTR regions (no internal regions) from non-TGCA raw candidates
+	`perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.pass.list -N -max_ratio $max_ratio`;
+	`cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
+	`perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome itself > $index.ltrTE.pass.LTR`;
+
+##condense the pass.LTR lib if size exceed 15M to enhance speed
+	&makeLib("$index.ltrTE.pass.LTR") if (-s "$index.ltrTE.pass.LTR")>15000000;
+	`mv $index.ltrTE.pass.LTR.clust $index.ltrTE.pass.LTR` if -s "$index.ltrTE.pass.LTR.clust";
+	`${repeatmasker}RepeatMasker -qq -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.pass.LTR -cutoff 225 $index2.ltrTE.LTR 2>/dev/null`;
+	
+##cleanup highly masked sequence and tandem sequence from masked LTR regions (no internal)
+	`perl $script_path/bin/cleanup.pl -minscore 150 -Nscreen -nr 0.6 -f $index2.ltrTE.LTR.masked > $index2.ltrTE.stg1`;
+	}
+
+##cleanup the NNNs and tandem sequence from candidates (including internal regions)
+$minscore=150;
+`cp $index2.ltrTE.stg1 $index2.ltrTE.fa`;
+&cleanTandem($index2);
+
+##Major program, align the boundaries
+&Identifier($index2);
+#Aggregate all candidates into one list
+`cat $index.retriever.scn.adj $index2.retriever.scn.adj > $index.retriever.all.scn.adj`;
+
+##Recycle truncated candidates, mask candidates by false LTR
+&trunc($index2);
+
+##DNA TE element and LINE protein masking
+&proMask($index2);
+
+##All passed LTR candidates, including internal region and the longer LTR region for truncated LTR candidates
+`perl $script_path/bin/annotate_lib.pl $index2.retriever.scn.adj $index2.ltrTE >> $index.prelib`; #contains both TGCA and nmtf LTR-RT
+
+End:
+`cp $index.retriever.scn.adj $index.retriever.all.scn.adj` unless (-s "$index.retriever.all.scn.adj");
+
+##obtain good nmtf entries from index.ltrTE and index2.ltrTE using $genome.nmtf.pass.list
+if (-s "$genome.nmtf.pass.list"){
+	`perl $script_path/bin/get_range.pl 1 $index.retriever.all.scn.adj $genome.nmtf.pass.list -i -N`;
+	`perl $script_path/bin/output_by_list.pl 1 $index.ltrTE 2 $index.retriever.all.scn.adj.list -FA -MSU0 -MSU1 > $index.ltrTE.nmtf`;
+	`perl $script_path/bin/output_by_list.pl 1 $index2.ltrTE 2 $index.retriever.all.scn.adj.list -FA -MSU0 -MSU1 >> $index.ltrTE.nmtf` if defined $index2;
+	`perl $script_path/bin/annotate_lib.pl $index.retriever.all.scn.adj $index.ltrTE.nmtf > $index.nmtf.prelib`;
+	}
+
+##get rid of solo LTR nested in internal regions
+`grep -i 'INT#LTR' $index.prelib > $index.prelib.INT.list`;
+`grep -i -v 'INT#LTR' $index.prelib > $index.prelib.LTR.list`;
+`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.INT.list -FA > $index.prelib.INT`;
+`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.LTR.list -FA > $index.prelib.LTR`;
+&makeLib("$index.prelib.LTR");
+`${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
+`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+`cat $index.prelib.LTR $index.prelib.INT.cln > $index.LTRlib`;
+`perl $script_path/bin/output_by_list.pl 1 $index.prelib.INT.cln 1 $index.nmtf.prelib -FA > $index.nmtf.LTRlib.fa`;
+`grep INT $index.nmtf.prelib|perl $script_path/bin/output_by_list.pl 1 $index.nmtf.prelib 1 - -FA -ex >> $index.nmtf.LTRlib.fa` if -s "$index.nmtf.prelib";
+
+##make non-redundant library and format output
+&makeLib("$index.LTRlib");
+`perl $script_path/bin/fasta-reformat.pl $index.LTRlib.clust 50 > $index.LTRlib.fa`;
+
+##Format outputs and cleanup intermediate files
+`echo '\#LTR_loc        Category        Motif   TSD     5'_TSD        3'_TSD       Internal        Similarity      Strand  Family  Superfamily     Insertion_Time' > $genome.pass.list.unq`;
+`sort -u -k1,4 $genome.pass.list >> $genome.pass.list.unq; mv $genome.pass.list.unq $genome.pass.list`;
+`echo '\#LTR_loc	Category	Motif	TSD	5'_TSD	3'_TSD	Internal	Similarity	Strand	Family	Superfamily	Insertion_Time' > $genome.nmtf.pass.list.unq`;
+`sort -u -k1,4 $genome.nmtf.pass.list >> $genome.nmtf.pass.list.unq; mv $genome.nmtf.pass.list.unq $genome.nmtf.pass.list`;
+`perl $script_path/bin/make_gff3.pl $genome $genome.pass.list` if $gff3==1;
+`perl $script_path/bin/cleanOutput.pl $genome` if $verbose==0;
+
+##Annotate LTR-RT in the genome
+if ($annotation==1){
+`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -gff -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
+`perl $script_path/bin/annotate_gff.pl $genome.LTRlib.fa $genome.out.gff > $genome.LTRanno.gff`;
+}
+
+###################################################################
+################# A collection of subroutines #####################
+###################################################################
+
+sub cleanTandem {
+##cleanup the NNNs and tandem sequence
+my $index=$_[0];
+`perl $script_path/bin/cleanup.pl $Nscreen -misschar $misschar -nc $missmax -nr $missrate -minscore $minscore -f $index.ltrTE.fa > $index.ltrTE.stg1`;
+}
+
+sub Identifier {
+##Major program, align the boundaries
+my $index=$_[0];
+`perl $script_path/bin/get_range.pl 1 $index.retriever.scn $index.ltrTE.stg1 -x`;
+`cat $index.retriever.scn.extend |sort -fu > $index.retriever.scn.extend.unq; mv $index.retriever.scn.extend.unq $index.retriever.scn.extend`;
+`perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.extend -C $genome > $index.retriever.scn.extend.fa`; #full TE sequence with 50bp-extended on each side
+`perl $script_path/bin/Six-frame_translate.pl $index.retriever.scn.extend.fa > $index.retriever.scn.extend.fa.aa`; ##six-frame translate candidate sequences
+`${hmmer}hmmsearch --tblout $index.retriever.scn.extend.fa.aa.tbl --notextw --cpu $threads -E 0.05 --domE 0.05 --noali $TEhmm $index.retriever.scn.extend.fa.aa > $index.retriever.scn.extend.fa.aa.scn`;
+`perl $script_path/bin/annotate_TE.pl $index.retriever.scn.extend.fa.aa.tbl > $index.retriever.scn.extend.fa.aa.anno`;
+`perl $script_path/bin/LTR.identifier.pl $index -list $index.retriever.scn -seq $index.retriever.scn.extend.fa -anno $index.retriever.scn.extend.fa.aa.anno -flanksim $flanksim -flankmiss $flankmiss -flankaln $flankaln -minlen $minlen $tsdaln -u $miu -threads $threads -blastplus $blastplus -motif @motif > $index.defalse`;
+}
+
+sub trunc {
+my $index=$_[0];
+##get lLTR, rLTR, and IN from pass and clusterize
+`grep -i pass $index.defalse|grep -i -v -P 'notLTR|mixture' > $index.ltrTE.pass.list`;
+`perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.pass.list -i -N`;
+`cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
+`perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome > $index.ltrTE.pass`; #lLTR, rLTR, and IN regions seperated of pass entries
+&makeLib("$index.ltrTE.pass");
+`mv $index.ltrTE.pass.clust $index.ltrTE.stg2`; #lLTR, rLTR, and IN from pass
+
+if ($keep_trunc){
+##get longer LTR and IN from trunc and masked by pass
+`grep -i trunc $index.defalse|grep -i -v -P 'notLTR|mixture|NA'|awk '{print \$1"\t"\$1}' > $index.ltrTE.trunc.list`;
+`perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.trunc.list -i -N -L`;
+`cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
+`perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome > $index.ltrTE.trunc`; #IN and the longer LTR region
+`perl -i -ne 's/>(.*)\\\|(.*)/>\$2/g;print "\$_"' $index.ltrTE.trunc`;
+
+`grep -i false $index.defalse|grep -i notLTR|grep -i -v 'motif:TGCA' > $index.ltrTE.veryfalse.list`;
+`awk '{print \$1"\\t"\$1}\' $index.ltrTE.veryfalse.list > $index.ltrTE.veryfalse`;
+`perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
+`cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
+`${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
+`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
+`cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
+
+} else {
+`cp $index.ltrTE.stg2 $index.ltrTE.stg3.cln`;
+}
+}
+
+sub proMask {
+##DNA TE transposase, LINE transposase, and plant protein masking
+my $index=$_[0];
+`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $index.ltrTE.stg3.cln -db $LINE -out $index.ltrTE.stg3.line.out`;
+`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $index.ltrTE.stg3.cln -db $DNA -out $index.ltrTE.stg3.dna.out`;
+`cat $index.ltrTE.stg3.line.out $index.ltrTE.stg3.dna.out > $index.ltrTE.stg3.otherTE.out`;
+`perl $script_path/bin/purger.pl -blast $index.ltrTE.stg3.otherTE.out -seq $index.ltrTE.stg3.cln -cov $procovTE -purge 0 -len $prolensig`;
+
+`${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $index.ltrTE.stg3.cln.clean -db $PlantP -out $index.ltrTE.stg3.plantP.out`;
+`perl $script_path/bin/purger.pl -blast $index.ltrTE.stg3.plantP.out -seq $index.ltrTE.stg3.cln.clean -cov $procovPL -purge 1 -len $prolensig`;
+`mv $index.ltrTE.stg3.cln.clean.clean $index.ltrTE`;
+`grep -i -v 'motif:TGCA' $index.ltrTE.pass.list | grep -i -P 'motif:T...\\s+' | grep -i -P 'TSD:.....\\s+' | grep -i -v 'TSD:NA' > $index.ltrTE.pass.nmtf.list`;
+`cat $index.ltrTE.pass.nmtf.list >> $genome.nmtf.pass.list` ;
+`cat $index.ltrTE.pass.list >> $genome.pass.list`;
+}
+
+sub makeLib {
+##generate non-redudant library for input sequences
+my $seq=$_[0];
+if ($blastclust==1){
+	`cp $seq $seq.tmp`;
+	`${blast}blastclust -i $seq.tmp -o $seq.clust.info -a $threads -p F $set_bclust`;
+	`cp $seq.clust.info $seq.clust.info.all`;
+	my $head=`head -1 $seq.clust.info`;
+	my @head=(split /\s+/, $head);
+	my $i=1;
+	while (@head>1 and $i<=10){
+		`perl $script_path/bin/make_lib.pl $seq.list $seq.tmp $seq.clust.info`;
+		`mv $seq.tmp.clust $seq.tmp`;
+		`${blast}blastclust -i $seq.tmp -o $seq.clust.info -a $threads -p F $set_bclust`;
+		`cat $seq.clust.info >> $seq.clust.info.all`;
+		$head=`head -1 $seq.clust.info`;
+		@head=(split /\s+/, $head);
+		$i++;
+		}
+	print "$i\n";
+	if (-e "$seq.tmp.clust"){
+		`mv $seq.tmp.clust $seq.clust`;
+		} else {
+		`mv $seq.tmp $seq.clust`;
+		}
+	}
+if ($cdhit==1){
+	`${cdhitpath}cd-hit-est -i $seq -o $seq.clust $set_cdhit -T $threads`;
+	}
+`perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $seq.clust`;
+}
+
+sub getLTR {
+##get LTR regions from raw candidates (original internal boundary)
+my $index=$_[0];
+`perl $script_path/bin/get_range.pl 1 $index.retriever.scn $genome -N -g -max_ratio $max_ratio`;
+`perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.list -C $genome itself > $index.ltrTE.LTR`;
+`perl -i -ne 's/>(.*)\\\|(.*)/>\$2/g;print "\$_"' $index.ltrTE.LTR`;
+}
+
