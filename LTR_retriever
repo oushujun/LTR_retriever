@@ -283,7 +283,11 @@ if ((-e "$index.ltrTE.pass.list") and !(-z "$index.ltrTE.pass.list")){
 	`${repeatmasker}RepeatMasker -qq -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.pass.LTR -cutoff 225 $index2.ltrTE.LTR 2>/dev/null`;
 	
 ##cleanup highly masked sequence and tandem sequence from masked LTR regions (no internal)
-	`perl $script_path/bin/cleanup.pl -minscore 150 -Nscreen -nr 0.6 -f $index2.ltrTE.LTR.masked > $index2.ltrTE.stg1`;
+	if (-s "$index2.ltrTE.LTR.masked"){
+		`perl $script_path/bin/cleanup.pl -minscore 150 -Nscreen -nr 0.6 -f $index2.ltrTE.LTR.masked > $index2.ltrTE.stg1`;
+		} else {
+		`cp $index2.ltrTE.LTR $index2.ltrTE.stg1`;
+		}
 	}
 
 ##cleanup the NNNs and tandem sequence from candidates (including internal regions)
@@ -323,7 +327,11 @@ if (-s "$genome.nmtf.pass.list"){
 `perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.LTR.list -FA > $index.prelib.LTR`;
 &makeLib("$index.prelib.LTR");
 `${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
-`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+if (-s "$index.prelib.INT.masked") {
+	`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+	} else {
+	`cp $index.prelib.INT $index.prelib.INT.cln`;
+	}
 `cat $index.prelib.LTR $index.prelib.INT.cln > $index.LTRlib`;
 `perl $script_path/bin/output_by_list.pl 1 $index.prelib.INT.cln 1 $index.nmtf.prelib -FA > $index.nmtf.LTRlib.fa`;
 `grep INT $index.nmtf.prelib|perl $script_path/bin/output_by_list.pl 1 $index.nmtf.prelib 1 - -FA -ex >> $index.nmtf.LTRlib.fa` if -s "$index.nmtf.prelib";
@@ -380,7 +388,7 @@ my $index=$_[0];
 
 if ($keep_trunc){
 ##get longer LTR and IN from trunc and masked by pass
-`grep -i trunc $index.defalse|grep -i -v -P 'notLTR|mixture|NA'|awk '{print \$1"\t"\$1}' > $index.ltrTE.trunc.list`;
+`grep -i trunc $index.defalse|grep -i -v -P 'notLTR|mixture|\\s+NA'|awk '{print \$1"\t"\$1}' > $index.ltrTE.trunc.list`;
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.trunc.list -i -N -L`;
 `cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome > $index.ltrTE.trunc`; #IN and the longer LTR region
@@ -391,7 +399,11 @@ if ($keep_trunc){
 `perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
 `${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
-`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
+if (-s "$index.ltrTE.trunc.masked"){
+	`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
+	} else {
+	`cp $index.ltrTE.trunc $index.ltrTE.trunc.cln`;
+	}
 `cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
 
 } else {
