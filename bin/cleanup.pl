@@ -47,7 +47,7 @@ while ($tandem=~s/\@(.*)\n?//){
 	}
 
 open Info, ">$file.cleanup";
-open File, "<$file" or die $!;
+open File, "<$file" or die "ERROR: $!";
 $/="\n>";
 while (<File>){
 	if (/^$/){next}

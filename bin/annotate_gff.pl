@@ -9,7 +9,7 @@ my $usage="perl annotate_gff.pl lib.fa gff > anno.gff\n";
 my $lib=$ARGV[0];
 my $gff=$ARGV[1];
 
-open GFF, "<$gff" or die $usage;
+open GFF, "<$gff" or die "ERROR: $!";
 while (<GFF>){
 	my $id='';
 	$id=$1 if /\"(.*)\"/;

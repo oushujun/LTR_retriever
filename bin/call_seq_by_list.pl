@@ -54,7 +54,7 @@ foreach my $para (@ARGV){
 	$i++;
 	}
 
-open Genome, "<$genome" or die "\n\t\tGenome sequence not found, or wrong parameters!\n$usage";
+open Genome, "<$genome" or die "\n\t\tERROR: Genome sequence not found, or wrong parameters!\n$usage";
 my %genome;
 $/="\n>";
 while (<Genome>){
@@ -68,11 +68,11 @@ while (<Genome>){
 $/="\n";
 close Genome;
 
-open List, "sort -k2,2 -suV $ARGV[0] |" or die "\n\tno LOC list!\n$usage";
+open List, "sort -k2,2 -suV $ARGV[0] |" or die "\n\tERROR: no LOC list!\n$usage";
 my @list=<List>; #an array to store loc list information
 close List;
 
-die "LOC list is empty.\n" if $#list<0;
+die "ERROR: LOC list is empty.\n" if $#list<0;
 shift @list if $list[0]=~/^\s?$/;
 my $chr='';
 my %chr; #store chr names being worked
@@ -91,7 +91,7 @@ foreach my $line (@list){
 		($chr, $start, $stop)=($1, $2, $3);
 		} else {
 	print "$pos\n";
-	die "Can not recognize this MSU position in the list!\n";
+	die "ERROR: Can not recognize this MSU position in the list!\n";
 		}
 	$chr{$chr}=$chr;
 	if ($start>$stop){

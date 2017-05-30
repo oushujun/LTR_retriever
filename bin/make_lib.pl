@@ -6,10 +6,10 @@
 #!usr/bin/perl -w
 use strict;
 
-open List, "<$ARGV[0]" or die $!;
-open Seq, "<$ARGV[1]" or die $!;
-open Clust, "<$ARGV[2]" or die $!;
-open Out, ">$ARGV[1].clust" or die $!;
+open List, "<$ARGV[0]" or die "ERROR: $!";
+open Seq, "<$ARGV[1]" or die "ERROR: $!";
+open Clust, "<$ARGV[2]" or die "ERROR: $!";
+open Out, ">$ARGV[1].clust" or die "ERROR: $!";
 
 my %list;
 my $j=0;

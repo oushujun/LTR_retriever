@@ -23,8 +23,8 @@ $blastplus=$ARGV[6] if defined $ARGV[6]; #path to the blast+ directory containin
 my ($bond, $seq3, $seq4, $left_align, $right_align, $left3, $left4, $right3, $right4, $boundary_aln);
 $left_align=$right_align='None';
 $boundary_aln="NA";
-my $File3=$ARGV[4] or die $usage;
-my $File4=$ARGV[5] or die $usage;
+my $File3=$ARGV[4] or die "ERROR: $!";
+my $File4=$ARGV[5] or die "ERROR: $!";
 $seq3=(split /\\n/, $File3)[1];
 $seq4=(split /\\n/, $File4)[1];
 my $seq_l;

@@ -37,7 +37,7 @@ foreach my $para (@ARGV){
 	$k++;
 	}
 
-open File, "<$blast" or die $!;
+open File, "<$blast" or die "ERROR: $!";
 my %query; #store query information
 my $info='';
 while (<File>){
@@ -49,7 +49,12 @@ $info="Good news! No sequence is needed to be purged.\n" if $info eq '';
 open Out, ">$seq.exclude.temp";
 print Out "$info";
 close Out;
-`perl ${script_path}/combine_overlap.pl $seq.exclude.temp $seq.exclude.list`;
-`rm $seq.exclude.temp`;
 
-`awk '{print \$1\"\\t\"\$1\":\"\$2\"..\"\$3}' $seq.exclude.list | perl ${script_path}/call_seq_by_list.pl - -C $seq -ex -cov $coverage -purge $purge > $seq.clean`;
+if ($info=~/Good news!/i){
+	`mv $seq.exclude.temp $seq.exclude.list`;
+	`cp $seq $seq.clean`;
+	} else {
+	`perl ${script_path}/combine_overlap.pl $seq.exclude.temp $seq.exclude.list`;
+	`rm $seq.exclude.temp`;
+	`awk '{print \$1\"\\t\"\$1\":\"\$2\"..\"\$3}' $seq.exclude.list | perl ${script_path}/call_seq_by_list.pl - -C $seq -ex -cov $coverage -purge $purge > $seq.clean`;
+	}

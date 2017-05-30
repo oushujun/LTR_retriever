@@ -20,9 +20,9 @@ my $version="
 		v1.1 Shujun Ou  02-12-2014 Support LRTharvest and LTRdigest output, get chr name from LTRharvest.fa file
 ";
 
-if ($#ARGV<1){die $usage}
+if ($#ARGV<1){die "ERROR: $usage"}
 my $LTR=$ARGV[0]; #0 for RepeatMasker analysis, 1 for LTRharvest and LTRdigest analysis
-die $usage unless $LTR=~/^[01]$/;
+die "ERROR: $usage" unless $LTR=~/^[01]$/;
 
 my $IN=1; #1 for internal length/ratio control (default), 0 for no control
 my $min_inlen=100; #minimum internal length
@@ -54,14 +54,14 @@ foreach my $para (@ARGV){
 	$k++;
 	}
 
-open TBL, "<$ARGV[1]" or die $!;
+open TBL, "<$ARGV[1]" or die "ERROR: $!";
 open LTRlist, ">$ARGV[1].list" unless $extend==1;
 open Extend, ">$ARGV[1].extend" if $extend==1;
 open Full, ">$ARGV[1].full" if $full==1;
 
 my %chr;
 if ($LTR==1 && $genome==0){
-	open FA, "<$ARGV[2]" or die $usage;
+	open FA, "<$ARGV[2]" or die "ERROR: $!";
 	while (<FA>){
 		s/>//;
 		$chr{"$2..$3"}=$1 if (/^(\S+).*\[([0-9]+),([0-9]+)\]/); #eg: >9311_chr01 (dbseq-nr 0) [101308,114181]

@@ -10,7 +10,7 @@ my $minLength=500;
 my $maxLength=50000;
 my $minRQ=0.8;
 
-open FASTQ, "<$ARGV[0]" or die $!;
+open FASTQ, "<$ARGV[0]" or die "ERROR: $!";
 
 while (<FASTQ>){
 	chomp;

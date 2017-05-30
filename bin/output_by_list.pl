@@ -32,9 +32,9 @@ foreach my $para (@ARGV) {
 	}
 
 my $data_pos=$ARGV[0]-1;
-open(DB,"$ARGV[1]") or die $usage;
+open(DB,"$ARGV[1]") or die "ERROR: $!";
 my $list_pos=$ARGV[2]-1;
-open(LS,"$ARGV[3]") or die $usage;
+open(LS,"$ARGV[3]") or die "ERROR: $!";
 
 
 my %data;

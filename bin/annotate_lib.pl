@@ -6,8 +6,8 @@
 #!/usr/bin/perl -w
 use strict;
 
-open List, "<$ARGV[0]" or die $!;
-open Lib, "<$ARGV[1]" or die $!;
+open List, "<$ARGV[0]" or die "ERROR: $!";
+open Lib, "<$ARGV[1]" or die "ERROR: $!";
 
 my %info;
 while (<List>){

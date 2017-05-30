@@ -7,8 +7,8 @@ use strict;
 my $max_gap=0; #gaps between this length (bp) will be joined
 my ($dmr,$out)=@ARGV;
 die usage() unless @ARGV==2;
-open DMR,"sort -t \$'\t' -k1,1 -k2n,2 -k3n,3 $dmr |" or die "$!";
-open OUT,">$out" or die "$!";
+open DMR,"sort -t \$'\t' -k1,1 -k2n,2 -k3n,3 $dmr |" or die "ERROR: $!";
+open OUT,">$out" or die "ERROR: $!";
 while(my $line=<DMR>){
 	next if $line=~/^\s+$/;
 	my ($chr1,$stt1,$end1)=(split(/\s+/,$line))[0,1,2];
@@ -32,6 +32,6 @@ while(my $line=<DMR>){
 
 sub usage{
     my $die=<<DIE;
-    perl *.pl <DMR candidate> <OUT>
+    ERROR: Usage: perl *.pl <DMR candidate> <OUT>
 DIE
 }

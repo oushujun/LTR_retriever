@@ -33,7 +33,7 @@ foreach (@ARGV){
 	$i++;
 	}
 
-open FA, "<$ARGV[0]" or die $!;
+open FA, "<$ARGV[0]" or die "ERROR: $!";
 $/="\n>";
 my %fasta;
 my %blast;
@@ -50,7 +50,7 @@ while (<FA>){
 $/="\n";
 close FA;
 
-open BLAST, "<$ARGV[1]" or die $!;
+open BLAST, "<$ARGV[1]" or die "ERROR: $!";
 while (<BLAST>){
 	next if /^#/;
 	next unless /[0-9]+/;

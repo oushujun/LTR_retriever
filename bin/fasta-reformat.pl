@@ -5,10 +5,10 @@ use strict;
 my $usage = "This script is written to convert fasta files into a prettier format. 
 Usage: fasta-reformat.pl input-fasta-file number-of-positions-per-line\n";
 
-if (@ARGV < 2) {die $usage;}
-if ($ARGV[1] < 1) {die $usage;}
+if (@ARGV < 2) {die "ERROR: $usage";}
+if ($ARGV[1] < 1) {die "ERROR: $usage";}
 
-open(FA, "<$ARGV[0]") || die $usage;
+open(FA, "<$ARGV[0]") || die "ERROR: $usage";
 
 my $seq = "";
 while (<FA>) {

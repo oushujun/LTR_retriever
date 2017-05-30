@@ -8,9 +8,9 @@
 #!/usr/bin/perl -w
 use strict;
 
-open FA, "<$ARGV[0]" or die $!;
-open List, "<$ARGV[1]" or die $!;
-open GFF, ">$ARGV[1].gff3" or die $!;
+open FA, "<$ARGV[0]" or die "ERROR: $!";
+open List, "<$ARGV[1]" or die "ERROR: $!";
+open GFF, ">$ARGV[1].gff3" or die "ERROR: $!";
 print GFF "##gff-version   3\n";
 $/="\n>";
 my $chr_info='';
