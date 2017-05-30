@@ -22,7 +22,7 @@ Version:
 \n";
 
 my $name=$ARGV[0];
-die $usage unless defined $name;
+die "ERROR: $usage" unless defined $name;
 my $a_cutoff=0.6; #0.5 #minimum ac, bd alignment portion
 my $s_cutoff=60; #alignment similariy (%) cutoff
 my $w_size=7; #word size for boundary alignment
@@ -65,8 +65,8 @@ foreach (@ARGV){
 	}
 $a_cutoff-=0.10 if $boundary_ctrl==0;
 
-open List, "<$List" or die "No candidate list file!\n$usage";
-open FA, "<$FA" or die "No candidate sequence file!\n$usage";
+open List, "<$List" or die "ERROR: No candidate list file!\n$usage";
+open FA, "<$FA" or die "ERROR: No candidate sequence file!\n$usage";
 
 ##Store LTR information in hash
 my %info;
@@ -85,7 +85,7 @@ close List;
 ##protein family and strand annotation
 my %anno;
 if (defined $ANNO){
-	open ANNO, "<$ANNO" or die "Can't read the .anno file!\n";
+	open ANNO, "<$ANNO" or die "ERROR: Can't read the .anno file!\n";
 	while (<ANNO>){
 		next if /^#/;
 		my ($id, $superfam, $fam, $strand)=(split)[0,1,2,3];
@@ -115,7 +115,7 @@ while (<FA>){
 close FA;
 
 ##open scn.adj file and print out the header
-open SCN, ">$List.adj" or die $!;
+open SCN, ">$List.adj" or die "ERROR: $!";
 print SCN "#LTR boundary fine-grain adjustment and annotation have been performed by LTR_retriever (Shujun Ou, oushujun\@msu.edu)\n$head";
 
 ##multi-threading module
@@ -405,6 +405,7 @@ if (0){#old module which has a low rate of error
 	$decision="false" if ($motif !~ /TGCT|TACA|TACT|TGGA|TGGT|TATA|TGTA|TGCC|TGCA/i and $info[12] eq "?" and lc $info[18] eq "unknown" and uc $info[17] eq "NA");
 	$decision="false" if ($TSD_ctrl==1 and $TSD=~/NA/);
 	$decision="false" if ($motif !~ /TGCA/i and length $TSD ne 5 and $info[12] eq "?" and lc $info[18] eq "unknown" and uc $info[17] eq "NA");
+	$decision="false" if uc $info[17] eq "NOTLTR";
 
 	if ($boundary_ctrl and lc $decision eq "pass"){
 		unless ($ac=~/right/i and $bd=~/left/i and $motif ne "NA"){
