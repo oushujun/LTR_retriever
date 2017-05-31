@@ -422,7 +422,13 @@ print "$date\tStart to make non-redundant library...\n\n";
 
 ##make non-redundant library and format output
 &makeLib("$index.LTRlib");
-`perl $script_path/bin/fasta-reformat.pl $index.LTRlib.clust 50 > $index.LTRlib.fa`;
+if (-s "$index.LTRlib.clust"){
+	`perl $script_path/bin/fasta-reformat.pl $index.LTRlib.clust 50 > $index.LTRlib.fa`;
+	} else {
+	$date=`date`;
+	chomp ($date);
+	print "$date\tMake library for $index.LTRlib failed! Please check the file\n\n";
+	}
 
 #update status
 my $lib_count=`grep -c \\> $index.LTRlib.fa`;
@@ -516,6 +522,7 @@ my $index=$_[0];
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.extend -C $genome > $index.retriever.scn.extend.fa`; #full TE sequence with 50bp-extended on each side
 `perl $script_path/bin/Six-frame_translate.pl $index.retriever.scn.extend.fa > $index.retriever.scn.extend.fa.aa`; ##six-frame translate candidate sequences
 `${hmmer}hmmsearch --tblout $index.retriever.scn.extend.fa.aa.tbl --notextw --cpu $threads -E 0.05 --domE 0.05 --noali $TEhmm $index.retriever.scn.extend.fa.aa > $index.retriever.scn.extend.fa.aa.scn`;
+`touch $index.retriever.scn.extend.fa.aa.tbl` unless -s "$index.retriever.scn.extend.fa.aa.tbl";
 `perl $script_path/bin/annotate_TE.pl $index.retriever.scn.extend.fa.aa.tbl > $index.retriever.scn.extend.fa.aa.anno`;
 `perl $script_path/bin/LTR.identifier.pl $index -list $index.retriever.scn -seq $index.retriever.scn.extend.fa -anno $index.retriever.scn.extend.fa.aa.anno -flanksim $flanksim -flankmiss $flankmiss -flankaln $flankaln -minlen $minlen $tsdaln -u $miu -threads $threads -blastplus $blastplus -motif @motif > $index.defalse`;
 `grep -i pass $index.defalse|grep -i -v -P 'notLTR|mixture' > $index.ltrTE.pass.list`;
@@ -611,6 +618,7 @@ print "$date\tRetained clean sequence: $cln_lib_count\n\n";
 sub makeLib {
 ##generate non-redudant library for input sequences
 my $seq=$_[0];
+print "ERROR: $seq is empty, please check the last file\n" unless -s "$seq";
 if ($blastclust==1){
 	`cp $seq $seq.tmp`;
 	`${blast}blastclust -i $seq.tmp -o $seq.clust.info -a $threads -p F $set_bclust`;

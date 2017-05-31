@@ -20,7 +20,8 @@ my %copia=qw(PF07727.11 copia PF13961.3 copia PF14244.3 copia PF03564.12 copia P
 
 my %TE;
 my %hmm;
-while (<>){
+open File, "<$ARGV[0]" or die "ERROR: $ARGV[0]. $!";
+while (<File>){
 	next if /^#/;
 	my ($TE, $hmm)=(split)[0,3];
 	my ($decision, $family, $strand)=("NA", "unknown", "?");
@@ -60,6 +61,7 @@ while (<>){
 	$TE{$TE}[3]++ if  $strand eq "+";
 	$TE{$TE}[4]++ if  $strand eq "-";
 	}
+close File;
 
 print "#TE\tSuperfamily\tFamily\tStrand\thmmmatchs\n";
 foreach (keys %TE){
