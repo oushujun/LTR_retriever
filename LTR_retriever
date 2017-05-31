@@ -177,8 +177,10 @@ while (<Path>){
 	next unless /=/;
 	chomp;
 	my ($program, $path)=(split /=/, $_, 2);
-	$path=~s/\s+?#.*$//;
+	$path=~s/(\s+)?#.*$//;
+	$path=~s/\s+//g;
 	$path="$path"."/" if $path!~/\/$/;
+	$path='' if $path eq '/';
 	$path{$program}=$path;
 	}
 close Path;
