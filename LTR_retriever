@@ -121,32 +121,32 @@ my $k=0;
 my $argv='';
 foreach (@ARGV){
 	$argv.="$_ ";
-	$inharvest=$ARGV[$k+1] if /^-inharvest$/i;
-	$infinder=$ARGV[$k+1] if /^-infinder$/i;
-	$inmgescan=$ARGV[$k+1] if /^-inMGEScan$/i;
-	$nonTGCA=$ARGV[$k+1] if /^-nonTGCA$/i;
-	$genome=$ARGV[$k+1] if /^-genome$/i;
-	$misschar=$ARGV[$k+1] if /^-misschar$/i;
+	$inharvest=$ARGV[$k+1] if /^-inharvest$/i and $ARGV[$k+1]!~/-/;
+	$infinder=$ARGV[$k+1] if /^-infinder$/i and $ARGV[$k+1]!~/-/;
+	$inmgescan=$ARGV[$k+1] if /^-inMGEScan$/i and $ARGV[$k+1]!~/-/;
+	$nonTGCA=$ARGV[$k+1] if /^-nonTGCA$/i and $ARGV[$k+1]!~/-/;
+	$genome=$ARGV[$k+1] if /^-genome$/i and $ARGV[$k+1]!~/-/;
+	$misschar=$ARGV[$k+1] if /^-misschar$/i and $ARGV[$k+1]!~/-/;
 	$Nscreen="-Nscreen" if /^-Nscreen$/i;
-	$missmax=$ARGV[$k+1] if /^-missmax$/i;
-	$missrate=$ARGV[$k+1] if /^-missrate$/i;
-	$minscore=$ARGV[$k+1] if /^-minscore$/i;
+	$missmax=$ARGV[$k+1] if /^-missmax$/i and $ARGV[$k+1]!~/-/;
+	$missrate=$ARGV[$k+1] if /^-missrate$/i and $ARGV[$k+1]!~/-/;
+	$minscore=$ARGV[$k+1] if /^-minscore$/i and $ARGV[$k+1]!~/-/;
 	$bondcorr=0 if /^-bondcorr$/i;
-	$flanksim=$ARGV[$k+1] if /^-flanksim$/i;
-	$flankmiss=$ARGV[$k+1] if /^-flankmiss$/i;
-	$flankaln=$ARGV[$k+1] if /^-flankaln$/i;
-	$minlen=$ARGV[$k+1] if /^-minlen$/i;
-	$max_ratio=$ARGV[$k+1] if /^-max_ratio$/i;
+	$flanksim=$ARGV[$k+1] if /^-flanksim$/i and $ARGV[$k+1]!~/-/;
+	$flankmiss=$ARGV[$k+1] if /^-flankmiss$/i and $ARGV[$k+1]!~/-/;
+	$flankaln=$ARGV[$k+1] if /^-flankaln$/i and $ARGV[$k+1]!~/-/;
+	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1]!~/-/;
+	$max_ratio=$ARGV[$k+1] if /^-max_ratio$/i and $ARGV[$k+1]!~/-/;
 	$tsdaln="-tsdaln" if /^-tsdaln$/i;
 	@motif=(split /\s+/, $1) if $argv=~/-motif\s+\[([atcgnx ]+)\]/i;
-	$procovPL=$ARGV[$k+1] if /^-procovPL$/i;
-	$procovTE=$ARGV[$k+1] if /^-procovTE$/i;
-	$prolensig=$ARGV[$k+1] if /^-prolensig$/i;
-	$LINE=$ARGV[$k+1] if /^-linelib$/i;
-	$DNA=$ARGV[$k+1] if /^-dnalib$/i;
-	$PlantP=$ARGV[$k+1] if /^-plantprolib$/i;
-	$TEhmm=$ARGV[$k+1] if /^-TEhmm$/i;
-	$miu=$ARGV[$k+1] if /^-u$/i;
+	$procovPL=$ARGV[$k+1] if /^-procovPL$/i and $ARGV[$k+1]!~/-/;
+	$procovTE=$ARGV[$k+1] if /^-procovTE$/i and $ARGV[$k+1]!~/-/;
+	$prolensig=$ARGV[$k+1] if /^-prolensig$/i and $ARGV[$k+1]!~/-/;
+	$LINE=$ARGV[$k+1] if /^-linelib$/i and $ARGV[$k+1]!~/-/;
+	$DNA=$ARGV[$k+1] if /^-dnalib$/i and $ARGV[$k+1]!~/-/;
+	$PlantP=$ARGV[$k+1] if /^-plantprolib$/i and $ARGV[$k+1]!~/-/;
+	$TEhmm=$ARGV[$k+1] if /^-TEhmm$/i and $ARGV[$k+1]!~/-/;
+	$miu=$ARGV[$k+1] if /^-u$/i and $ARGV[$k+1]!~/-/;
 	$blastclust=1 if /^-blastclust$/i;
 	$set_bclust=$1 if $argv=~/-blastclust\s+\[(.+?)\]/i;
 	$cdhit=1 if /^-cdhit$/i;
@@ -154,7 +154,7 @@ foreach (@ARGV){
 	$keep_trunc=0 if $argv=~/-notrunc/i;
 	$annotation=0 if /^-noanno$/i;
 	$verbose=1 if /^-verbose|-v$/i;
-	$threads=$ARGV[$k+1] if /^-threads$/i;
+	$threads=$ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1]!~/-/;
 	die $help if /^--help|-h$/i;
 	$k++;
         }
@@ -244,14 +244,51 @@ if (`ls $genome*|wc -l`>15){
 ###################################################################
 
 my $index=$genome;
+##check the length of genome sequence IDs, if longer than 15bp, chop it.
+my $id_len=`grep \\> $genome|perl -ne 'chomp; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
+$id_len=(split /\s+/, $id_len)[-1];
+if ($id_len>15){
+	$date=`date`;
+	chomp ($date);
+	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
+	print "\t\t\t\tTrying to reformat seq IDs...\n\n";
+	open Genome, "<$genome" or die "ERROR: $!";
+	open Modify, ">$genome.mod" or die "ERROR: $!";
+	while (<Genome>){
+		chomp;
+		s/[#!@\$\%^&*()=+\\\|\/?<,~`'"\[\]\{\}]//g;
+		my $info=$_;
+		if ($info=~/^>/){
+			$info=(split)[0];
+				if ($info=~/.{15,100}?/){
+					$info=">$1" if $info=~/([0-9]+)/;
+					}
+				}
+			print Modify "$info\n";
+		}
+	close Genome;
+	close Modify;
+	my $old_id=`grep \\> $genome|sort -u|wc -l`;
+	my $new_id=`grep \\> $genome.mod|sort -u|wc -l`;
+	$date=`date`;
+	chomp ($date);
+	if ($old_id==$new_id){
+		$index="$genome.mod";
+		print "$date\tSeq ID conversion successful!\n\n";
+		} else {
+		`rm $genome.mod`;
+		die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
+		}
+	}
 
 ##obtain initial LTR candidates from LTRharvest and/or LTR_finder screen outputs
 $date=`date`;
 chomp ($date);
 print "$date\tStart to convert inputs...\n";
-`perl $script_path/bin/convert_ltr_finder.pl $infinder > $index.retriever.scn` if $infinder ne '';
-`perl $script_path/bin/convert_MGEScan.pl $inmgescan >> $index.retriever.scn` if $inmgescan ne '';
-`cat $inharvest >> $index.retriever.scn` if $inharvest ne '';
+`perl $script_path/bin/convert_ltr_finder.pl $infinder > $index.retriever.scn` if -s $infinder;
+`perl $script_path/bin/convert_MGEScan.pl $inmgescan >> $index.retriever.scn` if -s $inmgescan;
+`cat $inharvest >> $index.retriever.scn` if -s $inharvest;
+die "\nERROR: The specified candidate file(s) is not exist.\n\n" unless `grep -c -v \'#\' $index.retriever.scn`>0;
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn $genome -f -g -max_ratio $max_ratio`;
 `cat $index.retriever.scn.full|sort -fu >$index.retriever.scn.full.uniq; mv $index.retriever.scn.full.uniq $index.retriever.scn.full`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.full -C $genome > $index.ltrTE.fa`;
@@ -400,12 +437,14 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	&makeLib("$index.prelib.LTR");
 	`${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
 	`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+	`cat $index.prelib.LTR $index.prelib.INT.cln > $index.LTRlib`;
 
 #update status
 	$date=`date`;
 	chomp ($date);
 	my $ori_size=-s "$index.prelib.INT";
 	my $cln_size=-s "$index.prelib.INT.cln";
+	print "\nWarning: RepeatMasker seems to be not running correctly! Please check this program.\n\n" if $ori_size>0 and $cln_size==0;
 	print "$date\tRaw internal region size (bit): $ori_size\n\t\t\t\tClean internal region size (bit): $cln_size\n\n";
 	} else {
 	`cp $index.prelib $index.LTRlib`;
@@ -457,18 +496,20 @@ print "$date\tTotal intact LTRs found: $pass_count
 
 `perl $script_path/bin/make_gff3.pl $genome $genome.pass.list` if $gff3==1;
 ##Annotate LTR-RT in the genome
+$date=`date`;
+chomp ($date);
 if ($annotation==1){
 	$date=`date`;
 	chomp ($date);
 	print "$date\tStart to annotate whole-genome LTRs...\n\n";
 	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -gff -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
 	`perl $script_path/bin/annotate_gff.pl $genome.LTRlib.fa $genome.out.gff > $genome.LTRanno.gff`;
-}
-} else {
-	$date=`date`;
-	chomp ($date);
-	print "$date\tNo LTR was found in your data.\n\n";
 	}
+} else {
+$date=`date`;
+chomp ($date);
+print "$date\tNo LTR was found in your data.\n\n";
+}
 
 `perl $script_path/bin/cleanOutput.pl $genome` if $verbose==0;
 $date=`date`;
@@ -588,6 +629,7 @@ print "Attention: No truncated LTRs will be saved in the final LTR library.\n\n"
 }
 
 sub proMask {
+my $index=$_[0];
 my $raw_lib_count=`grep -c \\> $index.ltrTE.stg3.cln`;
 $raw_lib_count=~s/\s+//g;
 $date=`date`;
@@ -596,7 +638,6 @@ print "$date\tStart to remove DNA TE and LINE transposases, and remove plant pro
 \t\t\t\tTotal library sequences: $raw_lib_count\n";
 
 ##DNA TE transposase, LINE transposase, and plant protein masking
-my $index=$_[0];
 `${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $index.ltrTE.stg3.cln -db $LINE -out $index.ltrTE.stg3.line.out`;
 `${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $index.ltrTE.stg3.cln -db $DNA -out $index.ltrTE.stg3.dna.out`;
 `cat $index.ltrTE.stg3.line.out $index.ltrTE.stg3.dna.out > $index.ltrTE.stg3.otherTE.out`;
