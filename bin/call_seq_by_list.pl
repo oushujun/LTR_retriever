@@ -133,7 +133,8 @@ foreach my $line (@list){
 			$stp=length $genome{$chr_pre};
 			$seq.=substr ($genome{$chr_pre}, $str-1, $stp-$str+1) if (exists $genome{$chr_pre} and $str<=$stp and $str!=1);
 			if ($purge==1){
-				print ">$chr_pre|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+				print ">$chr_pre\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+#				print ">$chr_pre|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
 				} else {
 				print ">$chr_pre\n$genome{$chr_pre}\n" unless ($stp-length $seq)/$stp >= $coverage;
 				}
@@ -159,7 +160,8 @@ foreach my $line (@list){
 		$stp=length $genome{$chr};
 		$seq.=substr ($genome{$chr}, $str-1, $stp-$str+1) if (exists $genome{$chr} and $str<=$stp and $str!=1);
 		if ($purge==1){
-			print ">$chr|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+			print ">$chr\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+#			print ">$chr|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
 			} else {
 			print ">$chr\n$genome{$chr}\n" unless ($stp-length $seq)/$stp >= $coverage;
 			}
