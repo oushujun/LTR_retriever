@@ -114,7 +114,7 @@ my $TEhmm="$script_path/database/TEfam.hmm";
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
 
 my $threads=4;
-my $version="v1.1";
+my $version="v1.2";
 #my $scn=''; #store screen output information
 
 my $k=0;
@@ -323,6 +323,11 @@ goto NEXT if $pass_count==0;
 ##generate non-redudant library for pass LTR candidates
 $date=`date`;
 chomp ($date);
+my $prelib_size=-s "$index.ltrTE";
+die "ERROR: $pass_count intact LTRs have found, but the pre-library file $index.ltrTE is empty.
+Something is wrong at this point. Please report the bug to https://github.com/oushujun/LTR_retriever/issues
+Program halt!\n" unless $prelib_size>0;
+
 print "$date\tSequence clustering for $index.ltrTE ...\n";
 &makeLib("$index.ltrTE");
 `perl $script_path/bin/annotate_lib.pl $index.retriever.scn.adj $index.ltrTE.clust > $index.prelib`;

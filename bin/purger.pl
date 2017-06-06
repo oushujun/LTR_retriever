@@ -45,7 +45,7 @@ while (<File>){
 	($qstart, $qend)=($qend, $qstart) if $qstart>$qend;
 	$info.="$query\t$qstart\t$qend\n" if ($eval<=$evalue and $len>=$length);
 }
-$info="Good news! No sequence is needed to be purged.\n" if $info eq '';
+$info="Good news! No sequence is needed to be purged.\n" if $info=~/^(\s+)?$/;
 open Out, ">$seq.exclude.temp";
 print Out "$info";
 close Out;

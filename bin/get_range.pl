@@ -121,6 +121,7 @@ if ($LTR==1){
 			}
 		}
 
+	print "ERROR: could not recognize the following line:\n\t$_" unless defined $lLTR_length and defined $rLTR_length;
 	my $long="NA";
 	if ($lLTR_length>=$rLTR_length){
 		$long="left";
