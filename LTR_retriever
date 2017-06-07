@@ -2,7 +2,7 @@
 use strict;
 use Cwd 'abs_path';
 
-##Build base on GenomeTools/1.5.1, BLAST+/2.2.28, BLAST/2.2.25, HMMER/3.1b2, RepeatMasker/4.0.0 and Tandem Repeats Finder 4.07b
+##Build base on GenomeTools/1.5.1, BLAST+/2.2.28, BLAST/2.2.25, HMMER/3.1b2, RepeatMasker/4.0.0, CDHIT/4.5.6, and Tandem Repeats Finder 4.07b
 
 my $help="
 ###########################
@@ -151,7 +151,7 @@ foreach (@ARGV){
 	$set_bclust=$1 if $argv=~/-blastclust\s+\[(.+?)\]/i;
 	$cdhit=1 if /^-cdhit$/i;
 	$set_cdhit=$1 if $argv=~/-cdhit\s+\[(.+?)\]/i;
-	$keep_trunc=0 if $argv=~/-notrunc/i;
+	$keep_trunc=0 if /^-notrunc$/i;
 	$annotation=0 if /^-noanno$/i;
 	$verbose=1 if /^-verbose|-v$/i;
 	$threads=$ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1]!~/^-/;
@@ -447,7 +447,9 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	chomp ($date);
 	my $ori_size=-s "$index.prelib.INT";
 	my $cln_size=-s "$index.prelib.INT.cln";
-	print "\nWarning: RepeatMasker seems to be not running correctly! Please check this program.\n\n" if $ori_size>0 and $cln_size==0;
+	print "\nWarning: RepeatMasker seems to be not running correctly! Please check this program by running:
+	RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT
+	Please report any errors to https://github.com/oushujun/LTR_retriever/issues\n\n" if $ori_size>0 and $cln_size==0;
 	print "$date\tRaw internal region size (bit): $ori_size\n\t\t\t\tClean internal region size (bit): $cln_size\n\n";
 	} else {
 	`cp $index.prelib $index.LTRlib`;
@@ -613,6 +615,12 @@ if ($trunc>0){
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
 `${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
 #if (-s "$index.ltrTE.trunc.masked"){
+#file checking
+die "ERROR: RepeatMasker is not running properly!
+	Please check the file $index.ltrTE.mask.lib and $index.ltrTE.trunc and test run:
+		RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
+	Please report errors to https://github.com/oushujun/LTR_retriever/issues\nProgram halt!\n" unless -s "$index.ltrTE.trunc.masked";
+
 `perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
 `cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
 	} else {
