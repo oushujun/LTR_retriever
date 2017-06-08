@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 use Cwd 'abs_path';
+use File::Basename;
 
-##Build base on GenomeTools/1.5.1, BLAST+/2.2.28, BLAST/2.2.25, HMMER/3.1b2, RepeatMasker/4.0.0, CDHIT/4.5.6, and Tandem Repeats Finder 4.07b
+##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, and Tandem Repeats Finder 4.07b
 
 my $help="
 ###########################
@@ -207,6 +208,10 @@ die "blastx is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplu
 $repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
 $repeatmasker=~s/RepeatMasker\n//;
 die "RepeatMasker is not exist in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
+`cp $script_path/database/dummy060817.fa ./`;
+my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa -lib dummy060817.fa`;
+die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
+`rm dummy060817.fa*`;
 #hmmsearch
 $hmmer=`which hmmsearch 2>/dev/null` if $hmmer eq '';
 $hmmer=~s/hmmsearch\n//;
@@ -227,6 +232,11 @@ print "
 ##########################\n
 Contributors: Shujun Ou, Ning Jiang\n
 Parameters: @ARGV\n\n\n";
+
+`cp $LINE $DNA $PlantP ./`;
+$LINE=fileparse($LINE);
+$DNA=fileparse($DNA);
+$PlantP=fileparse($PlantP);
 
 `${blastplus}makeblastdb -in $LINE -dbtype prot`;
 `${blastplus}makeblastdb -in $DNA -dbtype prot`;
@@ -363,7 +373,7 @@ if (`grep -c -v \'#\' $index.ltrTE.pass.list`>0){
 ##condense the pass.LTR lib if size exceed 15M to enhance speed
 	&makeLib("$index.ltrTE.pass.LTR") if (-s "$index.ltrTE.pass.LTR")>15000000;
 	`mv $index.ltrTE.pass.LTR.clust $index.ltrTE.pass.LTR` if -s "$index.ltrTE.pass.LTR.clust";
-	`${repeatmasker}RepeatMasker -qq -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.pass.LTR -cutoff 225 $index2.ltrTE.LTR 2>/dev/null`;
+	`${repeatmasker}RepeatMasker -e ncbi -qq -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.pass.LTR -cutoff 225 $index2.ltrTE.LTR 2>/dev/null`;
 	}
 	
 ##cleanup highly masked sequence and tandem sequence from masked LTR regions (no internal)
@@ -398,7 +408,7 @@ chomp ($date);
 print "$date\tIntact non-TGCA LTR found: $pass_count\n\n";
 
 #Aggregate all candidates into one list
-`cat $index.retriever.scn.adj $index2.retriever.scn.adj > $index.retriever.all.scn.adj`;
+`cat $index.retriever.scn.adj $index2.retriever.scn.adj > $index.retriever.all.scn`;
 goto End if $pass_count==0;
 
 ##Recycle truncated candidates, mask candidates by false LTR
@@ -411,15 +421,15 @@ goto End if $pass_count==0;
 `perl $script_path/bin/annotate_lib.pl $index2.retriever.scn.adj $index2.ltrTE >> $index.prelib`; #contains both TGCA and nmtf LTR-RT
 
 End:
-`cp $index.retriever.scn.adj $index.retriever.all.scn.adj` unless (-s "$index.retriever.all.scn.adj");
+`cp $index.retriever.scn.adj $index.retriever.all.scn` unless (-s "$index.retriever.all.scn");
 
 ##obtain good nmtf entries from index.ltrTE and index2.ltrTE using $genome.nmtf.pass.list
 `touch $genome.nmtf.pass.list`;
 if (`grep -c -v \'#\' $genome.nmtf.pass.list`>0){
-	`perl $script_path/bin/get_range.pl 1 $index.retriever.all.scn.adj $genome.nmtf.pass.list -i -N`;
-	`perl $script_path/bin/output_by_list.pl 1 $index.ltrTE 2 $index.retriever.all.scn.adj.list -FA -MSU0 -MSU1 > $index.ltrTE.nmtf`;
-	`perl $script_path/bin/output_by_list.pl 1 $index2.ltrTE 2 $index.retriever.all.scn.adj.list -FA -MSU0 -MSU1 >> $index.ltrTE.nmtf` if defined $index2;
-	`perl $script_path/bin/annotate_lib.pl $index.retriever.all.scn.adj $index.ltrTE.nmtf > $index.nmtf.prelib`;
+	`perl $script_path/bin/get_range.pl 1 $index.retriever.all.scn $genome.nmtf.pass.list -i -N`;
+	`perl $script_path/bin/output_by_list.pl 1 $index.ltrTE 2 $index.retriever.all.scn.list -FA -MSU0 -MSU1 > $index.ltrTE.nmtf`;
+	`perl $script_path/bin/output_by_list.pl 1 $index2.ltrTE 2 $index.retriever.all.scn.list -FA -MSU0 -MSU1 >> $index.ltrTE.nmtf` if defined $index2;
+	`perl $script_path/bin/annotate_lib.pl $index.retriever.all.scn $index.ltrTE.nmtf > $index.nmtf.prelib`;
 	}
 
 `touch $index.prelib`;
@@ -438,7 +448,7 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.INT.list -FA > $index.prelib.INT`;
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.LTR.list -FA > $index.prelib.LTR`;
 	&makeLib("$index.prelib.LTR");
-	`${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
+	`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
 	`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
 	`cat $index.prelib.LTR $index.prelib.INT.cln > $index.LTRlib`;
 
@@ -448,7 +458,7 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	my $ori_size=-s "$index.prelib.INT";
 	my $cln_size=-s "$index.prelib.INT.cln";
 	print "\nWarning: RepeatMasker seems to be not running correctly! Please check this program by running:
-	RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT
+	RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT
 	Please report any errors to https://github.com/oushujun/LTR_retriever/issues\n\n" if $ori_size>0 and $cln_size==0;
 	print "$date\tRaw internal region size (bit): $ori_size\n\t\t\t\tClean internal region size (bit): $cln_size\n\n";
 	} else {
@@ -468,6 +478,7 @@ print "$date\tStart to make non-redundant library...\n\n";
 &makeLib("$index.LTRlib");
 if (-s "$index.LTRlib.clust"){
 	`perl $script_path/bin/fasta-reformat.pl $index.LTRlib.clust 50 > $index.LTRlib.fa`;
+	`rm $index.LTRlib.clust`;
 	} else {
 	$date=`date`;
 	chomp ($date);
@@ -507,7 +518,7 @@ if ($annotation==1){
 	$date=`date`;
 	chomp ($date);
 	print "$date\tStart to annotate whole-genome LTRs...\n\n";
-	`${repeatmasker}RepeatMasker -pa $threads -q -no_is -norna -nolow -gff -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
+	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -gff -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
 	`perl $script_path/bin/annotate_gff.pl $genome.LTRlib.fa $genome.out.gff > $genome.LTRanno.gff`;
 	}
 } else {
@@ -516,7 +527,7 @@ chomp ($date);
 print "$date\tNo LTR was found in your data.\n\n";
 }
 
-`perl $script_path/bin/cleanOutput.pl $genome` if $verbose==0;
+`perl $script_path/bin/cleanOutput.pl $genome $LINE $DNA $PlantP` if $verbose==0;
 $date=`date`;
 chomp ($date);
 print "$date\tAll analyses were finished!
@@ -613,12 +624,12 @@ if ($trunc>0){
 `awk '{print \$1"\\t"\$1}\' $index.ltrTE.veryfalse.list > $index.ltrTE.veryfalse`;
 `perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
-`${repeatmasker}RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
+`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
 #if (-s "$index.ltrTE.trunc.masked"){
 #file checking
 die "ERROR: RepeatMasker is not running properly!
 	Please check the file $index.ltrTE.mask.lib and $index.ltrTE.trunc and test run:
-		RepeatMasker -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
+		RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
 	Please report errors to https://github.com/oushujun/LTR_retriever/issues\nProgram halt!\n" unless -s "$index.ltrTE.trunc.masked";
 
 `perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
