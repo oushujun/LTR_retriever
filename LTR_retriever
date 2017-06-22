@@ -254,6 +254,7 @@ if (`ls $genome*|wc -l`>15){
 ###################################################################
 
 my $index=$genome;
+#die "\nERROR: Genome file $genome not exist.\n\n" if -s "$genome"==0;
 ##check the length of genome sequence IDs, if longer than 15bp, chop it.
 my $id_mode=0; #record the mode of id conversion.
 my $id_len=`grep \\> $genome|perl -ne 'chomp; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
@@ -290,13 +291,17 @@ if ($id_len>15){
 	}
 
 ##obtain initial LTR candidates from LTRharvest and/or LTR_finder screen outputs
+die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
+die "\nERROR: The specified file $infinder is not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
+die "\nERROR: The specified file $inmgescan is not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
+die "\nERROR: The specified file $inharvest is not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
 $date=`date`;
 chomp ($date);
 print "$date\tStart to convert inputs...\n";
 `perl $script_path/bin/convert_ltr_finder.pl $infinder $id_mode > $index.retriever.scn` if -s $infinder;
 `perl $script_path/bin/convert_MGEScan.pl $inmgescan >> $index.retriever.scn` if -s $inmgescan;
 `cat $inharvest >> $index.retriever.scn` if -s $inharvest;
-die "\nERROR: The specified candidate file(s) is not exist.\n\n" unless `grep -c -v \'#\' $index.retriever.scn`>0;
+die "\nERROR: No candidate is found in the file(s) you specified.\n\n" unless `grep -c -v \'#\' $index.retriever.scn`>0;
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn $genome -f -g -max_ratio $max_ratio`;
 `cat $index.retriever.scn.full|sort -fu >$index.retriever.scn.full.uniq; mv $index.retriever.scn.full.uniq $index.retriever.scn.full`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.full -C $genome > $index.ltrTE.fa`;
@@ -357,8 +362,10 @@ my $index2="$index.nmtf";
 `cp $nonTGCA $index2.retriever.scn`;
 $total_candidate=`grep -v -c \'#\' $index2.retriever.scn`;
 $total_candidate=~s/\s+//g;
-print "\t\t\t\tTotal non-TGCA candidates: $total_candidate\n
-$date\tStart to remove non-TGCA candidates that are >=60% identical to TGCA LTRs...\n";
+$total_candidate=0 if $total_candidate!~/[0-9]+/;
+print "\t\t\t\tTotal non-TGCA candidates: $total_candidate\n";
+goto End if $total_candidate eq 0;
+print "$date\tStart to remove non-TGCA candidates that are >=60% identical to TGCA LTRs...\n";
 
 ##get LTR regions from non-TGCA raw candidates (original internal boundary)
 &getLTR($index2);
