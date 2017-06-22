@@ -45,4 +45,4 @@ For more details about the usage and parameter settings, please see the help pag
 	./LTR_retriever -h
 Or refer to the manual document.
 
-For questions and Issues Please See: https://github.com/oushujun/LTR_retriever
+For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/issues
