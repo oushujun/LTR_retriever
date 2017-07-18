@@ -13,15 +13,17 @@ To run LTR_retriever you need to provide the paths to the following dependent pr
 
 Simply modify the 'paths' file in the same directory
 In your terminal, type:
-	`
-*	vi /your_path_to/LTR_retriever/paths`
+
+	vi /your_path_to/LTR_retriever/paths
+
 Then modify lines below:
-	`
-*	BLAST+=/your_path_to/BLAST+2.2.30/bin/
-*	RepeatMasker=/your_path_to/RepeatMasker4.0.0/
-*	HMMER=/your_path_to/HMMER3.1b2/bin/
-*	CDHIT=/your_path_to/CDHIT4.6.1/
-*	BLAST=/your_path_to/BLAST2.2.26/bin/ #not required if CDHIT provided`
+
+	BLAST+=/your_path_to/BLAST+2.2.30/bin/
+	RepeatMasker=/your_path_to/RepeatMasker4.0.0/
+	HMMER=/your_path_to/HMMER3.1b2/bin/
+	CDHIT=/your_path_to/CDHIT4.6.1/
+	BLAST=/your_path_to/BLAST2.2.26/bin/ #not required if CDHIT provided`
+
 
 ### Inputs ###
 
