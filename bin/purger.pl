@@ -22,7 +22,8 @@ $script_path=~s/(.+)\/.+$/$1/;
 my $seq; #provide the sequence to be purged
 my $blast; #provide the blast outfmt=6 result
 my $evalue=0.001; #evalue cutoff for blast entries. Evalues lower than this cutoff is considered a real alignment.
-my $length=90; #alignment cutoff (bp, default 90) to be considered as a real alignment
+my $length=90; #identity cutoff (bp, default 90) to be considered as a real alignment (= alignment length - mismatch)
+my $identity=30; #identity cutoff (%, default 30) to be considered as a read alignment
 my $purge=1; #switch on=1(default)/off=0 to clean up aligned region and joint unaligned sequences
 my $coverage=1; #if the excluded portion is too long (default 1, [0-1]), discard the entire sequence
 
@@ -33,6 +34,7 @@ foreach my $para (@ARGV){
 	$evalue=$ARGV[$k+1] if $para=~/^-eval$/i;
 	$length=$ARGV[$k+1] if $para=~/^-len$/i;
 	$coverage=$ARGV[$k+1] if $para=~/^-cov$/i;
+	$identity=$ARGV[$k+1] if $para=~/^-iden$/i;
 	$purge=$ARGV[$k+1] if $para=~/^-purge$/i;
 	$k++;
 	}
@@ -41,9 +43,9 @@ open File, "<$blast" or die "ERROR: $!";
 my %query; #store query information
 my $info='';
 while (<File>){
-	my ($query, $len, $qstart, $qend, $eval)=(split)[0,3,6,7,10];
+	my ($query, $iden, $len, $mismatch, $qstart, $qend, $eval)=(split)[0,2,3,4,6,7,10];
 	($qstart, $qend)=($qend, $qstart) if $qstart>$qend;
-	$info.="$query\t$qstart\t$qend\n" if ($eval<=$evalue and $len>=$length);
+	$info.="$query\t$qstart\t$qend\n" if ($eval<=$evalue and $len-$mismatch>=$length and $iden>=$identity);
 }
 $info="Good news! No sequence is needed to be purged.\n" if $info=~/^(\s+)?$/;
 open Out, ">$seq.exclude.temp";

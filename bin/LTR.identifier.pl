@@ -164,6 +164,8 @@ sub Identifier() {
 	my $exec="${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
 	my @Blast=();
 	@Blast=qx(bash -c '$exec') if defined $ltr;
+#print "$exec\n\n";	
+#	@Blast=qx(bash -c '"${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6"') if defined $ltr;
 	my ($sim, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,0,0,0,0,0,0,0,0,0);
 	my $adjust="NO";
 	$decision="false" if $#Blast==0;
