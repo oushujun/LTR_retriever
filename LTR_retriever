@@ -26,7 +26,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 -nonTGCA     [File]	Non-canonical LTR-RT candidates from LTRharvest
 
 【Output options】
--verbose		retain intermediate outputs (developer mode)
+-verbose/-v		retain intermediate outputs (developer mode)
 -noanno			disable whole genome LTR-RT annotation (no GFF output)
 
 【Filter options】
@@ -65,6 +65,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 【Miscellaneous】
 -u           [FLOAT]	neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
 -threads     [INT]	number of threads (≤ total available threads, default 4)
+-help/-h		display this help information
 
 ######Questions and Issues Please See: https://github.com/oushujun/LTR_retriever ######
 
@@ -233,10 +234,16 @@ print "
 Contributors: Shujun Ou, Ning Jiang\n
 Parameters: @ARGV\n\n\n";
 
-`cp $LINE $DNA $PlantP ./`;
-$LINE=fileparse($LINE);
-$DNA=fileparse($DNA);
-$PlantP=fileparse($PlantP);
+my $rand=int(rand(1000000));
+my ($LINE_base, $LINE_path)=fileparse($LINE);
+my ($DNA_base, $DNA_path)=fileparse($DNA);
+my ($PlantP_base, $PlantP_path)=fileparse($PlantP);
+`cp $LINE ./$LINE_base.$rand`;
+`cp $DNA ./$DNA_base.$rand`;
+`cp $PlantP ./$PlantP_base.$rand`;
+$LINE="$LINE_base.$rand";
+$DNA="$DNA_base.$rand";
+$PlantP="$PlantP_base.$rand";
 
 `${blastplus}makeblastdb -in $LINE -dbtype prot`;
 `${blastplus}makeblastdb -in $DNA -dbtype prot`;
@@ -264,7 +271,7 @@ if ($id_len>15){
 	chomp ($date);
 	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -ne 'chomp; if (s/^>//) {\$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_\n"' $genome > $genome.mod`;
+	`perl -ne 'chomp; if (s/^>+//) {\$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_\n"' $genome > $genome.mod`;
 	my $old_id=`grep \\> $genome|sort -u|wc -l`;
 	my $new_id=`grep \\> $genome.mod|sort -u|wc -l`;
 	$date=`date`;
@@ -456,7 +463,11 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.LTR.list -FA > $index.prelib.LTR`;
 	&makeLib("$index.prelib.LTR");
 	`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
-	`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+	if (-e "$index.prelib.INT.masked"){
+		`perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+		} else {
+		`cp $index.prelib.INT $index.prelib.INT.cln`;
+		}
 	`cat $index.prelib.LTR $index.prelib.INT.cln > $index.LTRlib`;
 
 #update status
@@ -537,8 +548,9 @@ print "$date\tNo LTR was found in your data.\n\n";
 `perl $script_path/bin/cleanOutput.pl $genome $LINE $DNA $PlantP` if $verbose==0;
 $date=`date`;
 chomp ($date);
-print "$date\tAll analyses were finished!
-
+print "$date\tAll analyses were finished!\n";
+if ($prelib_count>0){
+print "
 ##############################
 ####### Result files #########
 ##############################
@@ -552,6 +564,7 @@ LTR library
 ";
 print "GFF3 file for intact LTRs\n\t$genome.pass.list.gff3\n\n" if $gff3==1;
 print "Whole-genome LTR annotation (GFF)\n\t$genome.LTRanno.gff\n\n\n" if $annotation==1;
+}
 
 
 ###################################################################

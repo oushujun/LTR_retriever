@@ -161,11 +161,16 @@ sub Identifier() {
 	my $motif1="$seq[0]"."$seq[1]";
 	my $motif2="$seq[-2]"."$seq[-1]";
 	my $candidate_seq=">$name\\n$ltr"; #just candidate LTR including internal region, no extended sequences
+
 	my $exec="${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
 	my @Blast=();
-	@Blast=qx(bash -c '$exec') if defined $ltr;
-#print "$exec\n\n";	
-#	@Blast=qx(bash -c '"${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6"') if defined $ltr;
+	my $try=0;
+	while ($try<100){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
+		@Blast=qx(bash -c '$exec' 2> /dev/null) if defined $ltr;
+		last if $? == 0;
+		$try++;
+		}
+
 	my ($sim, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,0,0,0,0,0,0,0,0,0);
 	my $adjust="NO";
 	$decision="false" if $#Blast==0;
@@ -174,6 +179,7 @@ sub Identifier() {
 	my $pair=0; #0 indicates no alignment pair seems correct, 1 indicates at least 1 alignment pair seems right
 	for (my $i=1; defined $Blast[$i+1]; $i++){
 		$decision="false" if $i>8;
+		last if $i>8;
 		($sim, $q_start, $q_end, $s_start, $s_end)=(split /\s+/,  $Blast[$i])[2,6,7,8,9];
 		$cor_adj=$info[0]-1;
 		($ls, $le, $rs, $re)=($info[3]-$cor_adj, $info[4]-$cor_adj, $info[6]-$cor_adj, $info[7]-$cor_adj);
@@ -188,6 +194,7 @@ sub Identifier() {
 			last;
 			}
 		}
+
 	$decision="false" if $pair==0;
 ##element age estimation by T=K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
 ###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is the inverse of identity ($sim).
@@ -415,6 +422,8 @@ if (0){#old module which has a low rate of error
 			}
 		}
 
+print "blast:\n@Blast "; #test
+print "sim:$sim\tinfo19:$info[19]\n"; #test
 	print "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$sim\t$info[12]\t$info[18]\t$info[17]\t$info[19]\n";#last four variables: strand/family/superfamily/age
 	print "\tAdjust: $adjust\tlLTR: $ll\trLTR: $rl\n";
 	print "\tAlignment regions: $s_start, $s_end, $q_start, $q_end\n";
