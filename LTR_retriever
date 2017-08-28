@@ -456,8 +456,8 @@ chomp ($date);
 print "$date\tStart to remove nested insertions in internal regions...\n";
 
 ##get rid of solo LTR nested in internal regions
-`grep \\> $index.prelib|grep -i 'INT#LTR' > $index.prelib.INT.list`;
-`grep \\> $index.prelib|grep -i -v 'INT#LTR' > $index.prelib.LTR.list`;
+`grep \\> $index.prelib|grep -i 'INT#LTR'|sort -u > $index.prelib.INT.list`;
+`grep \\> $index.prelib|grep -i -v 'INT#LTR'|sort -u > $index.prelib.LTR.list`;
 if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.INT.list -FA > $index.prelib.INT`;
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.LTR.list -FA > $index.prelib.LTR`;
