@@ -138,6 +138,16 @@ if ($LTR==1){
 		$rLTR_end-=10;
 		}
 
+##for internal region length control
+	my $mark=1;
+	if ($IN==1){
+		my $in_len=$rLTR_start-$lLTR_end;
+		my $inLTR_ratio=$in_len/(($lLTR_length+$rLTR_length)/2);
+		if ($in_len<$min_inlen or $in_len>$max_inlen or $inLTR_ratio<$min_iLratio or $inLTR_ratio>$max_iLratio){
+			$mark=0;
+			}
+		}
+
 	if ($extend==1 or $flanking==1){
 		$lLTR_start-=50; #directly extend the coordinate for 50 bp
 		$lLTR_end+=50;
@@ -152,16 +162,6 @@ if ($LTR==1){
 
 ##This is for LTRdigest result analysis 
 #	($element_start,  $element_end,  $element_length,  $sequence,  $lLTR_start,  $lLTR_end,  $lLTR_length,  $rLTR_start,  $rLTR_end,  $rLTR_length,  $lTSD_start,  $lTSD_end,  $lTSD_motif,  $rTSD_start,  $rTSD_end,  $rTSD_motif,  $PPT_start,  $PPT_end,  $PPT_motif,  $PPT_strand,  $PPT_offset,  $PBS_start,  $PBS_end,  $PBS_strand,  $tRNA,  $tRNA_motif,  $PBS_offset,  $tRNA_offset,  $PBS_tRNA_edist,  $Protein_domain_hits)=split (/\t/,$_);
-
-##for internal region length control
-	my $mark=1;
-	if ($IN==1){
-		my $in_len=$rLTR_start-$lLTR_end;
-		my $inLTR_ratio=$in_len/(($lLTR_length+$rLTR_length)/2);
-		if ($in_len<$min_inlen or $in_len>$max_inlen or $inLTR_ratio<$min_iLratio or $inLTR_ratio>$max_iLratio){
-			$mark=0;
-			}
-		}
 
 	if ($mark==1 and defined $chr and $extend!=1 and $int==0){
 		print LTRlist "$chr:$element_start..$element_end\[1]\t$chr:$lLTR_start..$lLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "left"));
