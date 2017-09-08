@@ -1,0 +1,27 @@
+#!/usr/bin/perl -w
+use strict;
+##This script is to extract coordinate information for intact LTRs and all LTRs to calculate the LAI score
+##Users should provide the LTR_retriever *pass.list file and the RepeatMasker *out file as inputs
+##Usage: perl ./LAI intact.pass.list genome.out genome.fa
+##Author: Shujun Ou (oushujun@msu.edu)
+##First version: 11/23/2016
+
+
+my $script_path=`readlink -fn -- $0`;
+$script_path=~s/(.+)\/.+$/$1/;
+my $usage="perl ./LAI intact.pass.list genome.out genome.fa\n";
+die $usage unless $#ARGV==2;
+die $usage unless (-s "$ARGV[0]" and -s "$ARGV[1]" and -s "$ARGV[2]");
+
+#convert intact LTR information into bed format
+`perl -ne 'my \$id=(split)[0]; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\n"' $ARGV[0] > $ARGV[0].bed`;
+`perl $script_path/bin/combine_overlap.pl $ARGV[0].bed $ARGV[0].bed.cbi`;
+
+#get all LTR sequence annotated in the genome that are no shorter than 80bp
+`awk '{if (\$6~/[0-9]/ && \$7-\$6>=80)print \$5"\\t"\$6"\\t"\$7}' $ARGV[1] > $ARGV[1].bed`;
+`perl $script_path/bin/combine_overlap.pl $ARGV[1].bed $ARGV[1].bed.cbi`;
+
+#calculate the LAI score
+`perl $script_path/bin/LAI_calc.pl -i $ARGV[0].bed.cbi -a $ARGV[1].bed.cbi -g $ARGV[2]> $ARGV[1].LAI`;
+
+`rm $ARGV[0].bed $ARGV[0].bed.cbi $ARGV[1].bed $ARGV[1].bed.cbi`;
