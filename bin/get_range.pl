@@ -83,6 +83,7 @@ if ($LTR==1 && $genome==1){
 	foreach (@id){
 		chomp;
 		s/>//g;
+		s/\s+//g;
 		$chr{$i}=$_;
 		$i++;
 		}
