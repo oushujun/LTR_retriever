@@ -6,6 +6,7 @@ eg1. perl call_seq_by_LOC.pl array_list itself >result	##call LOC sequence withi
 eg2. perl call_seq_by_LOC.pl array_list -C your_database up_2000 >result	##call sequence of upper 2000 bp region in the list, from the provided database
 
 Update history:
+	v2.3	output a list of entirely excluded sequences
 	v2.2	support -ex. Exclude the sequence information provided by list and output the rest. Can use with -cov
 	v2.1	support - direction. If the locus position is upside down, eg. Chr1:2..1, it would be treated as negative strand request	Shujun Ou 2014/8/19
 	v2.0	Increase speed and reduce memory consumption by introducing the substr function, remove the - direction support	Shujun Ou 2014/8/17
@@ -54,6 +55,7 @@ foreach my $para (@ARGV){
 	$i++;
 	}
 
+open Exclude, ">$genome.exclude" or die "\n\t\tERROR: Can not create the file $genome.exclude to output excluded seq IDs!\n" if $exclude == 1;
 open Genome, "<$genome" or die "\n\t\tERROR: Genome sequence not found, or wrong parameters!\n$usage";
 my %genome;
 $/="\n>";
@@ -62,6 +64,7 @@ while (<Genome>){
 	chomp;
 	s/>//g;
 	my ($chr, $seq)=(split /\n/, $_, 2);
+	$chr=~s/\s+$//;
 	$seq=~s/\s+//g;
 	$genome{$chr}=$seq;
 	}
@@ -73,7 +76,7 @@ my @list=<List>; #an array to store loc list information
 close List;
 
 die "ERROR: LOC list is empty.\n" if $#list<0;
-shift @list if $list[0]=~/^\s?$/;
+shift @list if $list[0]=~/^\s?$/; #remove the first empty line
 my $chr='';
 my %chr; #store chr names being worked
 my $chr_pre=$1 if (split /\s+/, $list[0])[1]=~/(.*):[0-9]+\.\.[0-9]+$/;
@@ -132,12 +135,20 @@ foreach my $line (@list){
 		if ($chr_pre ne $chr and $chr ne ''){
 			$stp=length $genome{$chr_pre};
 			$seq.=substr ($genome{$chr_pre}, $str-1, $stp-$str+1) if (exists $genome{$chr_pre} and $str<=$stp and $str!=1);
-			if ($purge==1){
-				print ">$chr_pre\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
-#				print ">$chr_pre|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+			if (($stp-length $seq)/$stp >= $coverage){
+				print Exclude "$chr_pre\n";
+				} elsif ($purge==1){
+				print ">$chr_pre\n$seq\n";
 				} else {
-				print ">$chr_pre\n$genome{$chr_pre}\n" unless ($stp-length $seq)/$stp >= $coverage;
+				print ">$chr_pre\n$genome{$chr_pre}\n";
 				}
+
+#			if ($purge==1){
+#				print ">$chr_pre\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+##				print ">$chr_pre|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+#				} else {
+#				print ">$chr_pre\n$genome{$chr_pre}\n" unless ($stp-length $seq)/$stp >= $coverage;
+#				}
 			$chr_pre=$chr;
 			$str=1;
 			$stp=length $genome{$chr};
@@ -159,12 +170,19 @@ foreach my $line (@list){
 	if ($exclude==1){
 		$stp=length $genome{$chr};
 		$seq.=substr ($genome{$chr}, $str-1, $stp-$str+1) if (exists $genome{$chr} and $str<=$stp and $str!=1);
-		if ($purge==1){
-			print ">$chr\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
-#			print ">$chr|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+		if (($stp-length $seq)/$stp >= $coverage){
+			print Exclude "$chr_pre\n";
+			} elsif ($purge==1){
+			print ">$chr_pre\n$seq\n";
 			} else {
-			print ">$chr\n$genome{$chr}\n" unless ($stp-length $seq)/$stp >= $coverage;
+			print ">$chr_pre\n$genome{$chr_pre}\n";
 			}
+#		if ($purge==1){
+#			print ">$chr\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+##			print ">$chr|cleanup\n$seq\n" unless ($stp-length $seq)/$stp >= $coverage;
+#			} else {
+#			print ">$chr\n$genome{$chr}\n" unless ($stp-length $seq)/$stp >= $coverage;
+#			}
 		foreach my $chr (keys %genome){
 			print ">$chr\n$genome{$chr}\n" unless exists $chr{$chr};
 			}
