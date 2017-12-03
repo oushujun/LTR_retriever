@@ -69,6 +69,10 @@ while(<DB>){
 		if ($exclude==0){
 			print ">" if $newline eq "\n>";
 			print "$_";
+			#sequences with the same ID will be output only once
+			delete $data{$pos};
+			delete $data{$p1};
+			delete $data{$p2};
 			}
 		} else {
 		if ($exclude==1){
