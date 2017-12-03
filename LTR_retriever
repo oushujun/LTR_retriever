@@ -103,10 +103,10 @@ my $cdhit=1; #1 for using cdhit as clustering method, 0 for no.
 my $set_bclust="-L 0.9 -b T -S 80"; #set parameters for blastclust
 my $set_cdhit="-c 0.8 -G 0.8 -s 0.9 -aL 0.9 -aS 0.9 -M 0"; #set parameters for cdhit
 
-my $keep_trunc="1"; #1 will recycle information from truncated LTR; 0 will disable this module
+my $keep_trunc="1"; #1 will recycle information from truncated LTR-RTs; 0 will disable this module
 my $gff3=1; #0 will not make gff3 file; 1 will.
 my $verbose=0; #0 will delete intermediate files after analysis; 1 will not.
-my $annotation=1; #1 will perform whole genome LTR annotation; 0 will not
+my $annotation=1; #1 will perform whole genome LTR-RT annotation; 0 will not
 
 my $LINE="$script_path/database/Tpases020812LINE";
 my $DNA="$script_path/database/Tpases020812DNA";
@@ -116,7 +116,7 @@ my $TEhmm="$script_path/database/TEfam.hmm";
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
 
 my $threads=4;
-my $version="v1.5";
+my $version="v1.6";
 #my $scn=''; #store screen output information
 
 my $k=0;
@@ -170,6 +170,17 @@ my $repeatmasker='';
 my $hmmer='';
 my $blast='';
 my $cdhitpath='';
+
+print "
+##########################
+### LTR_retriever $version ###
+##########################\n
+Contributors: Shujun Ou, Ning Jiang\n
+Parameters: @ARGV\n\n\n";
+
+my $date=`date`;
+chomp ($date);
+print "$date\tDependency checking: ";
 
 open Path, "<$script_path/paths" or die "Fail to locate the paths file!\n";
 my %path = ("BLAST+"=>'', "HMMER"=>'', "BLAST"=>'', "CDHIT"=>'', "RepeatMasker"=>'');
@@ -227,12 +238,7 @@ $cdhitpath=~s/cd-hit-est\n//;
 die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" if (!(-X "${cdhitpath}cd-hit-est") and $cdhit);
 die "neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}blastclust" or -X "${cdhitpath}cd-hit-est");
 
-print "
-##########################
-### LTR_retriever $version ###
-##########################\n
-Contributors: Shujun Ou, Ning Jiang\n
-Parameters: @ARGV\n\n\n";
+print "All passed!\n";
 
 my $rand=int(rand(1000000));
 my ($LINE_base, $LINE_path)=fileparse($LINE);
@@ -248,17 +254,17 @@ $PlantP="$PlantP_base.$rand";
 `${blastplus}makeblastdb -in $LINE -dbtype prot`;
 `${blastplus}makeblastdb -in $DNA -dbtype prot`;
 `${blastplus}makeblastdb -in $PlantP -dbtype prot`;
-my $date=`date +"%m-%d-%y_%H%M"`;
+$date=`date +"%m-%d-%y_%H%M"`;
 chomp ($date);
 if (`ls $genome*|wc -l`>15){
-	print "Previous LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
-	`mkdir LTRretriever-pre$date; mv $genome*.LDI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* LTRretriever-pre$date/ 2>/dev/null`; # if `ls $genome*|wc -l`>15;
+	print "\n\t\t\t\tPrevious LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
+	`mkdir LTRretriever-pre$date; mv $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* LTRretriever-pre$date/ 2>/dev/null`; # if `ls $genome*|wc -l`>15;
 }
 
 
-###################################################################
-######### To retrieve high quality LTRs with TGCA motif ###########
-###################################################################
+####################################################################
+######### To retrieve high quality LTR-RTs with TGCA motif #########
+####################################################################
 
 my $index=$genome;
 #die "\nERROR: Genome file $genome not exist.\n\n" if -s "$genome"==0;
@@ -266,13 +272,21 @@ my $index=$genome;
 my $id_mode=0; #record the mode of id conversion.
 my $id_len=`grep \\> $genome|perl -ne 'chomp; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
 $id_len=(split /\s+/, $id_len)[-1];
+my $raw_id=`grep \\> $genome|wc -l`;
+my $old_id=`grep \\> $genome|sort -u|wc -l`;
+
+##check if duplicated sequences found
+if ($raw_id>$old_id){
+	$date=`date`;
+	die "$date\tDuplicated sequence found in the provided genome! Please remove the duplicated sequece and regenerate input candidates for LTR_retriever\n";
+	}
+
 if ($id_len>15){
 	$date=`date`;
 	chomp ($date);
 	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
 	`perl -ne 'chomp; if (s/^>+//) {\$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_\n"' $genome > $genome.mod`;
-	my $old_id=`grep \\> $genome|sort -u|wc -l`;
 	my $new_id=`grep \\> $genome.mod|sort -u|wc -l`;
 	$date=`date`;
 	chomp ($date);
@@ -297,11 +311,12 @@ if ($id_len>15){
 		}
 	}
 
-##obtain initial LTR candidates from LTRharvest and/or LTR_finder screen outputs
+##obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
 die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
 die "\nERROR: The specified file $infinder is not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
 die "\nERROR: The specified file $inmgescan is not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
 die "\nERROR: The specified file $inharvest is not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
+
 $date=`date`;
 chomp ($date);
 print "$date\tStart to convert inputs...\n";
@@ -312,6 +327,7 @@ die "\nERROR: No candidate is found in the file(s) you specified.\n\n" unless `g
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn $genome -f -g -max_ratio $max_ratio`;
 `cat $index.retriever.scn.full|sort -fu >$index.retriever.scn.full.uniq; mv $index.retriever.scn.full.uniq $index.retriever.scn.full`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.full -C $genome > $index.ltrTE.fa`;
+
 #update status
 my $total_candidate=`grep -v -c '#' $index.retriever.scn`;
 $total_candidate=~s/\s+//g;
@@ -322,8 +338,8 @@ print "\t\t\t\tTotal candidates: $total_candidate
 
 ##cleanup the NNNs and tandem sequence
 my $stg1_count=&cleanTandem($index);
+
 #update status
-#my $stg1_count=`grep -c \> $index.ltrTE.stg1`;
 $date=`date`;
 chomp ($date);
 print "$date\t$stg1_count clean candidates remained\n\n";
@@ -333,7 +349,7 @@ goto NEXT if $stg1_count==0;
 my $pass_count=&Identifier($index);
 $date=`date`;
 chomp ($date);
-print "$date\tIntact LTR found: $pass_count\n\n";
+print "$date\tIntact LTR-RT found: $pass_count\n\n";
 goto NEXT if $pass_count==0;
 
 ##Recycle truncated candidates, mask candidates by false LTR
@@ -342,11 +358,11 @@ goto NEXT if $pass_count==0;
 ##clean up protein coding sequence from DNA TE, LINE, and normal plant genes
 &proMask($index);
 
-##generate non-redudant library for pass LTR candidates
+##generate non-redudant library for pass LTR-RT candidates
 $date=`date`;
 chomp ($date);
 my $prelib_size=-s "$index.ltrTE";
-die "ERROR: $pass_count intact LTRs have found, but the pre-library file $index.ltrTE is empty.
+die "ERROR: $pass_count intact LTR-RTs have found, but the pre-library file $index.ltrTE is empty.
 Something is wrong at this point. Please report the bug to https://github.com/oushujun/LTR_retriever/issues
 Program halt!\n" unless $prelib_size>0;
 
@@ -356,14 +372,14 @@ print "$date\tSequence clustering for $index.ltrTE ...\n";
 my $lib_count=`grep -c \\> $index.prelib`;
 print "$date\tUnique lib sequence: $lib_count\n";
 
-###################################################################
-####### To retrieve high quality LTRs with non-TGCA motif ##########
-###################################################################
+####################################################################
+####### To retrieve high quality LTR-RTs with non-TGCA motif #######
+####################################################################
 NEXT:
 goto End if $nonTGCA eq '';
 $date=`date`;
 chomp ($date);
-print "$date\tStart to analyze non-TGCA LTR candidates...\n";
+print "$date\tModule 7: Start to analyze non-TGCA LTR-RT candidates...\n";
 
 my $index2="$index.nmtf";
 `cp $nonTGCA $index2.retriever.scn`;
@@ -419,7 +435,7 @@ goto End if $stg1_count==0;
 $pass_count=&Identifier($index2);
 $date=`date`;
 chomp ($date);
-print "$date\tIntact non-TGCA LTR found: $pass_count\n\n";
+print "$date\tIntact non-TGCA LTR-RT found: $pass_count\n\n";
 
 #Aggregate all candidates into one list
 `cat $index.retriever.scn.adj $index2.retriever.scn.adj > $index.retriever.all.scn`;
@@ -431,7 +447,7 @@ goto End if $pass_count==0;
 ##DNA TE element and LINE protein masking
 &proMask($index2);
 
-##All passed LTR candidates, including internal region and the longer LTR region for truncated LTR candidates
+##All passed LTR-RT candidates, including internal region and the longer LTR region for truncated LTR-RT candidates
 `perl $script_path/bin/annotate_lib.pl $index2.retriever.scn.adj $index2.ltrTE >> $index.prelib`; #contains both TGCA and nmtf LTR-RT
 
 End:
@@ -453,7 +469,7 @@ if ($prelib_count>0){
 
 $date=`date`;
 chomp ($date);
-print "$date\tStart to remove nested insertions in internal regions...\n";
+print "$date\tModule 6: Start to remove nested insertions in internal regions...\n";
 
 ##get rid of solo LTR nested in internal regions
 `grep \\> $index.prelib|grep -i 'INT#LTR'|sort -u > $index.prelib.INT.list`;
@@ -487,10 +503,23 @@ if ( -s "$index.nmtf.prelib"){
 	`grep INT $index.nmtf.prelib|perl $script_path/bin/output_by_list.pl 1 $index.nmtf.prelib 1 - -FA -ex >> $index.nmtf.LTRlib.fa`;
 	}
 
+##make the redundant lib (contains TGCA and non-TGCA LTR-RTs. Solo-LTR nested insertion and non-LTR protease are not removed, but plant protein is removed)
+`perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $genome.LTRlib.raw`;
+`perl $script_path/bin/output_by_list.pl 1 $genome.LTRlib.raw 2 $genome.LTRlib.exclude.tgt -FA -ex > $genome.LTRlib.redundant.fa`;
+
+##update status
+my $redun_count=`grep -c \\> $genome.LTRlib.redundant.fa`;
+$redun_count=~s/\s+//g;
+my $redun_size=-s "$genome.LTRlib.redundant.fa";
+$date=`date`;
+chomp ($date);
+print "$date\tSequence number of the redundant LTR-RT library: $redun_count
+\t\t\t\tThe redundant LTR-RT library size (bit): $redun_size\n\n";
+
 #update status
 $date=`date`;
 chomp ($date);
-print "$date\tStart to make non-redundant library...\n\n";
+print "$date\tModule 8: Start to make non-redundant library...\n\n";
 
 ##make non-redundant library and format output
 &makeLib("$index.LTRlib");
@@ -509,13 +538,13 @@ $lib_count=~s/\s+//g;
 my $lib_size=-s "$index.LTRlib.fa";
 $date=`date`;
 chomp ($date);
-print "$date\tFinal LTR library entries: $lib_count
-\t\t\t\tFinal LTR library size (bit): $lib_size\n\n";
+print "$date\tFinal LTR-RT library entries: $lib_count
+\t\t\t\tFinal LTR-RT library size (bit): $lib_size\n\n";
 
 ##Format outputs and cleanup intermediate files
-`echo '\#LTR_loc        Category        Motif   TSD     5'_TSD        3'_TSD       Internal        Similarity      Strand  Family  Superfamily     Insertion_Time' > $genome.pass.list.unq`;
+`echo '\#LTR_loc        Category        Motif   TSD     5'_TSD        3'_TSD       Internal        Similarity      Strand  SuperFamily  TE_type     Insertion_Time' > $genome.pass.list.unq`;
 `sort -uV -k1,4 $genome.pass.list >> $genome.pass.list.unq; mv $genome.pass.list.unq $genome.pass.list`;
-`echo '\#LTR_loc	Category	Motif	TSD	5'_TSD	3'_TSD	Internal	Similarity	Strand	Family	Superfamily	Insertion_Time' > $genome.nmtf.pass.list.unq`;
+`echo '\#LTR_loc	Category	Motif	TSD	5'_TSD	3'_TSD	Internal	Similarity	Strand	SuperFamily	TE_type	Insertion_Time' > $genome.nmtf.pass.list.unq`;
 `sort -uV -k1,4 $genome.nmtf.pass.list >> $genome.nmtf.pass.list.unq; mv $genome.nmtf.pass.list.unq $genome.nmtf.pass.list`;
 
 #update status
@@ -525,8 +554,8 @@ $pass_count=~s/\s+//g;
 $nmtf_count=~s/\s+//g;
 $date=`date`;
 chomp ($date);
-print "$date\tTotal intact LTRs found: $pass_count
-\t\t\t\tTotal intact non-TGCA LTRs found: $nmtf_count\n\n";
+print "$date\tTotal intact LTR-RTs found: $pass_count
+\t\t\t\tTotal intact non-TGCA LTR-RTs found: $nmtf_count\n\n";
 
 `perl $script_path/bin/make_gff3.pl $genome $genome.pass.list` if $gff3==1;
 ##Annotate LTR-RT in the genome
@@ -535,7 +564,9 @@ chomp ($date);
 if ($annotation==1){
 	$date=`date`;
 	chomp ($date);
-	print "$date\tStart to annotate whole-genome LTRs...\n\n";
+	print "$date\tStart to annotate whole-genome LTR-RTs...\n\t\t\t\tUse -noanno if you don't want whole-genome LTR-RT annotation.\n\n";
+#	print "\t\t\t\tAnnotation by the non-redundant library...\n\t\t\t\tConsider change to redundant library (-redun 1) if library size < 10 Mb.\n\n" if $redun==0;
+#	print "\t\t\t\tAnnotation by the redundant library...\n\t\t\t\tChange to non-redundant library (-redun 0) will improve speed.\n\n" if $redun==1;
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -gff -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
 	`perl $script_path/bin/annotate_gff.pl $genome.LTRlib.fa $genome.out.gff > $genome.LTRanno.gff`;
 	`perl $script_path/LAI $genome.pass.list $genome.out $genome`;
@@ -543,7 +574,7 @@ if ($annotation==1){
 } else {
 $date=`date`;
 chomp ($date);
-print "$date\tNo LTR was found in your data.\n\n";
+print "$date\tNo LTR-RT was found in your data.\n\n";
 }
 
 `perl $script_path/bin/cleanOutput.pl $genome $LINE $DNA $PlantP` if $verbose==0;
@@ -556,15 +587,16 @@ print "
 ####### Result files #########
 ##############################
 
-Table output for intact LTRs (detailed info)
-	$genome.pass.list (All LTRs)
-	$genome.nmtf.pass.list (Non-TGCA LTRs)\n
-LTR library
-	$index.LTRlib.fa (All non-redundant LTRs)
-	$index.nmtf.LTRlib.fa (Non-TGCA LTRs)\n
+Table output for intact LTR-RTs (detailed info)
+	$genome.pass.list (All LTR-RTs)
+	$genome.nmtf.pass.list (Non-TGCA LTR-RTs)\n
+LTR-RT library
+	$genome.LTRlib.redundant.fa (All LTR-RTs with redundancy)
+	$index.LTRlib.fa (All non-redundant LTR-RTs)
+	$index.nmtf.LTRlib.fa (Non-TGCA LTR-RTs)\n
 ";
-print "GFF3 file for intact LTRs\n\t$genome.pass.list.gff3\n\n" if $gff3==1;
-print "Whole-genome LTR annotation (GFF)\n
+print "GFF3 file for intact LTR-RTs\n\t$genome.pass.list.gff3\n\n" if $gff3==1;
+print "Whole-genome LTR-RT annotation by the non-redundant library (GFF)
 	$genome.LTRanno.gff\n
 LTR Assembly Index (LAI)
 	$genome.out.LAI\n\n" if $annotation==1;
@@ -579,7 +611,7 @@ sub cleanTandem {
 ##cleanup the NNNs and tandem sequence
 $date=`date`;
 chomp ($date);
-print "$date\tStart to clean up candidates...
+print "$date\tModule 1: Start to clean up candidates...
 \t\t\t\tSequences with $missmax missing bp or $missrate missing data rate will be discarded.
 \t\t\t\tSequences containing tandem repeats will be discarded.\n\n";
 
@@ -595,8 +627,8 @@ sub Identifier {
 ##Major program, align the boundaries
 $date=`date`;
 chomp ($date);
-print "$date\tStart to analyze the structure of candidates...
-\t\t\t\tThe terminal motif, TSD, boundary, orientation, age, and family will be identified in this step.\n\n";
+print "$date\tModules 2-5: Start to analyze the structure of candidates...
+\t\t\t\tThe terminal motif, TSD, boundary, orientation, age, and superfamily will be identified in this step.\n\n";
 my $index=$_[0];
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn $index.ltrTE.stg1 -x`;
 `cat $index.retriever.scn.extend |sort -fu > $index.retriever.scn.extend.unq; mv $index.retriever.scn.extend.unq $index.retriever.scn.extend`;
@@ -618,15 +650,17 @@ my $index=$_[0];
 ##get lLTR, rLTR, and IN from pass and clusterize
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.pass.list -i -N`;
 `cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
+`cat $index.retriever.scn.adj.list >> $genome.LTRID.list`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome > $index.ltrTE.pass`; #lLTR, rLTR, and IN regions seperated of pass entries
+`cat $index.ltrTE.pass >> $genome.LTRlib.raw`;
 &makeLib("$index.ltrTE.pass");
 `mv $index.ltrTE.pass.clust $index.ltrTE.stg2`; #lLTR, rLTR, and IN from pass
 
 if ($keep_trunc){
 $date=`date`;
 chomp ($date);
-print "$date\tStart to analyze truncated LTRs...
-\t\t\t\tTruncated LTRs without the intact version will be retained in the LTR library.
+print "$date\tModule 6: Start to analyze truncated LTR-RTs...
+\t\t\t\tTruncated LTR-RTs without the intact version will be retained in the LTR-RT library.
 \t\t\t\tUse -notrunc if you don't want to keep them.\n\n";
 
 ##get longer LTR and IN from trunc and masked by pass
@@ -636,12 +670,11 @@ $trunc=`wc -l $index.ltrTE.trunc.list`;
 $trunc=(split /\s+/, $trunc)[0];
 $date=`date`;
 chomp ($date);
-print "$date\t$trunc truncated LTRs found\n";
+print "$date\t$trunc truncated LTR-RTs found\n";
 if ($trunc>0){
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.trunc.list -i -N -L`;
 `cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome > $index.ltrTE.trunc`; #IN and the longer LTR region
-#`perl -i -ne 's/>(.*)\\\|(.*)/>\$2/g;print "\$_"' $index.ltrTE.trunc`;
 `perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $index.ltrTE.trunc`;
 
 `grep -i false $index.defalse|grep -i notLTR|grep -i -v 'motif:TGCA' > $index.ltrTE.veryfalse.list`;
@@ -649,7 +682,7 @@ if ($trunc>0){
 `perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
 `${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
-#if (-s "$index.ltrTE.trunc.masked"){
+
 #file checking
 die "ERROR: RepeatMasker is not running properly!
 	Please check the file $index.ltrTE.mask.lib and $index.ltrTE.trunc and test run:
@@ -658,8 +691,8 @@ die "ERROR: RepeatMasker is not running properly!
 
 `perl $script_path/bin/cleanup.pl -nr 0.8 -trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
 `cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
+`cat $index.ltrTE.trunc.cln >> $genome.LTRlib.raw`;
 	} else {
-#	`cp $index.ltrTE.trunc $index.ltrTE.trunc.cln`;
 	`cp $index.ltrTE.stg2 $index.ltrTE.stg3.cln`;
 	}
 my $trunc_lib=0;
@@ -670,7 +703,7 @@ chomp ($date);
 print "$date\t$trunc_lib truncated LTR sequences have added to the library\n\n";
 
 } else {
-print "Attention: No truncated LTRs will be saved in the final LTR library.\n\n";
+print "Attention: No truncated LTR-RTs will be saved in the final LTR-RT library.\n\n";
 `cp $index.ltrTE.stg2 $index.ltrTE.stg3.cln`;
 }
 }
@@ -681,7 +714,7 @@ my $raw_lib_count=`grep -c \\> $index.ltrTE.stg3.cln`;
 $raw_lib_count=~s/\s+//g;
 $date=`date`;
 chomp ($date);
-print "$date\tStart to remove DNA TE and LINE transposases, and remove plant protein sequences...
+print "$date\tModule 5: Start to remove DNA TE and LINE transposases, and remove plant protein sequences...
 \t\t\t\tTotal library sequences: $raw_lib_count\n";
 
 ##DNA TE transposase, LINE transposase, and plant protein masking
@@ -692,7 +725,25 @@ print "$date\tStart to remove DNA TE and LINE transposases, and remove plant pro
 
 `${blastplus}blastx -word_size 3 -outfmt 6 -max_target_seqs 10 -num_threads $threads -query $index.ltrTE.stg3.cln.clean -db $PlantP -out $index.ltrTE.stg3.plantP.out`;
 `perl $script_path/bin/purger.pl -blast $index.ltrTE.stg3.plantP.out -seq $index.ltrTE.stg3.cln.clean -cov $procovPL -purge 1 -len $prolensig`;
-`mv $index.ltrTE.stg3.cln.clean.clean $index.ltrTE`;
+
+#use the purger generated exclude target to get the element ID
+`for i in \`perl -ne 's/\\|.*//; print \$_' $index.ltrTE.stg3.cln.clean.exclude\`; do grep \$i $genome.LTRID.list; done\|perl -ne 's/\\[.*//; print \$_'|sort -u > $index.ltrTE.stg3.cln.clean.exclude.father`;
+
+#use the element ID to get the IDs of LTR1, LTR2, and IN
+`for i in \`cat $index.ltrTE.stg3.cln.clean.exclude.father\`; do grep \$i $genome.LTRID.list; done\|sort -u > $index.ltrTE.stg3.cln.clean.exclude.child`;
+
+#exclude the child sequences
+`perl $script_path/bin/output_by_list.pl 1 $index.ltrTE.stg3.cln.clean.clean 2 $index.ltrTE.stg3.cln.clean.exclude.child -FA -ex > $index.ltrTE.stg3.cln.clean.clean.clean`;
+
+#aggregate child exclude targets to a list
+`cat $index.ltrTE.stg3.cln.clean.exclude.child >> $genome.LTRlib.exclude.tgt`;
+
+`mv $index.ltrTE.stg3.cln.clean.clean.clean $index.ltrTE`;
+#`mv $index.ltrTE.stg3.cln.clean.clean $index.ltrTE`;
+
+#generate clean pass.list without plant protein contamination
+`perl $script_path/bin/output_by_list.pl 1 $index.ltrTE.pass.list 1 $index.ltrTE.stg3.cln.clean.exclude.father -ex > $index.ltrTE.pass.list.cln`;
+`mv $index.ltrTE.pass.list.cln $index.ltrTE.pass.list`;
 `grep -i -v 'motif:TGCA' $index.ltrTE.pass.list | grep -i -P 'motif:T...\\s+' | grep -i -P 'TSD:.....\\s+' | grep -i -v 'TSD:NA' > $index.ltrTE.pass.nmtf.list`;
 `cat $index.ltrTE.pass.nmtf.list >> $genome.nmtf.pass.list` ;
 `cat $index.ltrTE.pass.list >> $genome.pass.list`;
