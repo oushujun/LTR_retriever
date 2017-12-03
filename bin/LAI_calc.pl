@@ -44,6 +44,7 @@ while (<Genome>){
 	s/>//g;
 	my ($chr, $seq)=(split /\n/, $_, 2);
 	$seq=~s/\s+//g;
+	$chr=~s/\s+$//; #remove space at the end of the seq ID
 	$seq=length($seq);
 	$genome_len+=$seq;
 	$length{$chr}=$seq;
@@ -162,7 +163,7 @@ sub LAI {
 	my $total=sprintf("%.5f", $win_len/$curr_win_len); #propotion of total LTR in the window
 	my $LAI=sprintf("%.3f", (${$seq}{$low}*$curr_win_len)/($win_len*$window))*100; #calculate LTR Assembly Index = intact LTR length / all LTR length, LAI is also weighted by window length 
 	$LAI=100.1 if $LAI>100; #LAI>100 could happen in chance if using the reduced redundenty library to find all LTRs
-	$LAI*=0.1 if $total<0.01; #scale down to 10% if total LTR content less then 1%
+	$LAI*=0.1 if $total<0.01; #scale down to 10% if total LTR content less than 1%
 	$total_intact+=${$seq}{$low};
 	$total_LTR+=$win_len;
 	$output.="$seq\t$low\t$high\t$intact\t$total\t$LAI\n";
