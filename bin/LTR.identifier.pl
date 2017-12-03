@@ -422,8 +422,8 @@ if (0){#old module which has a low rate of error
 			}
 		}
 
-print "blast:\n@Blast "; #test
-print "sim:$sim\tinfo19:$info[19]\n"; #test
+#print "blast:\n@Blast "; #test
+#print "sim:$sim\tinfo19:$info[19]\n"; #test
 	print "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$sim\t$info[12]\t$info[18]\t$info[17]\t$info[19]\n";#last four variables: strand/family/superfamily/age
 	print "\tAdjust: $adjust\tlLTR: $ll\trLTR: $rl\n";
 	print "\tAlignment regions: $s_start, $s_end, $q_start, $q_end\n";
