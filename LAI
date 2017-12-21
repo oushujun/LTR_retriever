@@ -9,9 +9,12 @@ use strict;
 
 my $script_path=`readlink -fn -- $0`;
 $script_path=~s/(.+)\/.+$/$1/;
-my $usage="perl ./LAI intact.pass.list genome.out genome.fa\n";
+my $usage="perl ./LAI intact.pass.list genome.out genome.fa -w [int(bp)]*
+*Optional: -w to set window size. Default: 1000000 (1 Mb)\n";
 die $usage unless $#ARGV==2;
 die $usage unless (-s "$ARGV[0]" and -s "$ARGV[1]" and -s "$ARGV[2]");
+my $win="1000000";
+$win=$ARGV[4] if $ARGV[3] eq "-w";
 
 #convert intact LTR information into bed format
 `perl -ne 'my \$id=(split)[0]; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\n"' $ARGV[0] > $ARGV[0].bed`;
@@ -22,6 +25,6 @@ die $usage unless (-s "$ARGV[0]" and -s "$ARGV[1]" and -s "$ARGV[2]");
 `perl $script_path/bin/combine_overlap.pl $ARGV[1].bed $ARGV[1].bed.cbi`;
 
 #calculate the LAI score
-`perl $script_path/bin/LAI_calc.pl -i $ARGV[0].bed.cbi -a $ARGV[1].bed.cbi -g $ARGV[2]> $ARGV[1].LAI`;
+`perl $script_path/bin/LAI_calc.pl -i $ARGV[0].bed.cbi -a $ARGV[1].bed.cbi -g $ARGV[2] -w $win > $ARGV[1].LAI`;
 
 `rm $ARGV[0].bed $ARGV[0].bed.cbi $ARGV[1].bed $ARGV[1].bed.cbi`;
