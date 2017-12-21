@@ -176,6 +176,7 @@ print "
 ### LTR_retriever $version ###
 ##########################\n
 Contributors: Shujun Ou, Ning Jiang\n
+Please cite: S. Ou and N. Jiang (2017) LTR_retriever: a highly accurate and sensitive program for identification of long terminal-repeat retrotransposons. Plant Physiology, pp.01310.2017; DOI: 10.1104/pp.17.01310
 Parameters: @ARGV\n\n\n";
 
 my $date=`date`;
