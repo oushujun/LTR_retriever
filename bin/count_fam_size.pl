@@ -13,14 +13,16 @@ my %translate;
 while (<List>){
 	next if /^#/;
 	s/^\s+//g;
-	my ($id, $in, $family)=(split)[0,6,9];
+	my ($id, $in, $family, $age)=(split)[0,6,9,11];
 	my ($chr, $start, $end)=($1, $2, $3) if $id=~/(.*):([0-9]+)\.\.([0-9]+)/;
 	next unless defined $chr;
 	$in=~s/IN://i;
+	$age=4000000 if $age eq "NA"; #make NA the oldest element
+	$age=$age/1000000; #convert to MY
 	$translate{"$chr:$start"}=$id;
 	$translate{"$chr:$end"}=$id;
 	$translate{"$chr:$in"}=$id;
-	$list{$id}=["0", $family]; #size, family
+	$list{$id}=["0", $family, $age]; #size, family, age
 	}
 close List;
 
@@ -40,8 +42,10 @@ while (<Anno>){
 		}
 	}
 close Anno;
+
+print "#ID\tFam_size\tSuperfamily\tAge(MY)\n";
 foreach my $id (sort { $list{$b}[0] <=> $list{$a}[0] } keys %list){ #sort value from large to small
-	print "$id\t$list{$id}[0]\t$list{$id}[1]\n" if $list{$id}[0]>0; #print out families that have size>0
+	print "$id\t$list{$id}[0]\t$list{$id}[1]\t$list{$id}[2]\n" if $list{$id}[0]>0; #print out families that have size>0
 	}
 
 
