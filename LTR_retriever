@@ -728,6 +728,7 @@ print "$date\tModule 5: Start to remove DNA TE and LINE transposases, and remove
 `perl $script_path/bin/purger.pl -blast $index.ltrTE.stg3.plantP.out -seq $index.ltrTE.stg3.cln.clean -cov $procovPL -purge 1 -len $prolensig`;
 
 #use the purger generated exclude target to get the element ID
+`touch $index.ltrTE.stg3.cln.clean.exclude` unless -e "$index.ltrTE.stg3.cln.clean.exclude";
 `for i in \`perl -ne 's/\\|.*//; print \$_' $index.ltrTE.stg3.cln.clean.exclude\`; do grep \$i $genome.LTRID.list; done\|perl -ne 's/\\[.*//; print \$_'|sort -u > $index.ltrTE.stg3.cln.clean.exclude.father`;
 
 #use the element ID to get the IDs of LTR1, LTR2, and IN

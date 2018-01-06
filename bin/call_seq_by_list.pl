@@ -75,7 +75,7 @@ open List, "sort -k2,2 -suV $ARGV[0] |" or die "\n\tERROR: no LOC list!\n$usage"
 my @list=<List>; #an array to store loc list information
 close List;
 
-die "ERROR: LOC list is empty.\n" if $#list<0;
+die "Warning: LOC list $ARGV[0] is empty.\n" if $#list<0;
 shift @list if $list[0]=~/^\s?$/; #remove the first empty line
 my $chr='';
 my %chr; #store chr names being worked
