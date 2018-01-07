@@ -682,7 +682,8 @@ if ($trunc>0){
 `awk '{print \$1"\\t"\$1}\' $index.ltrTE.veryfalse.list > $index.ltrTE.veryfalse`;
 `perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
-`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc > /dev/null 2>&1`;
+my $info=`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc`;
+`cp $index.ltrTE.trunc $index.ltrTE.trunc.masked` if $info=~/No repetitive sequences were detected/;
 
 #file checking
 die "ERROR: RepeatMasker is not running properly!
