@@ -38,8 +38,10 @@ LTR_retriever takes multiple LTR-RT candidate inputs including the screen output
 The output of LTR_retriever includes:
 1. A summary table for the identified intact LTR-RTs with coordinate and structural information (.pass.list)
 2. A non-redundant LTR-RT library (exemplar) in the FASTA format (.LTRlib.fa)
-3. A GFF3 format file for all intact LTR-RTs (.pass.list.gff3)
-4. A GFF format file for the whole-genome LTR-RT annotation (.gff)
+3. A redundant LTR-RT library in the FASTA format (.LTRlib.redundant.fa)
+4. A GFF3 format file for all intact LTR-RTs (.pass.list.gff3)
+5. A GFF format file for the whole-genome LTR-RT annotation (.gff)
+6. A table for the LTR Assembly Index (.LAI)
 
 ### Usage ###
 
