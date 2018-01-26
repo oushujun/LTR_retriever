@@ -312,15 +312,7 @@ sub Identifier() {
 
 	my $TSDlen=length $probTSD;
 	if ($TSDlen<=5 and uc $probTSD ne "NA"){
-if (0){#old module which has a low rate of error
-		my $lmotif_index=rindex ($up1_seq, $probTSD)+$TSDlen;
-		my $rmotif_index=index ($do2_seq, $probTSD)-2;
-		$lmotif_index=(length $up1_seq)-1 if $lmotif_index>(length $up1_seq)-1;
-		$rmotif_index=0 if $rmotif_index<0;
-		$motif=substr($up1_seq, $lmotif_index, 2).substr($do2_seq, $rmotif_index, 2);
-}else{
 		$motif=$store_motif;
-}
 		}
 
 ##Correction of TSDs > 5bp
@@ -422,8 +414,6 @@ if (0){#old module which has a low rate of error
 			}
 		}
 
-#print "blast:\n@Blast "; #test
-#print "sim:$sim\tinfo19:$info[19]\n"; #test
 	print "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$sim\t$info[12]\t$info[18]\t$info[17]\t$info[19]\n";#last four variables: strand/family/superfamily/age
 	print "\tAdjust: $adjust\tlLTR: $ll\trLTR: $rl\n";
 	print "\tAlignment regions: $s_start, $s_end, $q_start, $q_end\n";
