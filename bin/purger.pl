@@ -4,9 +4,19 @@ use strict;
 my $usage="
 Clean up sequence using blast resuls
 
-perl purger.pl -blast blast_outfmt6 -seq seq [options]
+perl purger.pl -blast blast_outfmt6 -seq seq.fa [options]
+
+Options:
+	-eval	[0-1]	e-value cutoff; discard the hit if >= this number; default 0.001
+	-len	[int]	length cutoff; discard the hit if < this number; default 90 (bp)
+	-iden	[0-100]	identity cutoff; discard the hit if <= tis number; default 30 (%)
+	-cov	[0-1]	coverage cutoff; discard the entire sequence if >= this number; default 1
+	-purge	[0|1]	purge switch; switch on=1(default)/off=0 to clean up aligned region and joint unaligned sequences
 
 Dependency: combine_overlap.pl, call_seq_by_list.pl
+
+BLAST example:
+blastn -subject seq.fa -query removal.lib.fa -outfmt=6 > blast_outfmt6
 
 Shujun Ou (oushujun\@msu.edu)
 04/17/2017
@@ -22,7 +32,7 @@ $script_path=~s/(.+)\/.+$/$1/;
 my $seq; #provide the sequence to be purged
 my $blast; #provide the blast outfmt=6 result
 my $evalue=0.001; #evalue cutoff for blast entries. Evalues lower than this cutoff is considered a real alignment.
-my $length=90; #identity cutoff (bp, default 90) to be considered as a real alignment (= alignment length - mismatch)
+my $length=90; #length cutoff (bp, default 90) to be considered as a real alignment (= alignment length - mismatch)
 my $identity=30; #identity cutoff (%, default 30) to be considered as a read alignment
 my $purge=1; #switch on=1(default)/off=0 to clean up aligned region and joint unaligned sequences
 my $coverage=1; #if the excluded portion is too long (default 1, [0-1]), discard the entire sequence
@@ -39,7 +49,7 @@ foreach my $para (@ARGV){
 	$k++;
 	}
 
-open File, "<$blast" or die "ERROR: $!";
+open File, "<$blast" or die "ERROR: Please specify the BLAST result!\n$usage";
 my %query; #store query information
 my $info='';
 while (<File>){

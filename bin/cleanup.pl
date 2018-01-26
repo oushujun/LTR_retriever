@@ -2,7 +2,14 @@
 use strict;
 
 my $usage="
-        Usage: perl cleanup.pl -f sample.fa -e [int] -r [0, 1] > sample.cln.fa 
+        Usage: perl cleanup.pl -f sample.fa [options] > sample.cln.fa 
+	Options:
+		-misschar	n	Define the letter representing unknown sequences; case insensitive; default: n
+		-Nscreen	[0|1]	Enable (1) or disable (0) the -nc parameter; default: 1
+		-nc		[int]	Ambuguous sequence len cutoff; discard the entire sequence if > this number; default: 0
+		-nr		[0-1]	Ambuguous sequence percentage cutoff; discard the entire sequence if > this number; default: 1
+		-cleanN		[0|1]	Retain (0) or remove (1) the -misschar taget in output sequence; default: 0
+		-trf		[0|1]	Enable (1) or disable (0) tandem repeat finder (trf); default: 1
         \n";
 my $version="
 cleanup.pl
@@ -38,6 +45,8 @@ foreach (@ARGV){
 
 my $workdir=`dirname "$0"`;
 $workdir=~s/\n$//;
+
+die $usage unless -s $file;
 
 my %tandem;
 my $tandem='';
