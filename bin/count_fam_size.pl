@@ -22,7 +22,7 @@ while (<List>){
 	$translate{"$chr:$start"}=$id;
 	$translate{"$chr:$end"}=$id;
 	$translate{"$chr:$in"}=$id;
-	$list{$id}=["0", $family, $age]; #size, family, age
+	$list{$id}=["0", $family, $age]; #size, family, age of the library entry
 	}
 close List;
 
@@ -31,7 +31,7 @@ while (<Anno>){
 	next unless /^[0-9]+/;
 	my ($score, $start, $end, $id)=(split)[0,5,6,9];
 	my $length=$end-$start+1;
-	next if $score<300 or $length<100; #require alignment score>300 or alignment length>100bp
+	next if $score<300 or $length<100; #require SW alignment score>=300 or alignment length>=100bp
 	my ($chr, $from, $to)=($1, $2, $3) if $id=~/(.*):([0-9]+)\.\.([0-9]+)/;
 	my ($start_id, $end_id, $in_id)=("$chr:$from", "$chr:$to", "$chr:$from..$to"); #construct possible ids to search in %list
 	foreach my $query ($start_id, $end_id, $in_id){
