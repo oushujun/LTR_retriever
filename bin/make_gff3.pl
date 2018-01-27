@@ -1,4 +1,4 @@
-##Generate gff3 file from pass list of LTR-modeler
+##Generate gff3 file from pass list of LTR_retriever
 ##Usage: perl make_gff3.pl genome.fa LTR.pass.list
 ##Author: Shujun Ou (oushujun@msu.edu), Department of Horticulture, Michigan State University
 ##Version: 1.0 04-09-2015

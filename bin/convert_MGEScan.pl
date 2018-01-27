@@ -1,4 +1,4 @@
-#convert MGEScan-ltr candidate list to LTR-modeler input format
+#convert MGEScan-ltr candidate list to LTR_retriever input format
 #Usage: perl convert.pl genome.ltrpos > genome.MGEScan.scn
 #Author: Shujun OU (oushujun@msu.edu) 08/13/2016
 

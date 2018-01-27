@@ -1,4 +1,4 @@
-#convert LTR_finder screen output to LTR-modeler input format
+#convert LTR_finder screen output to LTR_retriever input format
 #Usage: perl convert.pl LTR_finder_scn > out.scn
 #Author:Shujun OU (oushujun@msu.edu) 03/07/2015
 
