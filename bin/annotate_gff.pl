@@ -13,12 +13,15 @@ open GFF, "<$gff" or die "ERROR: $!";
 while (<GFF>){
 	my $id='';
 	$id=$1 if /\"(.*)\"/;
+	$id=$1 if /Target=([a-z0-9_.:\-]+)\s/i;
 	$id=~s/Motif://;
 	$id=~s/-int//;
 	my $name='';
 	$name=`grep $id $lib` if $id ne '';
 	$name=(split /\s+/, $name)[0];
-	my $anno=$1 if $name=~/#(.*)/;
+	my $anno="TE/unknown";
+	$anno=$1 if $name=~/#(.*)/;
+	s/=/ Motif:/;
 	$_=~s/Motif/$anno/;
 	print "$_";
 	}
