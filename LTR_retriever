@@ -218,13 +218,14 @@ $blastplus=`which blastx 2>/dev/null` if $blastplus eq '';
 $blastplus=~s/blastx\n//;
 die "blastx is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
 #RepeatMasker
+my $rand=int(rand(1000000));
 $repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
 $repeatmasker=~s/RepeatMasker\n//;
 die "RepeatMasker is not exist in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
-`cp $script_path/database/dummy060817.fa ./`;
-my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa -lib dummy060817.fa`;
+`cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
+my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand`;
 die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
-`rm dummy060817.fa*`;
+`rm dummy060817.fa.$rand*`;
 #hmmsearch
 $hmmer=`which hmmsearch 2>/dev/null` if $hmmer eq '';
 $hmmer=~s/hmmsearch\n//;
@@ -241,7 +242,6 @@ die "neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}bl
 
 print "All passed!\n";
 
-my $rand=int(rand(1000000));
 my ($LINE_base, $LINE_path)=fileparse($LINE);
 my ($DNA_base, $DNA_path)=fileparse($DNA);
 my ($PlantP_base, $PlantP_path)=fileparse($PlantP);
