@@ -5,8 +5,9 @@
 #Last updated: 09/08/2017
 
 #usage: perl LAI_calc.pl Intact_LTR.bed All_LTR.bed
-my $window="2000000"; #1Mb window
-my $average_age="0.8"; #mean age (MY) of intact LTR-RTs; default=0.8
+my $window="3000000"; #3Mb/window
+my $step="300000"; #300Kb/step, not fully implemented function
+my $average_age="0.8"; #mean age (MY) of intact LTR-RTs; default=0.8 (means no adjustment for age)
 my $intact="";
 my $all="";
 my $genome="";
@@ -17,6 +18,7 @@ foreach (@ARGV){
 	$intact=$ARGV[$k+1] if /^-i|intact$/i;
 	$all=$ARGV[$k+1] if /^-a|allLTR$/i;
 	$window=$ARGV[$k+1] if /^-w|window$/i;
+	$step=$ARGV[$k+1] if /^-s|step$/i;
 	$average_age=$ARGV[$k+1] if /^-t|time$/i;
 	$k++;
 	}
