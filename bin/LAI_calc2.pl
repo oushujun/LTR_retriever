@@ -3,39 +3,43 @@ use strict;
 
 #Description: This is the core script to calculate the LTR Assembly Index
 #Author: Shujun Ou (oushujun@msu.edu)
-#Last updated: 02/05/2018
+#Last updated: 02/08/2018 (beta2)
 #Note: Memory consumption of this scrip is approx. 2X the size of the input genome
 
 #usage: perl LAI_calc.pl -i Intact_LTR.bed -a All_LTR.bed -g genome.fa [options]
 my $window="3000000"; #3Mb/window
-my $step="300000"; #300Kb/step, not fully implemented function
-my $iden="94"; #mean identity (%) of LTR sequences in the haploid genome; default=94 (means no adjustment for age)
-my $iden_slope="3.13310889698647"; #the correction slope for LTR sequence identity (age)
+my $step="300000"; #300Kb/step
+my $iden="NA"; #mean identity (%) of LTR sequences in the monoploid (1x) genome
+my $solo="NA"; #Solo LTR content in the monoploid (1x) genome
+my $iden_slope="3.133"; #the correction slope for LTR sequence identity (age)
+my $solo_slope="31.154"; #the correction slope for solo LTR content (%)
 my $intact="";
-my $all="";
+my $total="";
 my $genome="";
 
 my $k=0;
 foreach (@ARGV){
-	$genome=$ARGV[$k+1] if /^-g|genome$/i;
-	$intact=$ARGV[$k+1] if /^-i|intact$/i;
-	$all=$ARGV[$k+1] if /^-a|allLTR$/i;
-	$window=$ARGV[$k+1] if /^-w|window$/i;
-	$step=$ARGV[$k+1] if /^-s|step$/i;
-	$iden=$ARGV[$k+1] if /^-d$/i;
-	$iden_slope=$ARGV[$k+1] if /^-k$/i;
+	$genome=$ARGV[$k+1] if /^-genome$/i;
+	$intact=$ARGV[$k+1] if /^-intact$/i;
+	$total=$ARGV[$k+1] if /^-all$/i;
+	$window=$ARGV[$k+1] if /^window$/i;
+	$step=$ARGV[$k+1] if /^-step$/i;
+	$iden=$ARGV[$k+1] if /^-iden$/i;
+	$solo=$ARGV[$k+1] if /^-solo$/i;
+	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
+	$solo_slope=$ARGV[$k+1] if /^-k_solo$/i;
 	$k++;
 	}
 
 open INTACT,"sort -suV -k1,3 $intact |" or die "ERROR: $!";
-open ALL,"sort -suV -k1,3 $all |" or die "ERROR: $!";
+open TOTAL,"sort -suV -k1,3 $total |" or die "ERROR: $!";
 open Genome, "<$genome" or die $!;
 
+my $genome_len=0; #length of the genome
 my %length; #store sequence length
 my %intact; #store intact LTR-RT info
 my %total; #store all LTR sequence info
-my @seqID; #store chr ID names in order
-my $genome_len=0; #length of the genome
+my @seqID; #store chr ID names in input order
 my $output=''; #stores output info
 
 $/="\n>";
@@ -58,17 +62,19 @@ close Genome;
 
 while (<INTACT>){
 	my ($chr, $from, $to)=(split)[0,1,2];
+	next unless exists $intact{$chr};
 	my $len=$to-$from+1;
 	substr($intact{$chr}, $from-1, $len)="i" x $len; #substitute '0' with 'i' where intact LTR-RT is occurred
 	}
 close INTACT;
 
-while (<ALL>){
+while (<TOTAL>){
 	my ($chr, $from, $to)=(split);
+	next unless exists $total{$chr};
 	my $len=$to-$from+1;
 	substr($total{$chr}, $from-1, $len)="a" x $len; #substitute '0' with 'a' where LTR sequence is occurred
 	}
-close ALL;
+close TOTAL;
 
 my ($tot_int_count, $tot_all_count, $tot_int_per, $tot_all_per, $tot_LAI, $tot_LAI_adj)=(0, 0, 0, 0, 0, 0);
 foreach my $chr (@seqID){
@@ -92,7 +98,14 @@ foreach my $chr (@seqID){
 		$win_LAI = sprintf("%.2f", ($win_int_count*$win_len*100)/($win_all_count*$window)) if $win_all_count != 0; #calculate LTR Assembly Index = intact LTR length / all LTR length, LAI is also weighted by window length
 		$win_LAI = 100.1 if $win_LAI > 100; #LAI>100 could happen in chance if using the reduced redundenty library to find all LTRs
 		$win_LAI *= 0.1 if $win_all_per < 0.01; #scale down to 10% if total LTR content less than 1%
-		my $win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden));
+		my $win_LAI_adj = 0;
+		if ($iden ne "NA"){ #first adjust for LTR identity, then adjust for solo LTR content
+			$win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden)) if $solo eq "NA";
+			$win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden) + $solo_slope * (0.07 - $solo)) if $solo ne "NA";
+			$win_LAI_adj = 0 if $win_LAI_adj < 0; #correction sometimes make it negative
+			} else {
+			$win_LAI_adj = "NA";
+			}
 		$output .= "$chr\t$start\t$end\t$win_int_per\t$win_all_per\t$win_LAI\t$win_LAI_adj\n";
 		}
 	}
@@ -102,7 +115,13 @@ $tot_all_per = sprintf("%.4f", $tot_all_count/$genome_len);
 $tot_LAI = sprintf("%.2f", ($tot_int_count*100)/$tot_all_count);
 $tot_LAI = 100.1 if $tot_LAI > 100;
 $tot_LAI *= 0.1 if $tot_all_per < 0.01;
-$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden));
+if ($iden ne "NA"){
+	$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden)) if $solo eq "NA";
+	$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden) + $solo_slope * (0.07 - $solo)) if $solo ne "NA";
+	$tot_LAI_adj = 0 if $tot_LAI_adj < 0;
+	} else {
+	$tot_LAI_adj = "NA";
+	}
 print "#Chromosome\tFrom\tTo\tIntact\tTotal\tLAI\tLAI_adj\n";
 print "whole_genome\tbegin\tend\t$tot_int_per\t$tot_all_per\t$tot_LAI\t$tot_LAI_adj\n$output"; #print out all LAI info
 
