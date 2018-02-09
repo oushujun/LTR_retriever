@@ -52,21 +52,68 @@ while (<RMout>){
 	}
 close RMout;
 
-$RMout.=".q$sample" if $quick==1;
-#$RMout.=".q" if $quick==1;
-open List, ">$RMout.LAI.LTRlist" or die $!;
-if ($quick==1){
-#for quick estimation, randomly choose 50K sequences
-	for (my $i=1; $i<=$sample; $i++){
-#	for (my $i=1; $i<=100000; $i++){
-		my $k=int(rand($#list));
-		print List "$list[$k]\n";
-		}
-	} else {
-	print List "$_\n" foreach @list;
-	}
-close List;
+my $n_all = $#list +1;
+my $iden_all;
+if ($quick==1 and $n_all > 60000){ #at least exceed 60K sequences to execute the quick estimation module, otherwise, no need.
+#for quick estimation, randomly choose 20K, 40K, and 60K sequences
+	my ($n1, $n2, $n3)=(20000, 40000, 60000);
 
+#work on the first set
+	my $out="$RMout.$n1";
+	open List10, ">$out.LAI.LTRlist" or die $!;
+	for (my $i=1; $i<=$n1; $i++){
+		my $k=int(rand($#list));
+		print List10 "$list[$k]\n";
+		}
+	close List10;
+	my $iden_10K=&Age_est($out);
+	`rm $out.LAI.LTRlist $out.LAI.LTR.fa* $out.LAI.LTR.ava.out`;
+
+#work on the second set
+	$out="$RMout.$n2";
+	open List20, ">$out.LAI.LTRlist" or die $!;
+	for (my $i=1; $i<=$n2; $i++){
+		my $k=int(rand($#list));
+		print List20 "$list[$k]\n";
+		}
+	close List20;
+	my $iden_20K=&Age_est($out);
+	`rm $out.LAI.LTRlist $out.LAI.LTR.fa* $out.LAI.LTR.ava.out`;
+
+#work on the third set
+	$out="$RMout.$n3";
+	open List30, ">$out.LAI.LTRlist" or die $!;
+	for (my $i=1; $i<=$n3; $i++){
+		my $k=int(rand($#list));
+		print List30 "$list[$k]\n";
+		}
+	close List30;
+	my $iden_30K=&Age_est($out);
+	`rm $out.LAI.LTRlist $out.LAI.LTR.fa* $out.LAI.LTR.ava.out`;
+
+#use the Lease Squares Estimate method to estimate the slope k in iden = iden0 + k * lg(n)
+	my $n_mean=(log($n1)+log($n2)+log($n3))/3;
+	my $i_mean=($iden_10K+$iden_20K+$iden_30K)/3;
+	my $k = ((log($n1)-$n_mean)*($iden_10K-$i_mean) + (log($n2)-$n_mean)*($iden_20K-$i_mean) + (log($n3)-$n_mean)*($iden_30K-$i_mean))/((log($n1)-$n_mean)**2 + (log($n2)-$n_mean)**2 + (log($n3)-$n_mean)**2);
+	$iden_all = $iden_30K + $k * (log($n_all) - log($n3));
+
+	} else {
+
+	open List, ">$RMout.LAI.LTRlist" or die $!;
+	print List "$_\n" foreach @list;
+	close List;
+	$iden_all=&Age_est($RMout);
+	`rm $RMout.LAI.LTRlist $RMout.LAI.LTR.fa* $RMout.LAI.LTR.ava.out`;
+	}
+
+open Age, ">$RMout.LAI.LTR.ava.age" or die $!;
+print "Input:$RMout\tSeq_num:$n_all\tMean_identity:$iden_all\n";
+print Age "Input:$RMout\tSeq_num:$n_all\tMean_identity:$iden_all\n";
+close Age;
+
+#the subroutine to estimate mean identity of a given sequence set
+sub Age_est {
+my $RMout=$_[0];
 `perl ${script_path}call_seq_by_list.pl $RMout.LAI.LTRlist -C $genome > $RMout.LAI.LTR.fa`;
 
 die "$RMout.LAI.LTR.fa is empty, please check the $genome file and the $RMout.LAI.LTRlist file\n" unless -s "$RMout.LAI.LTR.fa";
@@ -96,8 +143,7 @@ while (<Blast>){
 		}
 	}
 my $average_iden=$total_iden/$read_num;
-open Age, ">$RMout.LAI.LTR.ava.age" or die $!;
-print Age "Input:$RMout\tSeq_num:$read_num\tMean_identity:$average_iden\n";
-print "Input:$RMout\tSeq_num:$read_num\tMean_identity:$average_iden\n";
-close Age;
+return $average_iden;
+}
+
 
