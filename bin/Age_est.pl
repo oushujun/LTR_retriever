@@ -6,7 +6,7 @@ my $usage="
 Estimate the mean identity of LTR regions in the genome via all-versus-all BLAST
 Usage: perl Age_est.pl -blast [path to the blastn program] -RMout [Repeatmasker .out file] -genome [genome file] [*options]
 Options:
-	-q	quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.2% of accuracy)
+	-q	quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.5% of accuracy)
 	-t	number of threads to run blastn
 	-h	print this usage message
 Credit: Shujun Ou (oushujun\@msu.edu) 02/07/2018
@@ -14,7 +14,7 @@ Credit: Shujun Ou (oushujun\@msu.edu) 02/07/2018
 
 my $genome=''; #genome file
 my $RMout=''; #Repeatmasker .out file generated using the LTR_retriever library
-my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.2% of accuracy)
+my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $read_coverage=0.8; #as an LTR-derived read, at least 80% of the read should be mapped to LTR
 my $evalue=0.0001; #maximum e-value for a real hit
 my $threads=4;
@@ -67,7 +67,7 @@ if ($quick==1 and $n_all > 60000){ #at least exceed 60K sequences to execute the
 		}
 	close List10;
 	my $iden_10K=&Age_est($out);
-	`rm $out.LAI.LTRlist $out.LAI.LTR.fa* $out.LAI.LTR.ava.out`;
+	`rm $out.LAI.LTRlist $out.LAI.LTR.fa*`;
 
 #work on the second set
 	$out="$RMout.$n2";
@@ -78,7 +78,7 @@ if ($quick==1 and $n_all > 60000){ #at least exceed 60K sequences to execute the
 		}
 	close List20;
 	my $iden_20K=&Age_est($out);
-	`rm $out.LAI.LTRlist $out.LAI.LTR.fa* $out.LAI.LTR.ava.out`;
+	`rm $out.LAI.LTRlist $out.LAI.LTR.fa*`;
 
 #work on the third set
 	$out="$RMout.$n3";
@@ -89,7 +89,7 @@ if ($quick==1 and $n_all > 60000){ #at least exceed 60K sequences to execute the
 		}
 	close List30;
 	my $iden_30K=&Age_est($out);
-	`rm $out.LAI.LTRlist $out.LAI.LTR.fa* $out.LAI.LTR.ava.out`;
+	`rm $out.LAI.LTRlist $out.LAI.LTR.fa*`;
 
 #use the Lease Squares Estimate method to estimate the slope k in iden = iden0 + k * lg(n)
 	my $n_mean=(log($n1)+log($n2)+log($n3))/3;
@@ -103,13 +103,17 @@ if ($quick==1 and $n_all > 60000){ #at least exceed 60K sequences to execute the
 	print List "$_\n" foreach @list;
 	close List;
 	$iden_all=&Age_est($RMout);
-	`rm $RMout.LAI.LTRlist $RMout.LAI.LTR.fa* $RMout.LAI.LTR.ava.out`;
+	`rm $RMout.LAI.LTRlist $RMout.LAI.LTR.fa*`;
 	}
 
-open Age, ">$RMout.LAI.LTR.ava.age" or die $!;
+#print out the result and write on a file
+open Age, ">$RMout.LAI.LTR.ava.age" or die $! if $quick != 1;
+open Age, ">$RMout.q.LAI.LTR.ava.age" or die $! if $quick == 1;
 print "Input:$RMout\tSeq_num:$n_all\tMean_identity:$iden_all\n";
 print Age "Input:$RMout\tSeq_num:$n_all\tMean_identity:$iden_all\n";
 close Age;
+
+
 
 #the subroutine to estimate mean identity of a given sequence set
 sub Age_est {
@@ -145,5 +149,3 @@ while (<Blast>){
 my $average_iden=$total_iden/$read_num;
 return $average_iden;
 }
-
-
