@@ -16,7 +16,7 @@ Options:
 	-all [file]	RepeatMasker annotation of all LTR sequences in the genome (genome.fa.out).
 	-window [int]	Window size for LAI estimation. Default: 3000000 (3 Mb)
 	-step [int]	Step size for the estimation window to move forward. Default: 300000 (300 Kb)
-	-q		Quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.2% of accuracy).
+	-q		Quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.5% of accuracy).
 	-qq		No estimation of LTR identity and solo LTR content, only output raw LAI for within species comparison (very quick).
 	-iden [0-100]	Mean LTR identity in the monoploid (1x) genome. This parameter will inactivate de novo estimation (same speed to -qq).
 	-solo [0-1]	Solo LTR content in the monoploid (1x) genome. This parameter will inactivate de novo estimation.
@@ -33,7 +33,7 @@ my $iden="NA"; #mean identity (%) of LTR sequences in the monoploid (1x) genome
 my $solo="NA"; #Solo LTR content in the monoploid (1x) genome
 my $iden_slope="3.133"; #the correction slope for LTR sequence identity (age). Don't change this unless you are confident.
 my $solo_slope="31.154"; #the correction slope for solo LTR content. Don't change this unless you are confident.
-my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.2% of accuracy)
+my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $qquick=0; #Obtain only raw LAI for within species comparison (very quick)
 my $threads=4; #Number of threads to run blastn
 my $genome='';
