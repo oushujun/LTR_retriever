@@ -1,11 +1,12 @@
 #!/usr/bin/perl -w
 use strict;
-##This script is to estimate the mean LTR sequence identity and solo LTR content in the genome
+##This script is to estimate the mean LTR sequence identity in the genome
 ##The script also extracts coordinate information for intact LTRs and all LTRs to calculate the LAI score
 ##Users should provide the LTR_retriever *pass.list file and the RepeatMasker *out file as inputs
 ##Author: Shujun Ou (oushujun@msu.edu)
 ##First version: 11/23/2016
 ##Beta v2: 02/05/2018
+##Beta v3: 02/19/2018
 
 my $usage="
 The LTR Assembly Index (LAI) is developed to evaluate the assembly continunity of repetitive sequences
@@ -17,22 +18,17 @@ Options:
 	-window [int]	Window size for LAI estimation. Default: 3000000 (3 Mb)
 	-step [int]	Step size for the estimation window to move forward. Default: 300000 (300 Kb)
 	-q		Quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.5% of accuracy).
-	-qq		No estimation of LTR identity and solo LTR content, only output raw LAI for within species comparison (very quick).
+	-qq		No estimation of LTR identity, only output raw LAI for within species comparison (very quick).
 	-iden [0-100]	Mean LTR identity in the monoploid (1x) genome. This parameter will inactivate de novo estimation (same speed to -qq).
-	-solo [0-1]	Solo LTR content in the monoploid (1x) genome. This parameter will inactivate de novo estimation.
 	-blast [path]	The path to the blastn program. If left unspecified, then blastn must be accessible via shell ENV.
 	-t [number]	Number of threads to run blastn.
 	-h		Display this help info.
 \n";
-#	-k_iden [number] Correction slope for LTR identity in the genome. Default: 3.133
-#	-k_solo [number] Correction slope for solo LTR content. Default: 31.154
 
 my $window="3000000"; #3Mb/window
 my $step="300000"; #300Kb/step
 my $iden="NA"; #mean identity (%) of LTR sequences in the monoploid (1x) genome
-my $solo="NA"; #Solo LTR content in the monoploid (1x) genome
-my $iden_slope="3.133"; #the correction slope for LTR sequence identity (age). Don't change this unless you are confident.
-my $solo_slope="31.154"; #the correction slope for solo LTR content. Don't change this unless you are confident.
+my $iden_slope="2.8138"; #the correction slope for LTR sequence identity (age). Don't change this unless you are confident.
 my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $qquick=0; #Obtain only raw LAI for within species comparison (very quick)
 my $threads=4; #Number of threads to run blastn
@@ -50,9 +46,7 @@ foreach (@ARGV){
 	$quick=1 if /^-q$/i;
 	$qquick=1 if /^-qq$/i;
 	$iden=$ARGV[$k+1] if /^-iden$/i;
-	$solo=$ARGV[$k+1] if /^-solo$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
-	$solo_slope=$ARGV[$k+1] if /^-k_solo$/i;
 	$threads=$ARGV[$k+1] if /^-t$/i;
 	die $usage if /^-?-h|help$/i;
 	$k++;
@@ -70,20 +64,6 @@ if ($qquick != 1 and $iden eq "NA"){
 	$iden = $1 if $iden=~/Mean_identity:([0-9.]+)/;
 	}
 
-#estimate solo LTR content in the genome
-if ($qquick != 1 and $solo eq "NA"){
-	open Solo, "perl $script_path/bin/solo_finder.pl $all|" or die "Error: Could not execute solo_finder!\n";
-	my $len=0;
-	while (<Solo>){
-		my ($from, $to)=($1, $2) if /^.*:([0-9]+)\.\.([0-9]+)\t.*:/;
-		$len += $to-$from+1;
-		}
-	close Solo;
-	my $info = `perl $script_path/bin/count_base.pl $genome`;
-	my ($total, $N)=(split /\s+/, $info)[1,2];
-	$solo=$len/($total-$N);
-	}
-
 #convert intact LTR information into bed format
 `perl -ne 'my (\$id, \$age)=(split)[0,11]; \$age=4000000 if \$age eq \"NA\"; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\t\$age\\n"' $intact > $intact.bed`;
 
@@ -91,6 +71,6 @@ if ($qquick != 1 and $solo eq "NA"){
 `awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
 
 #calculate the LAI score
-`perl $script_path/bin/LAI_calc2.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -solo $solo -k_solo $solo_slope > $all.LAI`;
+`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope > $all.LAI`;
 
 `rm $intact.bed $all.bed`;
