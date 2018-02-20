@@ -82,6 +82,10 @@ foreach my $chr (@seqID){
 	my $all_count = $total{$chr} =~ tr/a/a/;
 	$tot_int_count += $int_count;
 	$tot_all_count += $all_count;
+	}
+$solo=$solo/$tot_all_count if $solo ne "NA"; #normalize solo LTR content based on the total LTR content
+
+foreach my $chr (@seqID){
 #estimate LAI based on windows and steps
 	my $win_len = $window;
 	for (my $start=1; $win_len == $window; $start += $step){
@@ -101,7 +105,7 @@ foreach my $chr (@seqID){
 		my $win_LAI_adj = 0;
 		if ($iden ne "NA"){ #first adjust for LTR identity, then adjust for solo LTR content
 			$win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden)) if $solo eq "NA";
-			$win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden) + $solo_slope * (0.07 - $solo)) if $solo ne "NA";
+			$win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden) + $solo_slope * (0.2 - $solo)) if $solo ne "NA";
 			$win_LAI_adj = 0 if $win_LAI_adj < 0; #correction sometimes make it negative
 			} else {
 			$win_LAI_adj = "NA";
@@ -117,7 +121,7 @@ $tot_LAI = 100.1 if $tot_LAI > 100;
 $tot_LAI *= 0.1 if $tot_all_per < 0.01;
 if ($iden ne "NA"){
 	$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden)) if $solo eq "NA";
-	$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden) + $solo_slope * (0.07 - $solo)) if $solo ne "NA";
+	$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden) + $solo_slope * (0.2 - $solo)) if $solo ne "NA";
 	$tot_LAI_adj = 0 if $tot_LAI_adj < 0;
 	} else {
 	$tot_LAI_adj = "NA";
