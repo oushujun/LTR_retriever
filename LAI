@@ -20,6 +20,7 @@ Options:
 	-q		Quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.5% of accuracy).
 	-qq		No estimation of LTR identity, only output raw LAI for within species comparison (very quick).
 	-iden [0-100]	Mean LTR identity in the monoploid (1x) genome. This parameter will inactivate de novo estimation (same speed to -qq).
+	-totLTR [0-100]	Specify the total LTR sequence content (%) in the genome instead of estimating from the -all RepeatMasker file.
 	-blast [path]	The path to the blastn program. If left unspecified, then blastn must be accessible via shell ENV.
 	-t [number]	Number of threads to run blastn.
 	-h		Display this help info.
@@ -29,6 +30,7 @@ my $window="3000000"; #3Mb/window
 my $step="300000"; #300Kb/step
 my $iden="NA"; #mean identity (%) of LTR sequences in the monoploid (1x) genome
 my $iden_slope="2.8138"; #the correction slope for LTR sequence identity (age). Don't change this unless you are confident.
+my $totLTR="NA"; #the total LTR sequence content (%) in the genome. Will be estimated from the -all RepeatMasker file if unspecified.
 my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $qquick=0; #Obtain only raw LAI for within species comparison (very quick)
 my $threads=4; #Number of threads to run blastn
@@ -47,6 +49,7 @@ foreach (@ARGV){
 	$qquick=1 if /^-qq$/i;
 	$iden=$ARGV[$k+1] if /^-iden$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
+	$totLTR=$ARGV[$k+1] if /^-totLTR$/i;
 	$threads=$ARGV[$k+1] if /^-t$/i;
 	die $usage if /^-?-h|help$/i;
 	$k++;
@@ -71,6 +74,6 @@ if ($qquick != 1 and $iden eq "NA"){
 `awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
 
 #calculate the LAI score
-`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope > $all.LAI`;
+`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $all.LAI`;
 
 `rm $intact.bed $all.bed`;

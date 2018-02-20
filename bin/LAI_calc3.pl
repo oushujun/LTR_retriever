@@ -11,6 +11,7 @@ my $window="3000000"; #3Mb/window
 my $step="300000"; #300Kb/step
 my $iden="NA"; #mean identity (%) of LTR sequences in the monoploid (1x) genome
 my $iden_slope="2.8138"; #the correction slope for LTR sequence identity (age)
+my $totLTR="NA"; #the total LTR sequence content (%) in the genome. Will be estimated from the -all RepeatMasker file if unspecified.
 my $intact="";
 my $total="";
 my $genome="";
@@ -24,9 +25,12 @@ foreach (@ARGV){
 	$step=$ARGV[$k+1] if /^-step$/i;
 	$iden=$ARGV[$k+1] if /^-iden$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
+	$totLTR=$ARGV[$k+1] if /^-totLTR$/i;
 	$k++;
 	}
 
+$iden=~s/%//g;
+$totLTR=~s/%//g;
 open INTACT,"sort -suV -k1,3 $intact |" or die "ERROR: $!";
 open TOTAL,"sort -suV -k1,3 $total |" or die "ERROR: $!";
 open Genome, "<$genome" or die $!;
@@ -79,6 +83,7 @@ foreach my $chr (@seqID){
 	$tot_int_count += $int_count;
 	$tot_all_count += $all_count;
 	}
+$tot_all_count = $totLTR*$genome_len/100 if $totLTR ne "NA";
 
 foreach my $chr (@seqID){
 #estimate LAI based on windows and steps
@@ -100,7 +105,7 @@ foreach my $chr (@seqID){
 		my $win_LAI_adj = 0;
 		if ($iden ne "NA"){ #adjust for LTR identity
 			$win_LAI_adj = sprintf("%.2f", $win_LAI + $iden_slope * (94 - $iden));
-			$win_LAI_adj = 0 if $win_LAI_adj < 0; #correction sometimes make it negative
+			$win_LAI_adj = 0 if $win_LAI_adj < 0 or $win_LAI == 0; #correction sometimes make it negative; if raw LAI == 0, then no correction
 			} else {
 			$win_LAI_adj = "NA";
 			}
@@ -115,7 +120,7 @@ $tot_LAI = 100.1 if $tot_LAI > 100;
 $tot_LAI *= 0.1 if $tot_all_per < 0.01;
 if ($iden ne "NA"){
 	$tot_LAI_adj = sprintf("%.2f", $tot_LAI + $iden_slope * (94 - $iden));
-	$tot_LAI_adj = 0 if $tot_LAI_adj < 0;
+	$tot_LAI_adj = 0 if $tot_LAI_adj < 0 or $tot_LAI == 0;
 	} else {
 	$tot_LAI_adj = "NA";
 	}
