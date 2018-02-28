@@ -31,6 +31,8 @@ foreach (@ARGV){
 
 $iden=~s/%//g;
 $totLTR=~s/%//g;
+$window=~s/,//g;
+$step=~s/,//g;
 open INTACT,"sort -suV -k1,3 $intact |" or die "ERROR: $!";
 open TOTAL,"sort -suV -k1,3 $total |" or die "ERROR: $!";
 open Genome, "<$genome" or die $!;
