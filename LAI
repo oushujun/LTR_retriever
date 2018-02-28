@@ -34,9 +34,12 @@ my $totLTR="NA"; #the total LTR sequence content (%) in the genome. Will be esti
 my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $qquick=0; #Obtain only raw LAI for within species comparison (very quick)
 my $threads=4; #Number of threads to run blastn
+my $blast=''; #path to the blastn and makeblastdb
+my $mode="standard mode"; #the mode for LTR identity estimation
 my $genome='';
 my $intact='';
 my $all='';
+my $version="beta3";
 
 my $k=0;
 foreach (@ARGV){
@@ -50,23 +53,58 @@ foreach (@ARGV){
 	$iden=$ARGV[$k+1] if /^-iden$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
 	$totLTR=$ARGV[$k+1] if /^-totLTR$/i;
+	$blast=$ARGV[$k+1] if /^-blast$/i;
 	$threads=$ARGV[$k+1] if /^-t$/i;
 	die $usage if /^-?-h|help$/i;
 	$k++;
 	}
+$mode="quick mode" if $quick==1;
+$mode="rapid mode" if $qquick==1;
+#die $usage unless -s "$genome" and -s "$intact" and -s "$all";
 
-die $usage unless -s "$genome" and -s "$intact" and -s "$all";
+print "
+######################################
+### LTR Assembly Index (LAI) $version ###
+######################################\n
+Developer: Shujun Ou
+Parameters: @ARGV\n\n\n";
+
+my $date=`date`;
+chomp ($date);
+print "$date\tDependency checking: ";
+#check blastn
+$blast=`which blastn 2>/dev/null` if $blast eq '';
+$blast=~s/blastn\n//;
+die "blastn is not exist in the BLAST+ path $blast!\n" unless -X "${blast}blastn";
+#check makeblastdb
+$blast=`which makeblastdb 2>/dev/null` if $blast eq '';
+$blast=~s/makeblastdb\n//;
+die "makeblastdb is not exist in the BLAST+ path $blast!\n" unless -X "${blast}makeblastdb";
+print "Passed!\n";
 
 my $script_path=`readlink -fn -- $0`;
 $script_path=~s/(.+\/).+$/$1/;
 
+my $rand=int(rand(1000000));
+
 #estimate mean identity of LTR sequences in the genome
 if ($qquick != 1 and $iden eq "NA"){
-	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -t $threads -q ` if $quick == 1;
-	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -t $threads ` if $quick == 0;
+	my $date=`date`;
+	chomp ($date);
+	print "$date\tEstimate the identity of LTR sequences in the genome: $mode\n";
+	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads -q ` if $quick == 1;
+	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads ` if $quick == 0;
 	$iden = $1 if $iden=~/Mean_identity:([0-9.]+)/;
 	}
 
+#update info
+$date=`date`;
+chomp ($date);
+print "$date\tThe identity of LTR sequences: $iden%\n";
+print "\n\t\t\t\t【Warning】 The identity drops below the safe limit. Instead, identity of 92% will be used for LAI adjustment.\n\n" if $iden<92;
+print "\n\t\t\t\t【Warning】 The identity jumps above the safe limit. Instead, identity of 96% will be used for LAI adjustment.\n\n" if $iden>96;
+
+print "$date\tCalculate LAI:\n";
 #convert intact LTR information into bed format
 `perl -ne 'my (\$id, \$age)=(split)[0,11]; \$age=4000000 if \$age eq \"NA\"; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\t\$age\\n"' $intact > $intact.bed`;
 
@@ -77,3 +115,19 @@ if ($qquick != 1 and $iden eq "NA"){
 `perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $all.LAI`;
 
 `rm $intact.bed $all.bed`;
+
+my $info=`grep whole_genome $all.LAI`;
+my ($int, $total)=(split /\s+/, $info)[3,4];
+($int, $total)=($int*100, $total*100); #convert to %
+if ($int<0.1 or $total<5){
+	print "\n\t\t\t\t【Error】Intact LTR-RT content ($int%) is too low for accurate LAI calculation (min 0.1% required)\n" if $int<0.1;
+	print "\t\t\t\t【Error】 Total LTR sequence content ($total%) is too low for accurate LAI calculation (min 5% required)\n" if $total<5;
+	`rm $all.LAI`;
+	print "\n\t\t\t\tSorry, LAI is not applicable on the current genome assembly.\n\n";
+	} else {
+	print "\n\t\t\t\t\t\tDone!\n\n";
+	$date=`date`;
+	chomp ($date);
+	print "$date\tResult file: $all.LAI\n\n";
+	print "\t\t\t\tYou may use either LAI or LAI_adj for intraspecific comparison\n\t\t\t\tbut please use ONLY LAI_adj for interspecific comparison\n\n";
+	}
