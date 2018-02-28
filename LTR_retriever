@@ -570,7 +570,8 @@ if ($annotation==1){
 #	print "\t\t\t\tAnnotation by the redundant library...\n\t\t\t\tChange to non-redundant library (-redun 0) will improve speed.\n\n" if $redun==1;
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
 	`perl $script_path/bin/make_gff3_with_RMout.pl $genome.out`;
-	`perl $script_path/LAI $genome.pass.list $genome.out $genome`;
+#	`perl $script_path/LAI $genome.pass.list $genome.out $genome`;
+	`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
 	}
 } else {
 $date=`date`;
