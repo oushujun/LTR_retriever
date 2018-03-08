@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
+use File::Basename;
 
 my $usage="
 Clean up sequence using blast resuls
@@ -26,8 +27,8 @@ Shujun Ou (oushujun\@msu.edu)
 #take blast outfmt=6 output, with each column means:
 #query id, subject id, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score
 
-my $script_path=`readlink -fn -- $0`;
-$script_path=~s/(.+)\/.+$/$1/;
+#use Cwd 'abs_path';
+my $script_path = dirname(__FILE__);
 
 my $seq; #provide the sequence to be purged
 my $blast; #provide the blast outfmt=6 result
@@ -66,7 +67,7 @@ if ($info=~/Good news!/i){
 	`mv $seq.exclude.temp $seq.exclude.list`;
 	`cp $seq $seq.clean`;
 	} else {
-	`perl ${script_path}/combine_overlap.pl $seq.exclude.temp $seq.exclude.list`;
+	`perl $script_path/combine_overlap.pl $seq.exclude.temp $seq.exclude.list`;
 	`rm $seq.exclude.temp`;
-	`awk '{print \$1\"\\t\"\$1\":\"\$2\"..\"\$3}' $seq.exclude.list | perl ${script_path}/call_seq_by_list.pl - -C $seq -ex -cov $coverage -purge $purge > $seq.clean`;
+	`awk '{print \$1\"\\t\"\$1\":\"\$2\"..\"\$3}' $seq.exclude.list | perl $script_path/call_seq_by_list.pl - -C $seq -ex -cov $coverage -purge $purge > $seq.clean`;
 	}

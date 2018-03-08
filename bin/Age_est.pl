@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
-
+use File::Basename;
 
 my $usage="
 Estimate the mean identity of LTR regions in the genome via all-versus-all BLAST
@@ -22,8 +22,7 @@ my $sample=$ARGV[0];
 
 #paths to dependent programs
 my $blast=''; #blastn and makeblastdb
-my $script_path=`readlink -fn -- $0`;
-$script_path=~s/(.+\/).+$/$1/;
+my $script_path = dirname(__FILE__);
 
 my $k=0;
 foreach (@ARGV){
@@ -118,7 +117,7 @@ close Age;
 #the subroutine to estimate mean identity of a given sequence set
 sub Age_est {
 my $RMout=$_[0];
-`perl ${script_path}call_seq_by_list.pl $RMout.LAI.LTRlist -C $genome > $RMout.LAI.LTR.fa`;
+`perl $script_path/call_seq_by_list.pl $RMout.LAI.LTRlist -C $genome > $RMout.LAI.LTR.fa`;
 
 die "$RMout.LAI.LTR.fa is empty, please check the $genome file and the $RMout.LAI.LTRlist file\n" unless -s "$RMout.LAI.LTR.fa";
 
