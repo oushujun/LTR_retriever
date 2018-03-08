@@ -21,7 +21,7 @@ foreach (@ARGV){
 	$genome=$ARGV[$k+1] if /^-genome$/i;
 	$intact=$ARGV[$k+1] if /^-intact$/i;
 	$total=$ARGV[$k+1] if /^-all$/i;
-	$window=$ARGV[$k+1] if /^window$/i;
+	$window=$ARGV[$k+1] if /^-window$/i;
 	$step=$ARGV[$k+1] if /^-step$/i;
 	$iden=$ARGV[$k+1] if /^-iden$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
