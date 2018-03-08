@@ -2,6 +2,7 @@
 use strict;
 use threads;
 use Thread::Semaphore;
+use File::Basename;
 
 my $usage="
 	Usage: perl LTR.identifier.pl LTR_index
@@ -35,8 +36,9 @@ my $miu="1.3e-8"; #neutral mutation rate, default: 1.3e-8 (rice) per bp per ya
 my @motif=qw/TGCT TACA TACT TGGA TATA TGTA TGCA/;
 my $threads="4"; #threads to run this program
 my $blastplus=''; #path to the blast+ directory
-my $workdir=`dirname "$0"`;
-$workdir=~s/\n$//;
+
+#obtain the exact path for the program location
+my $script_path = dirname(__FILE__);
 
 my $List;
 my $FA;
@@ -273,8 +275,8 @@ sub Identifier() {
 	my $LTR1_do=">$chr:$id\[1]\\n$do1_seq";
 	my $LTR2_up=">$chr:$id\[2]\\n$up2_seq";
 	my $LTR2_do=">$chr:$id\[2]\\n$do2_seq";
-	$ac=`perl $workdir/align_flanking.pl $a_cutoff $s_cutoff $w_size $boundary_ctrl \"$LTR1_up\" \"$LTR2_up\" $blastplus`;
-	$bd=`perl $workdir/align_flanking.pl $a_cutoff $s_cutoff $w_size $boundary_ctrl \"$LTR1_do\" \"$LTR2_do\" $blastplus`;
+	$ac=`perl $script_path/align_flanking.pl $a_cutoff $s_cutoff $w_size $boundary_ctrl \"$LTR1_up\" \"$LTR2_up\" $blastplus`;
+	$bd=`perl $script_path/align_flanking.pl $a_cutoff $s_cutoff $w_size $boundary_ctrl \"$LTR1_do\" \"$LTR2_do\" $blastplus`;
 	$ac=~s/l3[ATGCN\-?:]+\s+l4[ATCGN\-?:]+\s+(r3[ATGCN\-?:]+\s+r4[ATCGN\-?:]+\s+)HT-align:[0|1]\s+/$1/i;
 	$bd=~s/(l3[ATGCN\-?:]+\s+l4[ATCGN\-?:]+\s+)r3[ATGCN\-?:]+\s+r4[ATCGN\-?:]+\s+HT-align:[0|1]\s+/$1/i;
 

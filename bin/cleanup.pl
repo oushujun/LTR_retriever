@@ -1,5 +1,6 @@
 #!usr/bin/perl -w
 use strict;
+use File::Basename;
 
 my $usage="
         Usage: perl cleanup.pl -f sample.fa [options] > sample.cln.fa 
@@ -43,14 +44,14 @@ foreach (@ARGV){
 	$k++;
 	}
 
-my $workdir=`dirname "$0"`;
-$workdir=~s/\n$//;
+#obtain the exact path for the program location
+my $script_path = dirname(__FILE__);
 
 die $usage unless -s $file;
 
 my %tandem;
 my $tandem='';
-$tandem=`$workdir/trf409.legacylinux64 $file 2 7 7 80 10 $align_score $max_seed -ngs -h -l 6` if $trf==1;
+$tandem=`$script_path/trf409.legacylinux64 $file 2 7 7 80 10 $align_score $max_seed -ngs -h -l 6` if $trf==1;
 while ($tandem=~s/\@(.*)\n?//){
 	$tandem{$1}=$1;
 	}
