@@ -565,12 +565,10 @@ if ($annotation==1){
 	$date=`date`;
 	chomp ($date);
 	print "$date\tStart to annotate whole-genome LTR-RTs...\n\t\t\t\tUse -noanno if you don't want whole-genome LTR-RT annotation.\n\n";
-#	print "\t\t\t\tAnnotation by the non-redundant library...\n\t\t\t\tConsider change to redundant library (-redun 1) if library size < 10 Mb.\n\n" if $redun==0;
-#	print "\t\t\t\tAnnotation by the redundant library...\n\t\t\t\tChange to non-redundant library (-redun 0) will improve speed.\n\n" if $redun==1;
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
 	`perl $script_path/bin/make_gff3_with_RMout.pl $genome.out`;
-#	`perl $script_path/LAI $genome.pass.list $genome.out $genome`;
-	`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
+	my $info=`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
+	print "$info";
 	}
 } else {
 $date=`date`;
@@ -597,10 +595,12 @@ LTR-RT library
 	$index.nmtf.LTRlib.fa (Non-TGCA LTR-RTs)\n
 ";
 print "GFF3 file for intact LTR-RTs\n\t$genome.pass.list.gff3\n\n" if $gff3==1;
-print "Whole-genome LTR-RT annotation by the non-redundant library (GFF)
-	$genome.out.gff\n
-LTR Assembly Index (LAI)
-	$genome.out.LAI\n\n" if $annotation==1;
+
+if (-s "$genome.out.LAI"){
+	print "Whole-genome LTR-RT annotation by the non-redundant library (GFF)\n\t$genome.out.gff\n\nLTR Assembly Index (LAI)\n\t$genome.out.LAI\n\n";
+	} else {
+	print "Whole-genome LTR-RT annotation by the non-redundant library (GFF)\n\t$genome.out.gff\n\n" if $annotation==1;
+	}
 }
 
 
