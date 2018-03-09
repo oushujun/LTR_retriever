@@ -224,7 +224,7 @@ $repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
 $repeatmasker=~s/RepeatMasker\n//;
 die "RepeatMasker is not exist in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
-my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand`;
+my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
 die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
 `rm dummy060817.fa.$rand*`;
 #hmmsearch
@@ -457,6 +457,10 @@ goto End if $pass_count==0;
 
 ##All passed LTR-RT candidates, including internal region and the longer LTR region for truncated LTR-RT candidates
 `perl $script_path/bin/annotate_lib.pl $index2.retriever.scn.adj $index2.ltrTE >> $index.prelib`; #contains both TGCA and nmtf LTR-RT
+
+############################
+####### Final stage ########
+############################
 
 End:
 `cp $index.retriever.scn.adj $index.retriever.all.scn` unless (-s "$index.retriever.all.scn");
