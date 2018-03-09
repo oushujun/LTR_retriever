@@ -100,6 +100,7 @@ while (<TBL>){
 ## score   div. del. ins.  sequence  begin    end          (left)   repeat                      class/family begin   end    (left)    ID
 ##121374    0.3  0.0  0.0  Chr1       2991444  3005061 (38467215) C Os2091in-Osr28_AP002539     LTR/Gypsy       (0)  13617       1  304
 if ($LTR==0){
+	s/^\s+//;
 	(undef, $similarity, undef, undef, $seq_ID, $element_start, $element_end, undef)=split;
 	$seq_ID=(split /_/, $seq_ID)[0];
 	print LTRlist "$seq_ID:$element_start..$element_end\t$seq_ID:$element_start..$element_end\n";
@@ -109,6 +110,7 @@ if ($LTR==1){
 
 ##This is for LRharvest result analysis
 ##s(ret) e(ret) l(ret) s(lLTR) e(lLTR) l(lLTR) s(rLTR) e(rLTR) l(rLTR) sim(LTRs) seq-nr
+	s/^\s+//;
 	($element_start,  $element_end,  $element_length, $lLTR_start,  $lLTR_end,  $lLTR_length, $rLTR_start,  $rLTR_end,  $rLTR_length, $similarity, $seq_ID, $chr)=(split /\s+/, $_);
 #34 4594 4561 34 291 258 4335 4594 260 0.962     + CTCAC 29..33, 4595..4599 TG,TG,CA,CA
 #start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)

@@ -13,12 +13,14 @@ open DMR,"sort -suV -k1,3 $dmr |" or die "ERROR: $!";
 open OUT,">$out" or die "ERROR: $!";
 while(my $line=<DMR>){
 	next if $line=~/^\s+$/;
+	$line=~s/^\s+//;
 	my ($chr1,$stt1,$end1,$time1,$time_avg,$i);
 	$i=1;
 	($chr1,$stt1,$end1,$time1)=(split(/\s+/,$line))[0,1,2,3] if $age==1;
 	($chr1,$stt1,$end1)=(split(/\s+/,$line))[0,1,2] if $age==0;
     PATH:{
         $line=<DMR>;
+	$line=~s/^\s+//;
         if(!$line){ #print out the last line of the file
             print OUT "$chr1\t$stt1\t$end1\t$time1\n" if $age==1;
             print OUT "$chr1\t$stt1\t$end1\n" if $age==0;

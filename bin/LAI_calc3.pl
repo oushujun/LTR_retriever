@@ -49,6 +49,7 @@ while (<Genome>){
 	next if /^>\s?$/;
 	chomp;
 	s/>//g;
+	s/^\s+//;
 	my ($chr, $seq)=(split /\n/, $_, 2);
 	$seq=~s/\s+//g;
 	$chr=~s/\s+$//; #remove space at the end of the seq ID
@@ -63,6 +64,7 @@ $/="\n";
 close Genome;
 
 while (<INTACT>){
+	s/^\s+//;
 	my ($chr, $from, $to)=(split)[0,1,2];
 	next unless exists $intact{$chr};
 	my $len=$to-$from+1;
@@ -71,6 +73,7 @@ while (<INTACT>){
 close INTACT;
 
 while (<TOTAL>){
+	s/^\s+//;
 	my ($chr, $from, $to)=(split);
 	next unless exists $total{$chr};
 	my $len=$to-$from+1;

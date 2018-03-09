@@ -18,6 +18,7 @@ while (<Genome>){
 	next if /^>\s?$/;
 	chomp;
 	s/>//g;
+	s/^\s+//;
 	my ($id, $seq)=(split /\n/, $_, 2);
 	$id=~s/\s+$//g;
 	$seq=~s/\s+//g;

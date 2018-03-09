@@ -40,6 +40,7 @@ my %blast;
 while (<FA>){
 	s/>//;
 	chomp;
+	s/^\s+//;
 	my ($head, $seq)=(split /\n/, $_, 2);
 	$head=(split)[0];
 	$seq=~s/\s//g;
@@ -54,6 +55,7 @@ open BLAST, "<$ARGV[1]" or die "ERROR: $!";
 while (<BLAST>){
 	next if /^#/;
 	next unless /[0-9]+/;
+	s/^\s+//;
 #query id, subject id, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score
 	my ($qid, $sid, $idty, $len, $mis, $gap, $qs, $qe, $ss, $se, $eval)=split;
 	next if ($idty<$identity or $eval>$evalue or $len<$length);

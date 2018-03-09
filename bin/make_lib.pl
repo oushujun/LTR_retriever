@@ -16,6 +16,7 @@ my $j=0;
 while (<List>){
 #Chr1:244893..246841[1]  Chr1:244893..245187     91.86
 	next if /^\s+$/;
+	s/^\s+//;
 	my ($id, undef, $sim)=split;
 	$list{"tmpseq_$j"}=[$id, $sim];
 	$j++;
@@ -27,6 +28,7 @@ $/="\n>";
 while (<Seq>){
 	s/>//g;
 	next if /^\s+$/;
+	s/^\s+//;
 	my ($id, $seq)=(split /\n/, $_, 2);
 	next if $seq eq '';
 	$seq=~s/\s+//g;
@@ -36,6 +38,7 @@ while (<Seq>){
 $/="\n";
 
 while (<Clust>){
+	s/^\s+//;
 	my @clust=(split /\s+/, $_);
 	my $sim=0;
 	my $rep='';

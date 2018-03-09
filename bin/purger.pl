@@ -54,6 +54,7 @@ open File, "<$blast" or die "ERROR: Please specify the BLAST result!\n$usage";
 my %query; #store query information
 my $info='';
 while (<File>){
+	s/^\s+//;
 	my ($query, $iden, $len, $mismatch, $qstart, $qend, $eval)=(split)[0,2,3,4,6,7,10];
 	($qstart, $qend)=($qend, $qstart) if $qstart>$qend;
 	$info.="$query\t$qstart\t$qend\n" if ($eval<=$evalue and $len-$mismatch>=$length and $iden>=$identity);

@@ -12,6 +12,7 @@ open Lib, "<$ARGV[1]" or die "ERROR: $!";
 my %info;
 while (<List>){
 	next if /^#/;
+	s/^\s+//;
 	my ($start, $end, $lstart, $lend, $rstart, $rend, $direction, $fam)=(split)[0,1,3,4,6,7,12,18];
 	my ($istart, $iend)=($lend+1, $rstart-1);
 	next unless defined $fam;
@@ -24,6 +25,7 @@ while (<List>){
 $/="\n>";
 while (<Lib>){
 	s/>//g;
+	s/^\s+//;
 	my ($id, $seq)=(split /\n/, $_, 2);
 	$id=~s/\s+//g;
 	$seq=~s/\s+//g;

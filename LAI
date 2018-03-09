@@ -115,7 +115,7 @@ if ($fuse==1){
 
 print "$date\tCalculate LAI:\n";
 #convert intact LTR information into bed format
-`perl -ne 'my (\$id, \$age)=(split)[0,11]; \$age=4000000 if \$age eq \"NA\"; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\t\$age\\n"' $intact > $intact.bed`;
+`perl -nle 's/^\\s+//; my (\$id, \$age)=(split)[0,11]; \$age=4000000 if \$age eq \"NA\"; next unless \$id=~/:/; \$id=~s/\\.\\./\\t/g; \$id=~s/:/\\t/g; print "\$id\\t\$age"' $intact > $intact.bed`;
 
 #get all LTR sequence annotated in the genome that are no shorter than 80bp
 `awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
@@ -126,6 +126,7 @@ print "$date\tCalculate LAI:\n";
 `rm $intact.bed $all.bed`;
 
 my $info=`grep whole_genome $all.LAI`;
+$info=~s/^\s+//;
 my ($int, $total)=(split /\s+/, $info)[3,4];
 ($int, $total)=($int*100, $total*100); #convert to %
 if (($int<0.1 or $total<5) and $fuse==1){

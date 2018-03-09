@@ -25,6 +25,8 @@ $left_align=$right_align='None';
 $boundary_aln="NA";
 my $File3=$ARGV[4] or die "ERROR: $!";
 my $File4=$ARGV[5] or die "ERROR: $!";
+$File3=~s/^\s+//;
+$File4=~s/^\s+//;
 $seq3=(split /\\n/, $File3)[1];
 $seq4=(split /\\n/, $File4)[1];
 my $seq_l;
@@ -90,6 +92,7 @@ unless (@Blast){ #if no blast result (not aligned), then goto the end of this sc
 	}
 
 foreach (@Blast){
+	s/^\s+//;
 	($sim, $q_start, $q_end, $s_start, $s_end)=(split)[2,6,7,8,9];
 	$q_index="$q_index"."$q_start..$q_end;";
 	$s_index="$s_index"."$s_start..$s_end;";

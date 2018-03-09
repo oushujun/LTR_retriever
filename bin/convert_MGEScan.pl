@@ -10,6 +10,7 @@ print "#this summary file is created from MGEScan-ltr candidate list by convert_
 ##start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)\n";
 my ($from, $to, $chr, $LTR_len, $lLTR_len, $rLTR_len, $lLTR_end, $rLTR_str, $similarity, $TSD, $motif, $direction, $seq_id);
 while (<>){
+	s/^\s+//;
 	$from=$to=$LTR_len=$lLTR_len=$rLTR_len=$lLTR_end=$rLTR_str=$similarity=$direction="NA";
 	($chr, $from, $lLTR_end, $rLTR_str, $to, $direction, $similarity)=(split)[0,2,3,4,5,6,10];
 	#eg. Chr1    1       487160  487385  493666  493891  -       225     225     6281    98.7

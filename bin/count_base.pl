@@ -13,6 +13,7 @@ $/="\n>";
 while (<File>){
 	chomp;
 	s/>//g;
+	s/^\s+//;
 	my ($id, $seq)=(split /\n/, $_, 2);
 	$seq=~s/\s+//g;
 	my $N_count=$seq=~tr/Nn//;

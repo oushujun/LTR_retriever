@@ -23,6 +23,7 @@ my %hmm;
 open File, "<$ARGV[0]" or die "ERROR: $ARGV[0]. $!";
 while (<File>){
 	next if /^#/;
+	s/^\s+//;
 	my ($TE, $hmm)=(split)[0,3];
 	my ($decision, $family, $strand)=("NA", "unknown", "?");
 

@@ -75,6 +75,7 @@ my %info;
 my $head='';
 while (<List>){
 	next if /^\s+$/;
+	s/^\s+//;
 	if (/^#/){
 		$head.=$_;
 		next;
@@ -90,6 +91,7 @@ if (defined $ANNO){
 	open ANNO, "<$ANNO" or die "ERROR: Can't read the .anno file!\n";
 	while (<ANNO>){
 		next if /^#/;
+		s/^\s+//;
 		my ($id, $superfam, $fam, $strand)=(split)[0,1,2,3];
 		#Chr1:106472..118130|Chr1:106522..118080
 		$id=~s/.*\|.*:([0-9]+\.\.[0-9]+)$/$1/;
@@ -180,6 +182,7 @@ sub Identifier() {
 	if ($#Blast>0){
 	my $pair=0; #0 indicates no alignment pair seems correct, 1 indicates at least 1 alignment pair seems right
 	for (my $i=1; defined $Blast[$i+1]; $i++){
+		$Blast[$i]=~s/^\s+//;
 		$decision="false" if $i>8;
 		last if $i>8;
 		($sim, $q_start, $q_end, $s_start, $s_end)=(split /\s+/,  $Blast[$i])[2,6,7,8,9];

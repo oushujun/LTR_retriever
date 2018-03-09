@@ -63,6 +63,7 @@ while (<Genome>){
 	next if /^>\s?$/;
 	chomp;
 	s/>//g;
+	s/^\s+//;
 	my ($chr, $seq)=(split /\n/, $_, 2);
 	$chr=~s/\s+$//;
 	$seq=~s/\s+//g;
@@ -79,6 +80,7 @@ die "Warning: LOC list $ARGV[0] is empty.\n" if $#list<0;
 shift @list if $list[0]=~/^\s?$/; #remove the first empty line
 my $chr='';
 my %chr; #store chr names being worked
+$list[0]=~s/^\s+//;
 my $chr_pre=$1 if (split /\s+/, $list[0])[1]=~/(.*):[0-9]+\.\.[0-9]+$/;
 my $str=1; #the coordinate of the first bp of a sequence
 my $stp=length $genome{$chr_pre};
@@ -89,6 +91,7 @@ foreach my $line (@list){
 	next if $line=~/^\s?$/;
 	my ($loc, $pos, $strand, $start, $stop);
 	$strand="+";
+	$line=~s/^\s+//;
 	($loc, $pos)=split /\s+/, $line;
 	if ($pos=~/^(.*)\:(-?[0-9]+)\.\.(-?[0-9]+)$/){
 		($chr, $start, $stop)=($1, $2, $3);

@@ -41,6 +41,7 @@ my %data;
 while(<LS>){
 	s/>//g;
 	next if /^\s+$/;
+	s/^\s+//;
 	chomp;
 	my $loc=(split)[$list_pos];
 	$loc=~s/\|.*$//;
@@ -56,6 +57,7 @@ close LS ;
 $/="$newline";
 while(<DB>){
 	s/>//g;
+	s/^\s+//;
 	my $pos=(split)[$data_pos];
 	if ($pos=~/pos/i){ print $_ }
 	$pos=~s/\[.*\]//g;

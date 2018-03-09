@@ -14,6 +14,7 @@ my %all;
 
 while (<Intact>){
 	chomp;
+	s/^\s+//;
 	my ($id, $intact)=(split);
 	$all{$id}=["0", $intact];
 	}
@@ -21,6 +22,7 @@ close Intact;
 
 while (<Solo>){
 	chomp;
+	s/^\s+//;
 	my ($id, $solo)=(split);
 	if (exists $all{$id}){
 		$all{$id}[0]=$solo;

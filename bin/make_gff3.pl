@@ -18,6 +18,7 @@ my %seq_flag;
 my $j=0;
 while (<FA>){
 	s/>//g;
+	s/^\s+//;
 	my ($id, $seq)=(split /\n/, $_, 2);
 	$seq=~s/\s+//g;
 	my $len=length ($seq);

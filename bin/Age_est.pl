@@ -130,6 +130,7 @@ my ($identity1, $identity2, $total_iden, $read_num)=(0,0,0,0);
 open Blast, "<$RMout.LAI.LTR.ava.out" or die "$RMout.LAI.LTR.ava.out is empty, the blastn program may not run correctly.\n";
 while (<Blast>){
 	my ($chr, $alignment_length, $gap, $eval);
+	s/^\s+//;
 	($read1, $chr, $identity1, $alignment_length, $gap, $eval)=(split)[0,1,2,3,5,10];
 #query id, subject id, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score
 	next if $read1 eq $chr; #exclude self alignments

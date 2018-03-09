@@ -18,6 +18,7 @@ while (<GFF>){
 	$id=~s/-int//;
 	my $name='';
 	$name=`grep $id $lib` if $id ne '';
+	$name=~s/^\s+//;
 	$name=(split /\s+/, $name)[0];
 	my $anno="TE/unknown";
 	$anno=$1 if $name=~/#(.*)/;

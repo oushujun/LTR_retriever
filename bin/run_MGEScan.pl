@@ -19,6 +19,7 @@ chomp ($date);
 $/="\n>";
 while (<Genome>){
 	s/>//g;
+	s/^\s+//;
 	my ($id, $seq)=(split /\n/, $_,  2);
 	$seq=~s/\s+//g;
 	$id=~s/\s+//g;
