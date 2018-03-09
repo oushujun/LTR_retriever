@@ -11,6 +11,7 @@ my $usage="
 		-nr		[0-1]	Ambuguous sequence percentage cutoff; discard the entire sequence if > this number; default: 1
 		-cleanN		[0|1]	Retain (0) or remove (1) the -misschar taget in output sequence; default: 0
 		-trf		[0|1]	Enable (1) or disable (0) tandem repeat finder (trf); default: 1
+		-trf_path	path	Path to the trf program
         \n";
 my $version="
 cleanup.pl
@@ -21,6 +22,9 @@ Version: 	1.6 Add alignment score control (-e [int]) and missing count control (
 		1.0 2014/06/02
 \n";
 
+#obtain the exact path for the program location
+my $script_path = dirname(__FILE__);
+
 my $target="n";
 my $func_nc=1; #1, do $n_count screening
 my $n_count=0; #count the $target in each sequence, if it exceeds this number, it will be discarted.
@@ -29,6 +33,7 @@ my $align_score=1000; #-e para, dft:1000
 my $max_seed=2000; #maximum period size to report
 my $cleanN=0; #1 will remove $target="n" in output sequence
 my $trf=1; #1 will enable tandem repeat finder (default), 0 will not
+my $trf_path="$script_path/trf409.legacylinux64"; #Path to the trf program, default Linux version
 my $file;
 
 my $k=0;
@@ -41,11 +46,9 @@ foreach (@ARGV){
 	$file=$ARGV[$k+1] if /^-f$/i;
 	$cleanN=1 if /^-cleanN$/i;
 	$trf=0 if /^-trf$/i;
+	$trf_path=$ARGV[$k+1] if /^-trf_path$/i;
 	$k++;
 	}
-
-#obtain the exact path for the program location
-my $script_path = dirname(__FILE__);
 
 die $usage unless -s $file;
 
