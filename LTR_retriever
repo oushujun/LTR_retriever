@@ -72,6 +72,8 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
 #obtain the exact path for the program location
 my $script_path = dirname(__FILE__);
+my $trf=""; #path to the trf program
+
 
 my $inharvest=''; #screen output of LTRharvest with -motif 'TGCA' control
 my $infinder=''; #screen output of LTR_finder
@@ -238,6 +240,12 @@ $cdhitpath=`which cd-hit-est 2>/dev/null` if $cdhitpath eq '';
 $cdhitpath=~s/cd-hit-est\n//;
 die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" if (!(-X "${cdhitpath}cd-hit-est") and $cdhit);
 die "neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}blastclust" or -X "${cdhitpath}cd-hit-est");
+#trf
+$trf="$script_path/bin/trf409.legacylinux64"; #path to the trf program
+`$trf 2>/dev/null`;
+$trf="$script_path/bin/trf409.macosx" if $?==32256;
+`$trf 2>/dev/null`;
+die "Error: No Tandem Repeat Finder is working on the current system. Versions of trf409.macosx and trf409.legacylinux64 have been tested, and failed. Please report it to https://github.com/oushujun/LTR_retriever/issues" if $?==32256;
 
 print "All passed!\n";
 
