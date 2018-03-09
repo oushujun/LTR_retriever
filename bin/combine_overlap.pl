@@ -20,11 +20,11 @@ while(my $line=<DMR>){
 	($chr1,$stt1,$end1)=(split(/\s+/,$line))[0,1,2] if $age==0;
     PATH:{
         $line=<DMR>;
-	$line=~s/^\s+//;
         if(!$line){ #print out the last line of the file
             print OUT "$chr1\t$stt1\t$end1\t$time1\n" if $age==1;
             print OUT "$chr1\t$stt1\t$end1\n" if $age==0;
         }else{
+	$line=~s/^\s+//;
         my ($chr2,$stt2,$end2,$time2);
 	($chr2,$stt2,$end2,$time2)=(split(/\s+/,$line))[0,1,2,3] if $age==1;
         ($chr2,$stt2,$end2)=(split(/\s+/,$line))[0,1,2] if $age==0;
