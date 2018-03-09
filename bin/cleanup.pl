@@ -54,7 +54,7 @@ die $usage unless -s $file;
 
 my %tandem;
 my $tandem='';
-$tandem=`$script_path/trf409.legacylinux64 $file 2 7 7 80 10 $align_score $max_seed -ngs -h -l 6` if $trf==1;
+$tandem=`$trf_path $file 2 7 7 80 10 $align_score $max_seed -ngs -h -l 6` if $trf==1;
 while ($tandem=~s/\@(.*)\n?//){
 	$tandem{$1}=$1;
 	}
