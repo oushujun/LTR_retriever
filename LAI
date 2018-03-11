@@ -20,7 +20,9 @@ Options:
 	-step [int]	Step size for the estimation window to move forward. Default: 300000 (300 Kb)
 	-q		Quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.5% of accuracy).
 	-qq		No estimation of LTR identity, only output raw LAI for within species comparison (very quick).
-	-iden [0-100]	Mean LTR identity in the monoploid (1x) genome. This parameter will inactivate de novo estimation (same speed to -qq).
+	-mono [file]	This parameter is mainly for ployploid genomes. User provides a list of sequence names that represent a monoploid (1x).
+			LAI will calculated only on these sequences if provided. So user can also specify sequence of interest for LAI calculation.
+	-iden [0-100]	Mean LTR identity (%) in the monoploid (1x) genome. This parameter will inactivate de novo estimation (same speed to -qq).
 	-totLTR [0-100]	Specify the total LTR sequence content (%) in the genome instead of estimating from the -all RepeatMasker file.
 	-blast [path]	The path to the blastn program. If left unspecified, then blastn must be accessible via shell ENV.
 	-t [number]	Number of threads to run blastn.
@@ -38,6 +40,7 @@ my $threads=4; #Number of threads to run blastn
 my $blast=''; #path to the blastn and makeblastdb
 my $mode="standard mode"; #the mode for LTR identity estimation
 my $fuse=1; #1, limit LTR identity to [92, 96]; 0, no limitation of LTR identity
+my $monoploid=''; #A list of sequence names from the same monoploid (1x) for ployploid genomes
 my $genome='';
 my $intact='';
 my $all='';
@@ -52,6 +55,7 @@ foreach (@ARGV){
 	$step=$ARGV[$k+1] if /^-step$/i;
 	$quick=1 if /^-q$/i;
 	$qquick=1 if /^-qq$/i;
+	$monoploid=$ARGV[$k+1] if /^-mono$/i;
 	$iden=$ARGV[$k+1] if /^-iden$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
 	$totLTR=$ARGV[$k+1] if /^-totLTR$/i;
@@ -91,9 +95,20 @@ my $script_path = dirname(__FILE__);
 
 my $rand=int(rand(1000000));
 
+#extract sequence for targeted LAI calculation
+my $date=`date`;
+chomp ($date);
+if ($monoploid ne ''){
+	print "$date\tUser specified sequences are provided: $monoploid\n\t\t\t\tCalculation of LAI will be based only on this sequences.\n";
+	`perl $script_path/bin/output_by_list.pl 1 $genome 1 $monoploid -FA > $genome.monoploid.$rand.fa`;
+	$genome = "$genome.monoploid.$rand.fa";
+	} else {
+	print "$date\tCalculation of LAI will be based on the whole genome.\n\t\t\t\tPlease use the -mono parameter if your genome is a recent ployploid, for high identity between homeologues will overcorrect raw LAI scores.\n";
+	}
+
 #estimate mean identity of LTR sequences in the genome
 if ($qquick != 1 and $iden eq "NA"){
-	my $date=`date`;
+	$date=`date`;
 	chomp ($date);
 	print "$date\tEstimate the identity of LTR sequences in the genome: $mode\n";
 	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads -q ` if $quick == 1;
@@ -121,7 +136,7 @@ print "$date\tCalculate LAI:\n";
 `awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
 
 #calculate the LAI score
-`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $all.LAI`;
+`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $genome.LAI`;
 
 `rm $intact.bed $all.bed`;
 

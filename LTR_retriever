@@ -679,7 +679,7 @@ print "$date\tModule 6: Start to analyze truncated LTR-RTs...
 \t\t\t\tUse -notrunc if you don't want to keep them.\n\n";
 
 ##get longer LTR and IN from trunc and masked by pass
-`perl -nle 'next unless /trunc/i; next if /notLTR/i or /mixture/i or /\\s+NA/i; s/^\s+//; my \$loc=(split)[0]; print "\$loc\\t\$loc"' $index.defalse > $index.ltrTE.trunc.list`;
+`perl -nle 'next unless /trunc/i; next if /notLTR/i or /mixture/i or /\\s+NA/i; s/^\\s+//; my \$loc=(split)[0]; print "\$loc\\t\$loc"' $index.defalse > $index.ltrTE.trunc.list`;
 my $trunc=0;
 $trunc=`wc -l $index.ltrTE.trunc.list`;
 $trunc=~s/^\s+//;
