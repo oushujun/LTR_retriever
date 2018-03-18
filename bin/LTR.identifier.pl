@@ -1,7 +1,7 @@
 #!usr/bin/perl -w
 use strict;
 use threads;
-use Thread::Semaphore;
+use Thread::Queue;
 use File::Basename;
 
 my $usage="
@@ -122,9 +122,9 @@ close FA;
 open SCN, ">$List.adj" or die "ERROR: $!";
 print SCN "#LTR boundary fine-grain adjustment and annotation have been performed by LTR_retriever (Shujun Ou, oushujun\@msu.edu)\n$head";
 
-##multi-threading module
+##multi-threading using queue, put candidate LTRs into queue for parallel computation
+my $queue=Thread::Queue->new();
 my $i=0;
-my $semaphore=new Thread::Semaphore($threads);
 while ($i<=$#FA) {
 	last unless defined $FA[$i]->[0];
 	my ($name, $seq)=@{$FA[$i]}[0,1];
@@ -132,14 +132,24 @@ while ($i<=$#FA) {
 	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $5, $6) if $name=~/^(\S+):([0-9]+)..([0-9]+)\|(\S+):([0-9]+)..([0-9]+)/;
 	my $id="$ltr_start..$ltr_end";
 	next if $id eq '';
-
-	$semaphore->down();
-	my $thread=threads->new(\&Identifier, $name, $seq, \@{$info{$id}});
-	$thread->detach();
+	$queue->enqueue([$name, $seq, \@{$info{$id}}]);
 	delete $info{$id};
 	$i++;
 	}
-&waitquit;
+
+#initiate a number of worker threads
+my @threads=();
+foreach (1..$threads){
+	push @threads,threads->create(\&Identifier);
+	}
+
+foreach (@threads){
+	$queue->enqueue(undef);
+	}
+
+foreach (@threads){
+	$_->join();
+	}
 
 ##print out entries that could not pass initial screening criteria to scn.adj
 foreach my $key (sort{$a cmp $b}(keys %info)){
@@ -150,9 +160,11 @@ foreach my $key (sort{$a cmp $b}(keys %info)){
 	}
 close SCN;
 
+##subrotine for LTR structural analyses
 sub Identifier() {
+	while (defined($_ = $queue->dequeue())){
 ##Structural analysis, main program
-	my ($name, $seq, @info)=($_[0], $_[1], @{$_[2]});
+	my ($name, $seq, @info)=(@{$_}[0], @{$_}[1], @{@{$_}[2]});
 	my $decision="raw"; #conclusion of whether the element is a LTR
 	my ($chr, $seq_start, $seq_end, $ltr_start, $ltr_end);
 	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $5, $6) if $name=~/^(\S+):([0-9]+)..([0-9]+)\|(\S+):([0-9]+)..([0-9]+)/;  #eg: Chr4:10009589..10017157|Chr4:10009609..10017137 or 10.dna.chromosome.ch:100016935..100026312|10.dna.chromosome.ch:100016935..100026312
@@ -426,21 +438,10 @@ sub Identifier() {
 	print "\tTSD-LTR overlap: $overlap\n";
 	print "\tBoundary missing: $bond_miss\n\n";
 
-##output modified scn output to the scn.adj file
 	foreach (0..$#info){
 		print SCN "$info[$_]  ";
 		}
 	print SCN "\n";
-
-	$semaphore->up();
 	}
-
-
-sub waitquit {
-	my $n=0;
-	while ($n<$threads){
-		$semaphore->down();
-		$n++;
-		}
-	}
+}
 
