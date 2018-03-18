@@ -18,6 +18,7 @@ Options:
 	-all [file]	RepeatMasker annotation of all LTR sequences in the genome (genome.fa.out).
 	-window [int]	Window size for LAI estimation. Default: 3000000 (3 Mb)
 	-step [int]	Step size for the estimation window to move forward. Default: 300000 (300 Kb)
+			Set step size = window size if prefer non-overlapping outputs.
 	-q		Quick estimation of LTR identity (much faster for large genomes, may sacrifice ~0.5% of accuracy).
 	-qq		No estimation of LTR identity, only output raw LAI for within species comparison (very quick).
 	-mono [file]	This parameter is mainly for ployploid genomes. User provides a list of sequence names that represent a monoploid (1x).
@@ -67,7 +68,7 @@ foreach (@ARGV){
 	}
 $mode="quick mode" if $quick==1;
 $mode="rapid mode" if $qquick==1;
-die $usage unless -s "$genome" and -s "$intact" and -s "$all";
+die "Input file(s) not exist!\n$usage" unless -s "$genome" and -s "$intact" and -s "$all";
 
 print "
 ######################################
@@ -96,12 +97,14 @@ my $script_path = dirname(__FILE__);
 my $rand=int(rand(1000000));
 
 #extract sequence for targeted LAI calculation
-my $date=`date`;
+$date=`date`;
 chomp ($date);
 if ($monoploid ne ''){
-	print "$date\tUser specified sequences are provided: $monoploid\n\t\t\t\tCalculation of LAI will be based only on this sequences.\n";
-	`perl $script_path/bin/output_by_list.pl 1 $genome 1 $monoploid -FA > $genome.monoploid.$rand.fa`;
-	$genome = "$genome.monoploid.$rand.fa";
+	print "$date\tUser specified sequence list is provided: $monoploid\n\t\t\t\tCalculation of LAI will be based only on these sequences.\n";
+	`perl $script_path/bin/output_by_list.pl 1 $genome 1 $monoploid -FA > $genome.$monoploid.fa`;
+	`for i in \`cat $monoploid\`; do cat $all | perl -snle 's/^\\s+//; my \$chr=(split)[4]; \$i=~s/^>//; print \$_ if \$chr eq \$i' -- -i=\$i; done > $all.$monoploid.out`;
+	$genome = "$genome.$monoploid.fa";
+	$all = "$all.$monoploid.out";
 	} else {
 	print "$date\tCalculation of LAI will be based on the whole genome.\n\t\t\t\tPlease use the -mono parameter if your genome is a recent ployploid, for high identity between homeologues will overcorrect raw LAI scores.\n";
 	}
@@ -136,7 +139,7 @@ print "$date\tCalculate LAI:\n";
 `awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
 
 #calculate the LAI score
-`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $genome.LAI`;
+`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $all.LAI`;
 
 `rm $intact.bed $all.bed`;
 

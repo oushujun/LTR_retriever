@@ -93,7 +93,7 @@ $tot_all_count = $totLTR*$genome_len/100 if $totLTR ne "NA";
 foreach my $chr (@seqID){
 #estimate LAI based on windows and steps
 	my $win_len = $window;
-	for (my $start=1; $win_len == $window; $start += $step){
+	for (my $start=1; $win_len == $window; $start += $step){ #update $win_len everytime, exit when != $window (occurs at chromosome end)
 		my $end = $start+$window-1;
 		$end = $length{$chr} if $end > $length{$chr};
 		$win_len = $end-$start+1; #the actual size of the window (chromosome end may have win_len < window)
