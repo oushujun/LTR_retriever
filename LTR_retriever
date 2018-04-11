@@ -162,8 +162,14 @@ foreach (@ARGV){
 	$k++;
         }
 
-die "Please specify the input sequence file!\n" unless (defined $genome);
+die "Please specify the input sequence file!\n" unless (defined $genome and -s "$genome">0);
 die "Please specify LTRharvest or LTR_finder screen output file!\n" unless (defined $inharvest or defined $infinder);
+
+#obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
+die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
+die "\nERROR: The specified file $infinder is not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
+die "\nERROR: The specified file $inmgescan is not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
+die "\nERROR: The specified file $inharvest is not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
 
 ##read paths to dependent programs
 my $blastplus='';
@@ -275,7 +281,6 @@ if (`ls $genome*|wc -l`>15){
 ####################################################################
 
 my $index=$genome;
-#die "\nERROR: Genome file $genome not exist.\n\n" if -s "$genome"==0;
 ##check the length of genome sequence IDs, if longer than 15bp, chop it.
 my $id_mode=0; #record the mode of id conversion.
 my $id_len=`grep \\> $genome|perl -ne 'chomp; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
@@ -319,12 +324,6 @@ if ($id_len>15){
 			}
 		}
 	}
-
-##obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
-die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
-die "\nERROR: The specified file $infinder is not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
-die "\nERROR: The specified file $inmgescan is not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
-die "\nERROR: The specified file $inharvest is not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
 
 $date=`date`;
 chomp ($date);
