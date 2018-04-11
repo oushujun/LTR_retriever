@@ -1,7 +1,9 @@
 ##Generate gff3 file from pass list of LTR_retriever
 ##Usage: perl make_gff3.pl genome.fa LTR.pass.list
 ##Author: Shujun Ou (oushujun@msu.edu), Department of Horticulture, Michigan State University
-##Version: 1.0 04-09-2015
+##Version: 
+#	1.0 04-09-2015
+#	2.0 04-11-2018 Add ltr_digest support
 
 
 
@@ -22,7 +24,7 @@ while (<FA>){
 	my ($id, $seq)=(split /\n/, $_, 2);
 	$seq=~s/\s+//g;
 	my $len=length ($seq);
-	print GFF "##sequence-region   seq$j 1 $len\n";
+	print GFF "##sequence-region   $id 1 $len\n";
 	$chr_info.="#$id\n";
 	$seq_flag{$id}=$j;
 	$j++;
@@ -51,8 +53,7 @@ while (<List>){
 		$element_start=$lLTR_start;
 		$element_end=$rLTR_end;
 		}
-my $chr_ori=$chr;
-	$chr="seq$seq_flag{$chr_ori}";
+	my $chr_ori=$chr;
 	print GFF "$chr\t$annotator\trepeat_region\t$element_start\t$element_end\t.\t?\t.\tID=repeat_region$i\n";
 	print GFF "$chr\t$annotator\ttarget_site_duplication\t$lTSD\t.\t?\t.\tParent=repeat_region$i\n" unless $TSD eq "NA";
 	print GFF "$chr\t$annotator\tLTR_retrotransposon\t$lLTR_start\t$rLTR_end\t.\t?\t.\tID=LTR_retrotransposon$i;Parent=repeat_region$i;motif=$motif;tsd=$TSD;ltr_similarity=$sim;seq_number=$seq_flag{$chr_ori}\n";

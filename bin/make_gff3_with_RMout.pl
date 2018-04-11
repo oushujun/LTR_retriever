@@ -20,6 +20,7 @@ while (<RMout>){
 	my ($SW_score, $div, $chr, $chr_len, $element_start, $element_end, $element_length, $left_len, $strand, $TE_ID, $TE_class);
 	($SW_score, $div, $chr, $element_start, $element_end, $left_len, $strand, $TE_ID, $TE_class)=(split)[0,1,4,5,6,7,8,9,10];
 	next if $SW_score!~/[0-9]+/;
+	$TE_ID=~s/_INT-int$/_INT/;
 	$element_length=$element_end-$element_start+1;
 	next if $SW_score<300 and $element_length<80;
 	$strand="-" if $strand eq "C";
