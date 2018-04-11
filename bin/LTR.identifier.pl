@@ -13,6 +13,7 @@ LTR.identifier.pl
 LTR.identifier: Alignment assisted examination of LTR candidates
 Author: Shujun Ou (oushujun\@msu.edu), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
 Version: 
+	4.0 Use Thread::Queue instead of Semaphore for multi-threading 2018/04/01
 	3.6 Enable multi-threading 2016/6/30
 	3.5 Add TE family annotation and age estimation to scn output 2016/6/16
 	3.0 Combine Boundary_correction.pl and LTR.identifier.pl 2016/4/29
