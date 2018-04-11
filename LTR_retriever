@@ -579,6 +579,10 @@ if ($annotation==1){
 	chomp ($date);
 	print "$date\tStart to annotate whole-genome LTR-RTs...\n\t\t\t\tUse -noanno if you don't want whole-genome LTR-RT annotation.\n\n";
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
+	my $genome_size=`grep "total length" $genome.tbl|awk '{print \$3}'`;
+	chomp $genome_size;
+	`perl $script_path/bin/fam_coverage.pl $genome.LTRlib.fa $genome.out $genome_size > $genome.out.fam.size.list`;
+	`perl $script_path/bin/fam_summary.pl $genome.out.fam.size.list $genome_size > $genome.out.superfam.size.list`;
 	`perl $script_path/bin/make_gff3_with_RMout.pl $genome.out`;
 	my $info=`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
 	print "$info";
@@ -601,19 +605,26 @@ print "
 
 Table output for intact LTR-RTs (detailed info)
 	$genome.pass.list (All LTR-RTs)
-	$genome.nmtf.pass.list (Non-TGCA LTR-RTs)\n
+	$genome.nmtf.pass.list (Non-TGCA LTR-RTs)\n";
+print "\t$genome.pass.list.gff3 (GFF3 format for intact LTR-RTs)\n" if $gff3==1;
+
+print "
 LTR-RT library
 	$genome.LTRlib.redundant.fa (All LTR-RTs with redundancy)
 	$index.LTRlib.fa (All non-redundant LTR-RTs)
-	$index.nmtf.LTRlib.fa (Non-TGCA LTR-RTs)\n
+	$index.nmtf.LTRlib.fa (Non-TGCA LTR-RTs)
 ";
-print "GFF3 file for intact LTR-RTs\n\t$genome.pass.list.gff3\n\n" if $gff3==1;
 
-if (-s "$genome.out.LAI"){
-	print "Whole-genome LTR-RT annotation by the non-redundant library (GFF)\n\t$genome.out.gff\n\nLTR Assembly Index (LAI)\n\t$genome.out.LAI\n\n";
-	} else {
-	print "Whole-genome LTR-RT annotation by the non-redundant library (GFF)\n\t$genome.out.gff\n\n" if $annotation==1;
-	}
+print "
+Whole-genome LTR-RT annotation by the non-redundant library
+	$genome.out.gff (GFF format)
+	$genome.out.fam.size.list (LTR family summary)
+	$genome.out.superfam.size.list (LTR superfamily summary)
+" if $annotation==1;
+
+print "
+LTR Assembly Index (LAI)\n\t$genome.out.LAI
+\n" if -s "$genome.out.LAI";
 }
 
 
