@@ -117,7 +117,7 @@ my $TEhmm="$script_path/database/TEfam.hmm";
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
 
 my $threads=4;
-my $version="v1.7.4";
+my $version="v1.8.0";
 #my $scn=''; #store screen output information
 
 my $k=0;
