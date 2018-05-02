@@ -22,7 +22,7 @@ Then modify lines below:
 	RepeatMasker=/your_path_to/RepeatMasker4.0.0/
 	HMMER=/your_path_to/HMMER3.1b2/bin/
 	CDHIT=/your_path_to/CDHIT4.6.1/
-	BLAST=/your_path_to/BLAST2.2.26/bin/ #not required if CDHIT provided`
+	BLAST=/your_path_to/BLAST2.2.26/bin/ #not required if CDHIT provided
 
 
 ### Inputs ###
@@ -36,19 +36,25 @@ LTR_retriever takes multiple LTR-RT candidate inputs including the screen output
 ### Outputs ###
 
 The output of LTR_retriever includes:
-1. A summary table for the identified intact LTR-RTs with coordinate and structural information (.pass.list)
-2. A non-redundant LTR-RT library (exemplar) in the FASTA format (.LTRlib.fa)
-3. A redundant LTR-RT library in the FASTA format (.LTRlib.redundant.fa)
-4. A GFF3 format file for all intact LTR-RTs (.pass.list.gff3)
-5. A GFF format file for the whole-genome LTR-RT annotation (.gff)
-6. A table for the LTR Assembly Index (.LAI)
+1. Intact LTR-RTs with coordinate and structural information
+	a. Summary tables (.pass.list)
+	b. GFF3 format output (.pass.list.gff3)
+2. LTR-RT library
+	a. All non-redundant LTR-RTs (.LTRlib.fa)
+	b. All non-TGCA LTR-RTs (.nmtf.LTRlib.fa)
+	c. All LTR-RTs with redundancy (.LTRlib.redundant.fa)
+3. Whole-genome LTR-RT annotation by the non-redundant library (optional)
+	a. GFF format output (.out.gff)
+	b. LTR family summary (.out.fam.size.list)
+	c. LTR superfamily summary (.out.superfam.size.list)
+4. LTR Assembly Index (.out.LAI, optional)
 
 ### Usage ###
 
-	LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
+	/your_path_to/LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
 For more details about the usage and parameter settings, please see the help page of LTR_retriever by running:
-	./LTR_retriever -h
+	/your_path_to/LTR_retriever -h
 Or refer to the manual document.
 
 For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/issues
