@@ -159,5 +159,5 @@ if (($int<0.1 or $total<5) and $fuse==1){
 	$date=`date`;
 	chomp ($date);
 	print "$date\tResult file: $all.LAI\n\n";
-	print "\t\t\t\tYou may use either LAI or LAI_adj for intraspecific comparison\n\t\t\t\tbut please use ONLY LAI_adj for interspecific comparison\n\n";
+	print "\t\t\t\tYou may use either raw_LAI or LAI for intraspecific comparison\n\t\t\t\tbut please use ONLY LAI for interspecific comparison\n\n";
 	}
