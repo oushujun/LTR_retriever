@@ -114,8 +114,8 @@ if ($qquick != 1 and $iden eq "NA"){
 	$date=`date`;
 	chomp ($date);
 	print "$date\tEstimate the identity of LTR sequences in the genome: $mode\n";
-	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads -q ` if $quick == 1;
-	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads ` if $quick == 0;
+	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads -iden_cut 100 -q ` if $quick == 1;
+	$iden=`perl $script_path/bin/Age_est.pl -RMout $all -genome $genome -blast $blast -t $threads -iden_cut 100 ` if $quick == 0;
 	$iden = $1 if $iden=~/Mean_identity:([0-9.]+)/;
 	}
 
@@ -123,10 +123,11 @@ if ($qquick != 1 and $iden eq "NA"){
 $date=`date`;
 chomp ($date);
 print "$date\tThe identity of LTR sequences: $iden%\n";
-if ($fuse==1){
+if ($fuse==1 and $qquick==0){
 	($iden=92,  print "\n\t\t\t\t【Warning】 The identity drops below the safe limit. Instead, identity of 92% will be used for LAI adjustment.\n\n") if $iden<92;
 	($iden=96,  print "\n\t\t\t\t【Warning】 The identity jumps above the safe limit. Instead, identity of 96% will be used for LAI adjustment.\n\n") if $iden>96;
-	} else {
+	} 
+elsif ($fuse==0 and $qquick==0) {
 	print "\n\t\t\t\t【Warning】 The identity drops below the safe limit under the unlock mode.\n\n" if $iden<92;
 	print "\n\t\t\t\t【Warning】 The identity jumps above the safe limit under the unlock mode.\n\n" if $iden>96;
 	}
