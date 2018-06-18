@@ -17,6 +17,7 @@ my $RMout=''; #Repeatmasker .out file generated using the LTR_retriever library
 my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $read_coverage=0.8; #as an LTR-derived read, at least 80% of the read should be mapped to LTR
 my $evalue=0.0001; #maximum e-value for a real hit
+my $iden_cut=100; #alignment identity cutoff, hits higher than this value will be filtered out. Default: 100 (%)
 my $threads=4;
 my $sample=$ARGV[0];
 
@@ -31,6 +32,7 @@ foreach (@ARGV){
 	$genome=$ARGV[$k+1] if /^-genome$/i;
 	$quick=1 if /^-q$/i;
 	$threads=$ARGV[$k+1] if /^-t$/i;
+	$iden_cut=$ARGV[$k+1] if /^-iden_cut$/i;
 	die $usage if /^-?-h|help$/i;
         $k++;
         }
@@ -133,6 +135,7 @@ while (<Blast>){
 	s/^\s+//;
 	($read1, $chr, $identity1, $alignment_length, $gap, $eval)=(split)[0,1,2,3,5,10];
 #query id, subject id, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score
+	next if $identity1 > $iden_cut; #filter out hits with identity higher than $iden_cut
 	next if $read1 eq $chr; #exclude self alignments
 	my $read_length=$2-$1+1 if $read1=~/:([0-9]+)\.\.([0-9]+)\|/; #obtain the length of the query from the query ID
 	next if $eval>$evalue;
