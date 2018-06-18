@@ -312,7 +312,9 @@ sub Identifier() {
 	my $store_motif="NA";
 	foreach my $num (0..6) { #search for longest TSD. Minimum TSD-seed length: 9-6=3. Search will stop if found TSD flanked by the TGCA motif
 		foreach (0..(6-$num)) {
-			my $seed=substr $lTSD, $_, 3+$num;
+			my $len=3+$num;
+			next if $len > length $lTSD; #avoid substr sequences out of range
+			my $seed=substr $lTSD, $_, $len;
 			if ($rTSD=~/$seed/i){
 				my $temp_motif="NA";
 				my $temp_lf_index=$_+$num+3;
