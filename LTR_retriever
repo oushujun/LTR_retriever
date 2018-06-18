@@ -89,7 +89,7 @@ my $minlen=100; #dft=100, minmum LTR region length
 my $max_ratio=50; #maximum internal/LTR region length ratio
 
 my $bondcorr=1; #1 means correct the boundary (strongly recommended); 0 means not.
-my $flanksim=60; #minimum percent similarity of flanking sequence alignment
+my $flanksim=60; #minimum percent identity of flanking sequence alignment
 my $flankmiss=25; #minimum ambiguous characters in 50bp-flanking sequences
 my $flankaln=0.6; #
 my $tsdaln=" "; #blank means align the TSD (strongly recommended); "-tsdaln" means not.
@@ -272,7 +272,7 @@ $date=`date +"%m-%d-%y_%H%M"`;
 chomp ($date);
 if (`ls $genome*|wc -l`>15){
 	print "\n\t\t\t\tPrevious LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
-	`mkdir LTRretriever-pre$date; mv $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* LTRretriever-pre$date/ 2>/dev/null`; # if `ls $genome*|wc -l`>15;
+	`mkdir LTRretriever-pre$date; mv $genome*.out $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* LTRretriever-pre$date/ 2>/dev/null`;
 }
 
 
@@ -555,9 +555,9 @@ print "$date\tFinal LTR-RT library entries: $lib_count
 \t\t\t\tFinal LTR-RT library size (bit): $lib_size\n\n";
 
 ##Format outputs and cleanup intermediate files
-`echo '\#LTR_loc        Category        Motif   TSD     5'_TSD        3'_TSD       Internal        Similarity      Strand  SuperFamily  TE_type     Insertion_Time' > $genome.pass.list.unq`;
+`echo '\#LTR_loc        Category        Motif   TSD     5'_TSD        3'_TSD       Internal        Identity      Strand  SuperFamily  TE_type     Insertion_Time' > $genome.pass.list.unq`;
 `sort -uV -k1,4 $genome.pass.list >> $genome.pass.list.unq; mv $genome.pass.list.unq $genome.pass.list`;
-`echo '\#LTR_loc	Category	Motif	TSD	5'_TSD	3'_TSD	Internal	Similarity	Strand	SuperFamily	TE_type	Insertion_Time' > $genome.nmtf.pass.list.unq`;
+`echo '\#LTR_loc	Category	Motif	TSD	5'_TSD	3'_TSD	Internal	Identity	Strand	SuperFamily	TE_type	Insertion_Time' > $genome.nmtf.pass.list.unq`;
 `sort -uV -k1,4 $genome.nmtf.pass.list >> $genome.nmtf.pass.list.unq; mv $genome.nmtf.pass.list.unq $genome.nmtf.pass.list`;
 
 #update status
