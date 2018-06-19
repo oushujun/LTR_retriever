@@ -12,7 +12,7 @@ To run LTR_retriever you need to provide the paths to the following dependent pr
 4. RepeatMasker (http://www.repeatmasker.org/).
 
 Simply modify the 'paths' file in the LTR_retriever directory
-	`vi /your_path_to/LTR_retriever/paths`
+    vi /your_path_to/LTR_retriever/paths
 
 Then modify lines below:
 
