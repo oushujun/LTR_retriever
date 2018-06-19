@@ -583,6 +583,7 @@ if ($annotation==1){
 	chomp $genome_size;
 	`perl $script_path/bin/fam_coverage.pl $genome.LTRlib.fa $genome.out $genome_size > $genome.out.fam.size.list`;
 	`perl $script_path/bin/fam_summary.pl $genome.out.fam.size.list $genome_size > $genome.out.superfam.size.list`;
+	`perl $script_path/bin/LTR_sum.pl -genome $genome -all $genome.out > $genome.out.LTR.distribution.txt`;
 	`perl $script_path/bin/make_gff3_with_RMout.pl $genome.out`;
 	my $info=`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
 	print "$info";
