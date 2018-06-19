@@ -11,10 +11,8 @@ To run LTR_retriever you need to provide the paths to the following dependent pr
 3. hmmsearch in the HMMER package (http://hmmer.org/), and
 4. RepeatMasker (http://www.repeatmasker.org/).
 
-Simply modify the 'paths' file in the same directory
-In your terminal, type:
-
-	vi /your_path_to/LTR_retriever/paths
+Simply modify the 'paths' file in the LTR_retriever directory
+	`vi /your_path_to/LTR_retriever/paths`
 
 Then modify lines below:
 
@@ -43,18 +41,28 @@ The output of LTR_retriever includes:
 	a. All non-redundant LTR-RTs (.LTRlib.fa)
 	b. All non-TGCA LTR-RTs (.nmtf.LTRlib.fa)
 	c. All LTR-RTs with redundancy (.LTRlib.redundant.fa)
-3. Whole-genome LTR-RT annotation by the non-redundant library (optional)
+3. Whole-genome LTR-RT annotation by the non-redundant library
 	a. GFF format output (.out.gff)
 	b. LTR family summary (.out.fam.size.list)
 	c. LTR superfamily summary (.out.superfam.size.list)
-4. LTR Assembly Index (.out.LAI, optional)
+	d. LTR distribution on each chromosome (.out.LTR.distribution.txt)
+4. LTR Assembly Index (.out.LAI)
 
 ### Usage ###
 
-	/your_path_to/LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
+To run LTR_retriever:
 
-For more details about the usage and parameter settings, please see the help page of LTR_retriever by running:
-	/your_path_to/LTR_retriever -h
+	`/your_path_to/LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]`
+
+To run LAI:
+	`/your_path_to/LAI -genome genome.fa -intact intact.pass.list -all genome.out [options]`
+
+For more details about the usage and parameter settings, please see the help pages by running:
+	`/your_path_to/LTR_retriever -h`
+	`/your_path_to/LAI -h`
+	
 Or refer to the manual document.
+
+
 
 For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/issues
