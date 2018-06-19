@@ -272,7 +272,7 @@ $date=`date +"%m-%d-%y_%H%M"`;
 chomp ($date);
 if (`ls $genome*|wc -l`>15){
 	print "\n\t\t\t\tPrevious LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
-	`mkdir LTRretriever-pre$date; mv $genome*.out $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* LTRretriever-pre$date/ 2>/dev/null`;
+	`mkdir LTRretriever-pre$date; mv $genome*.out $genome*.out.gff* $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* $genome*.out*size.list $genome.out.LTR.distribution.txt LTRretriever-pre$date/ 2>/dev/null`;
 }
 
 
