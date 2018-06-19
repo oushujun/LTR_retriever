@@ -35,31 +35,34 @@ LTR_retriever takes multiple LTR-RT candidate inputs including the screen output
 
 The output of LTR_retriever includes:
 1. Intact LTR-RTs with coordinate and structural information
-	a. Summary tables (.pass.list)
-	b. GFF3 format output (.pass.list.gff3)
+	- Summary tables (.pass.list)
+	- GFF3 format output (.pass.list.gff3)
 2. LTR-RT library
-	a. All non-redundant LTR-RTs (.LTRlib.fa)
-	b. All non-TGCA LTR-RTs (.nmtf.LTRlib.fa)
-	c. All LTR-RTs with redundancy (.LTRlib.redundant.fa)
+	- All non-redundant LTR-RTs (.LTRlib.fa)
+	- All non-TGCA LTR-RTs (.nmtf.LTRlib.fa)
+	- All LTR-RTs with redundancy (.LTRlib.redundant.fa)
 3. Whole-genome LTR-RT annotation by the non-redundant library
-	a. GFF format output (.out.gff)
-	b. LTR family summary (.out.fam.size.list)
-	c. LTR superfamily summary (.out.superfam.size.list)
-	d. LTR distribution on each chromosome (.out.LTR.distribution.txt)
+	- GFF format output (.out.gff)
+	- LTR family summary (.out.fam.size.list)
+	- LTR superfamily summary (.out.superfam.size.list)
+	- LTR distribution on each chromosome (.out.LTR.distribution.txt)
 4. LTR Assembly Index (.out.LAI)
 
 ### Usage ###
 
 To run LTR_retriever:
 
-	`/your_path_to/LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]`
+	/your_path_to/LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
 To run LAI:
-	`/your_path_to/LAI -genome genome.fa -intact intact.pass.list -all genome.out [options]`
+
+	/your_path_to/LAI -genome genome.fa -intact intact.pass.list -all genome.out [options]
 
 For more details about the usage and parameter settings, please see the help pages by running:
-	`/your_path_to/LTR_retriever -h`
-	`/your_path_to/LAI -h`
+
+    /your_path_to/LTR_retriever -h
+
+	/your_path_to/LAI -h
 	
 Or refer to the manual document.
 
