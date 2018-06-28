@@ -129,6 +129,6 @@ if ($iden ne "NA"){
 	} else {
 	$tot_LAI_adj = "NA";
 	}
-print "#Chromosome\tFrom\tTo\tIntact\tTotal\traw_LAI\tLAI\n";
+print "Chr\tFrom\tTo\tIntact\tTotal\traw_LAI\tLAI\n";
 print "whole_genome\t1\t$genome_len\t$tot_int_per\t$tot_all_per\t$tot_LAI\t$tot_LAI_adj\n$output"; #print out all LAI info
 

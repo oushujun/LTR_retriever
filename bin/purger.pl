@@ -10,7 +10,7 @@ perl purger.pl -blast blast_outfmt6 -seq seq.fa [options]
 Options:
 	-eval	[0-1]	e-value cutoff; discard the hit if >= this number; default 0.001
 	-len	[int]	length cutoff; discard the hit if < this number; default 90 (bp)
-	-iden	[0-100]	identity cutoff; discard the hit if <= tis number; default 30 (%)
+	-iden	[0-100]	identity cutoff; discard the hit if <= tis number; default 35 (%)
 	-cov	[0-1]	coverage cutoff; discard the entire sequence if >= this number; default 1
 	-purge	[0|1]	purge switch; switch on=1(default)/off=0 to clean up aligned region and joint unaligned sequences
 
@@ -34,7 +34,7 @@ my $seq; #provide the sequence to be purged
 my $blast; #provide the blast outfmt=6 result
 my $evalue=0.001; #evalue cutoff for blast entries. Evalues lower than this cutoff is considered a real alignment.
 my $length=90; #length cutoff (bp, default 90) to be considered as a real alignment (= alignment length - mismatch)
-my $identity=30; #identity cutoff (%, default 30) to be considered as a read alignment
+my $identity=35; #identity cutoff (%, default 35) to be considered as a read alignment
 my $purge=1; #switch on=1(default)/off=0 to clean up aligned region and joint unaligned sequences
 my $coverage=1; #if the excluded portion is too long (default 1, [0-1]), discard the entire sequence
 

@@ -45,7 +45,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 -procovTE     [0-1]	maximum portion of allowed for cumulated DNA TE database and LINE database 
 			lignments (default 0.7)
 -procovPL     [0-1]	maximum portion allowed for cumulated plant protein database alignments (default 0.7)
--prolensig   [INT]	minimum alignment length (bp) for LINE/DNA transposase alignment (default 90)
+-prolensig   [INT]	minimum alignment length (aa) for LINE/DNA transposase/plant protein alignment (default 30)
 
 【Library options】
 -blastclust  [[STRING]]	trigger to use blastclust and customize parameters 
@@ -97,7 +97,7 @@ my @motif=qw/TCCA TGCT TACA TACT TGGA TATA TGTA TGCA/; #known motifs. The last o
 
 my $procovTE=0.7; #for DNA TE and LINE alignment, propotional, cumulated alignment coverage more than this will be treated as protein contained
 my $procovPL=0.7; #for plant protein alignment, propotional, cumulated alignment coverage more than this will be treated as protein contained
-my $prolensig=90; #bp, hits with alignment length less than this number will not be counted.
+my $prolensig=30; #aa, hits with alignment length less than this number will not be counted.
 
 my $blastclust=0; #1 for using blastclust as clustering method, 0 for no.
 my $cdhit=1; #1 for using cdhit as clustering method, 0 for no.
