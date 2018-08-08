@@ -2,6 +2,8 @@
 
 LTR_retriever is a command line program (in Perl) for accurate identification of LTR retrotransposons (LTR-RTs) from outputs of LTRharvest, LTR_FINDER, and/or MGEScan-LTR and generating non-redundant LTR-RT library for genome annotations.
 
+By default, the program will generate whole-genome LTR-RT annotation and the LTR Assembly Index (LAI) for evaluations of the assembly continuity of the input genome. Users can also run LAI separately (see `Usage`).
+
 ### Installation ###
 
 To run LTR_retriever you need to provide the paths to the following dependent programs.
