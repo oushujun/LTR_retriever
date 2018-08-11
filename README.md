@@ -70,5 +70,14 @@ For more details about the usage and parameter settings, please see the help pag
 Or refer to the manual document.
 
 
-
 For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/issues
+
+### Citations ###
+
+For LTR_retriever, please cite:
+
+`Ou S. and Jiang N. (2018). LTR_retriever: A Highly Accurate and Sensitive Program for Identification of Long Terminal Repeat Retrotransposons. Plant Physiol. 176(2): 1410-1422.`
+
+For LAI, please cite:
+
+`Ou S., Chen J. and Jiang N. (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. gky730:` https://doi.org/10.1093/nar/gky730
