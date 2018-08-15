@@ -10,7 +10,7 @@ To run LTR_retriever you need to provide the paths to the following dependent pr
 1. makeblastdb, blastn, and blastx in the BLAST+ package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
 2. cd-hit-est in the CDHIT package (http://weizhongli-lab.org/cd-hit/) OR 
    blastclust in the BLAST package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy/2.2.25/),
-3. hmmsearch in the HMMER package (http://hmmer.org/), and
+3. hmmsearch in the HMMER package (http://hmmer.org/; v3.1b2 or higher), and
 4. RepeatMasker (http://www.repeatmasker.org/).
 
 Simply modify the 'paths' file in the LTR_retriever directory
