@@ -216,7 +216,7 @@ sub Identifier() {
 	$decision="false" if $pair==0;
 ##element age estimation by T=K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
 ###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is the inverse of identity ($sim).
-	$sim=$sim/100;
+	$sim=sprintf ("%.4f", $sim/100);
 	my $JK=1;
 	if ($sim>=0.34){
 		$JK=-3/4*log(1-4*(1-$sim)/3); #low identity sequence could not be adjusted by the JK formula
@@ -268,10 +268,11 @@ sub Identifier() {
 	
 ##Start structural analysis
 	my ($ltr1_s, $ltr1_e, $ltr2_s, $ltr2_e)=@info[3,4,6,7];
-	my $up1_seq=substr $seq, 0, $ltr1_s-$seq_start+10; #start (i.e. 50bp upstream) + 10bp lLTR
-	my $do1_seq=substr $seq, $ltr1_e-$seq_start-9, 60; #10bp lLTR + 50bp internal
-	my $up2_seq=substr $seq, $ltr2_s-$seq_start-50, 60; #50bp internal + 10bp rLTR
-	my $do2_seq=substr $seq, $ltr2_e-$seq_start-9; #10bp rLTR + end (i.e. 50bp downstream)
+	my ($up1_seq, $do1_seq, $up2_seq, $do2_seq)=('','','','');
+	$up1_seq=substr $seq, 0, $ltr1_s-$seq_start+10; #start (i.e. 50bp upstream) + 10bp lLTR
+	$do1_seq=substr $seq, $ltr1_e-$seq_start-9, 60; #10bp lLTR + 50bp internal
+	$up2_seq=substr $seq, $ltr2_s-$seq_start-50, 60; #50bp internal + 10bp rLTR
+	$do2_seq=substr $seq, $ltr2_e-$seq_start-9; #10bp rLTR + end (i.e. 50bp downstream)
 
 ##boundary missing rate control
 	my $bond_miss=0;
@@ -282,15 +283,16 @@ sub Identifier() {
 		}
 
 ##boundary alignment
-	my ($ab, $ac, $bc, $bd, $ad);#alignment results between regions
+	my ($ac, $bc, $bd, $ad)=('','','','');#alignment results between regions
+	my ($LTR1_up, $LTR1_do, $LTR2_up, $LTR2_do)=('','','','');
 #	----||||||||----....----||||||||----
 #	 a   5'LTR   b       c   3'LTR   d
 #	up60[1]   do60[1]   up60[2]   do60[2]
 
-	my $LTR1_up=">$chr:$id\[1]\\n$up1_seq";
-	my $LTR1_do=">$chr:$id\[1]\\n$do1_seq";
-	my $LTR2_up=">$chr:$id\[2]\\n$up2_seq";
-	my $LTR2_do=">$chr:$id\[2]\\n$do2_seq";
+	$LTR1_up=">$chr:$id\[1]\\n$up1_seq";
+	$LTR1_do=">$chr:$id\[1]\\n$do1_seq";
+	$LTR2_up=">$chr:$id\[2]\\n$up2_seq";
+	$LTR2_do=">$chr:$id\[2]\\n$do2_seq";
 	$ac=`perl $script_path/align_flanking.pl $a_cutoff $s_cutoff $w_size $boundary_ctrl \"$LTR1_up\" \"$LTR2_up\" $blastplus`;
 	$bd=`perl $script_path/align_flanking.pl $a_cutoff $s_cutoff $w_size $boundary_ctrl \"$LTR1_do\" \"$LTR2_do\" $blastplus`;
 	$ac=~s/l3[ATGCN\-?:]+\s+l4[ATCGN\-?:]+\s+(r3[ATGCN\-?:]+\s+r4[ATCGN\-?:]+\s+)HT-align:[0|1]\s+/$1/i;
@@ -304,8 +306,9 @@ sub Identifier() {
 
 ##identify TSD
 	my ($TSD_ls, $TSD_le, $TSD_rs, $TSD_re)=(0,0,0,0);
-	my $lTSD=substr $up1_seq, -18, 11; #8bp TSD + 2bp motif + 1bp lLTR
-	my $rTSD=substr $do2_seq, 7, 11; #1bp rLTR + 2bp motif + 8bp TSD
+	my ($lTSD, $rTSD)=('','');
+	$lTSD=substr $up1_seq, -18, 11; #8bp TSD + 2bp motif + 1bp lLTR
+	$rTSD=substr $do2_seq, 7, 11; #1bp rLTR + 2bp motif + 8bp TSD
 	my $TSD="NA\t..\t..";
 	my $probTSD="NA";
 	my $motif="NA";
@@ -313,8 +316,9 @@ sub Identifier() {
 	foreach my $num (0..6) { #search for longest TSD. Minimum TSD-seed length: 9-6=3. Search will stop if found TSD flanked by the TGCA motif
 		foreach (0..(6-$num)) {
 			my $len=3+$num;
-			next if $len > length $lTSD; #avoid substr sequences out of range
-			my $seed=substr $lTSD, $_, $len;
+			next if ($len > length $lTSD) or (length $lTSD == 0) or (length $rTSD == 0); #avoid substr sequences out of range
+			my $seed="NA";
+			$seed=substr $lTSD, $_, $len;
 			if ($rTSD=~/$seed/i){
 				my $temp_motif="NA";
 				my $temp_lf_index=$_+$num+3;
@@ -324,8 +328,11 @@ sub Identifier() {
 				$temp_motif=(substr $lTSD, $temp_lf_index, 2).(substr $rTSD, $temp_rf_index, 2);
 				$probTSD=$seed if uc $probTSD eq "NA"; #assign initial TSD to $probTSD
 				$probTSD=$seed if (uc $store_motif ne "TGCA"); #this line will guarantee to get the longest nonTGCA motif before encountering TGCA
+			#	$probTSD=$seed if (uc $store_motif ne "TGCA"); #this line will guarantee to get the longest nonTGCA motif before encountering TGCA
 				$probTSD=$seed if ($temp_motif=~/TGCA/i and (uc $store_motif eq "TGCA") and (length $seed > length $probTSD)); #update to the longest TGCA motif
-				$store_motif="TGCA" if $temp_motif=~/TGCA/i;
+				$store_motif="TGCA" if ($temp_motif=~/TGCA/i and length $probTSD > 3); #only store the TGCA motif when TSD is longer than 3bp to avoid slippage.
+				$store_motif=$temp_motif if ($store_motif ne "TGCA" and length $probTSD == 5); #take the non-TGCA motif when TSD equals to 5bp.
+			#	$store_motif="TGCA" if $temp_motif=~/TGCA/i;
 				}
 			}
 		}
