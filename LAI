@@ -11,6 +11,7 @@ use File::Basename;
 
 my $usage="
 The LTR Assembly Index (LAI) is developed to evaluate the assembly continunity of repetitive sequences
+
 Usage: ./LAI -genome genome.fa -intact intact.pass.list -all genome.out [options]
 Options:
 	-genome [file]	The genome file that is used to generate everything.
@@ -45,7 +46,7 @@ my $monoploid=''; #A list of sequence names from the same monoploid (1x) for plo
 my $genome='';
 my $intact='';
 my $all='';
-my $version="beta3";
+my $version="beta3.1";
 
 my $k=0;
 foreach (@ARGV){
@@ -75,6 +76,11 @@ print "
 ### LTR Assembly Index (LAI) $version ###
 ######################################\n
 Developer: Shujun Ou
+
+Please cite:
+
+Ou S., Chen J. and Jiang N. (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. gky730: https://doi.org/10.1093/nar/gky730
+
 Parameters: @ARGV\n\n\n";
 
 my $date=`date`;
