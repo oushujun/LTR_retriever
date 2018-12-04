@@ -34,7 +34,8 @@ while (<File>){
 		elsif ($id_mode==2){
 			$chr=$1 if $chr=~/([0-9]+)/;
 			}
-		print "$from $to $LTR_len $from $lLTR_end $lLTR_len $rLTR_str $to $rLTR_len $similarity $chr $chr $direction $TSD $motif\n";
+		print "$from $to $LTR_len $from $lLTR_end $lLTR_len $rLTR_str $to $rLTR_len $similarity $chr\n";
+#		print "$from $to $LTR_len $from $lLTR_end $lLTR_len $rLTR_str $to $rLTR_len $similarity $chr $chr $direction $TSD $motif\n";
 		$from=$to=$LTR_len=$lLTR_len=$rLTR_len=$lLTR_end=$rLTR_str=$similarity=$TSD=$motif=$direction="NA";
 		}
 	}
