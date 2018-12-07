@@ -217,6 +217,7 @@ sub Identifier() {
 ##element age estimation by T=K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
 ###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is the inverse of identity ($sim).
 	$sim=sprintf ("%.4f", $sim/100);
+	$info[9]=$sim;
 	my $JK=1;
 	if ($sim>=0.34){
 		$JK=-3/4*log(1-4*(1-$sim)/3); #low identity sequence could not be adjusted by the JK formula
@@ -312,8 +313,13 @@ sub Identifier() {
 	my $TSD="NA\t..\t..";
 	my $probTSD="NA";
 	my $motif="NA";
-	my $store_motif="NA";
-	foreach my $num (0..6) { #search for longest TSD. Minimum TSD-seed length: 9-6=3. Search will stop if found TSD flanked by the TGCA motif
+#	my $store_motif="NA";
+	my $first_motif="NA"; #first tier: 5bp TSD + TGCA motif
+	my $second_motif="NA"; #second tier: 5bp TSD + non-TGCA motif
+	my $third_motif="NA"; #third tier: <5bp TSD + TGCA motif
+	my $fourth_motif="NA"; #fourth tier: <5bp TSD + non-TGCA motif
+	my $fifth_motif="NA"; #fifth tier: >5bp TSD
+	foreach my $num (0..6) { #search for longest TSD. Minimum TSD-seed length: 9-6=3.
 		foreach (0..(6-$num)) {
 			my $len=3+$num;
 			next if ($len > length $lTSD) or (length $lTSD == 0) or (length $rTSD == 0); #avoid substr sequences out of range
@@ -326,24 +332,44 @@ sub Identifier() {
 				$temp_lf_index=(length $lTSD)-1 if $temp_lf_index>(length $lTSD)-1;
 				$temp_rf_index=0 if $temp_rf_index<0;
 				$temp_motif=(substr $lTSD, $temp_lf_index, 2).(substr $rTSD, $temp_rf_index, 2);
-				$probTSD=$seed if uc $probTSD eq "NA"; #assign initial TSD to $probTSD
-				$probTSD=$seed if (uc $store_motif ne "TGCA"); #this line will guarantee to get the longest nonTGCA motif before encountering TGCA
-			#	$probTSD=$seed if (uc $store_motif ne "TGCA"); #this line will guarantee to get the longest nonTGCA motif before encountering TGCA
-				$probTSD=$seed if ($temp_motif=~/TGCA/i and (uc $store_motif eq "TGCA") and (length $seed > length $probTSD)); #update to the longest TGCA motif
-				$store_motif="TGCA" if ($temp_motif=~/TGCA/i and length $probTSD > 3); #only store the TGCA motif when TSD is longer than 3bp to avoid slippage.
-				$store_motif=$temp_motif if ($store_motif ne "TGCA" and length $probTSD == 5); #take the non-TGCA motif when TSD equals to 5bp.
-			#	$store_motif="TGCA" if $temp_motif=~/TGCA/i;
+			#	$probTSD=$seed if uc $probTSD eq "NA"; #assign initial TSD to $probTSD
+				$probTSD=$seed; #assign $seed to $probTSD
+				
+				$first_motif="TGCA_$probTSD" if ($temp_motif=~/TGCA/i and length $probTSD == 5); #first preferred 5bp TSD + TGCA motif
+				$second_motif="${temp_motif}_$probTSD" if (uc $temp_motif ne "TGCA" and length $probTSD == 5); #take the non-TGCA motif when TSD equals to 5bp.
+				$third_motif="${temp_motif}_$probTSD" if ($temp_motif=~/TGCA/i and length $probTSD < 5 and length $probTSD > length $third_motif -5 ) ; #get the logest TSD (<5)
+				$fourth_motif="${temp_motif}_$probTSD" if (uc $temp_motif ne "TGCA" and length $probTSD < 5 and length $probTSD > length $third_motif -5 ); #get the logest TSD (<5)
+				$fifth_motif="${temp_motif}_$probTSD" if (length $probTSD > 5 and length $probTSD > length $third_motif -5 ); #get the logest TSD (>5)
+
+#				$probTSD=$seed if (uc $store_motif ne "TGCA"); #this line will guarantee to get the longest nonTGCA motif before encountering TGCA
+#				$probTSD=$seed if ($temp_motif=~/TGCA/i and (uc $store_motif eq "TGCA") and (length $seed > length $probTSD)); #update to the longest TGCA motif
+#				$store_motif="TGCA" if ($temp_motif=~/TGCA/i and length $probTSD > 3); #only store the TGCA motif when TSD is longer than 3bp to avoid slippage.
+#				$store_motif=$temp_motif if ($store_motif ne "TGCA" and length $probTSD == 5); #take the non-TGCA motif when TSD equals to 5bp.
+			#	$store_motif="TGCA" if $temp_motif=~/TGCA/i; #obsolete
 				}
 			}
 		}
-
-	my $TSDlen=length $probTSD;
-	if ($TSDlen<=5 and uc $probTSD ne "NA"){
-		$motif=$store_motif;
+print "$first_motif\t$second_motif\t$third_motif\t$fourth_motif\t$fifth_motif\n";
+	if ($first_motif ne "NA"){
+		($motif, $probTSD)=($1, $2) if $first_motif=~/^([ATCGN]+)_([ATCGN]+)$/;
+		} elsif ($second_motif ne "NA"){
+		($motif, $probTSD)=($1, $2) if $second_motif=~/^([ATCGN]+)_([ATCGN]+)$/;
+		} elsif ($third_motif ne "NA"){
+		($motif, $probTSD)=($1, $2) if $third_motif=~/^([ATCGN]+)_([ATCGN]+)$/;
+		} elsif ($fourth_motif ne "NA"){
+		($motif, $probTSD)=($1, $2) if $fourth_motif=~/^([ATCGN]+)_([ATCGN]+)$/;
+		} elsif ($fifth_motif ne "NA"){
+		($motif, $probTSD)=($1, $2) if $fifth_motif=~/^([ATCGN]+)_([ATCGN]+)$/;
 		}
 
+	my $TSDlen=length $probTSD;
+#	if ($TSDlen<=5 and uc $probTSD ne "NA"){
+#		$motif=$store_motif;
+#		}
+
 ##Correction of TSDs > 5bp
-	elsif ($TSDlen>5 and lc $decision eq "pass") {
+#	elsif ($TSDlen>5 and lc $decision eq "pass") {
+	if ($TSDlen>5 and lc $decision eq "pass") {
 		foreach my $std_motif (@motif){
 			my ($lm, $rm)=($1, $2) if $std_motif=~/(..)(..)/;
 			my $lstart=rindex $lTSD, $lm;
@@ -404,7 +430,6 @@ sub Identifier() {
 		$info[6]=$ltr2_s;
 		$info[7]=$ltr2_e;
 		$info[8]=$ltr2_e-$ltr2_s+1;
-		$info[9]=$sim;
 		$info[11]=$chr;
 		$info[13]=$probTSD;
 		$info[14]="$TSD_ls..$TSD_le";
