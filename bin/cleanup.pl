@@ -9,6 +9,7 @@ my $usage="
 		-Nscreen	[0|1]	Enable (1) or disable (0) the -nc parameter; default: 1
 		-nc		[int]	Ambuguous sequence len cutoff; discard the entire sequence if > this number; default: 0
 		-nr		[0-1]	Ambuguous sequence percentage cutoff; discard the entire sequence if > this number; default: 1
+		-minlen		[int]	Minimum sequence length filter after clean up; default: 100 (bp)
 		-cleanN		[0|1]	Retain (0) or remove (1) the -misschar taget in output sequence; default: 0
 		-trf		[0|1]	Enable (1) or disable (0) tandem repeat finder (trf); default: 1
 		-trf_path	path	Path to the trf program
@@ -29,6 +30,7 @@ my $target="n";
 my $func_nc=1; #1, do $n_count screening
 my $n_count=0; #count the $target in each sequence, if it exceeds this number, it will be discarted.
 my $n_rate=1; #count the $target in each sequence, if it exceeds this percentage, it will be discarted.
+my $minlen=100; #Minimum sequence length filter after clean up; default: 100 (bp)
 my $align_score=1000; #-e para, dft:1000 
 my $max_seed=2000; #maximum period size to report
 my $cleanN=0; #1 will remove $target="n" in output sequence
@@ -42,6 +44,7 @@ foreach (@ARGV){
 	$func_nc=0 if /^-Nscreen$/i;
 	$n_count=$ARGV[$k+1] if /^-nc$/i;
 	$n_rate=$ARGV[$k+1] if /^-nr$/i;
+	$minlen=$ARGV[$k+1] if /^-minlen$/i;
 	$align_score=$ARGV[$k+1] if /^-minscore$/i;
 	$file=$ARGV[$k+1] if /^-f$/i;
 	$cleanN=1 if /^-cleanN$/i;
@@ -73,6 +76,8 @@ while (<File>){
 	my $count=0;
 	$count++ while $seq=~/$target/gi;
 	my $count_rate=$count/$length;
+
+#missing control
 	if ($count_rate>=$n_rate){
 		print Info "$id\t$count_rate missing\n";
 		$mark=1;
@@ -81,14 +86,21 @@ while (<File>){
 		print Info "$id\t$count sequence gap\n";
 		$mark=1;
 		}
+
+#tandem sequence control
 	if (exists $tandem{$id}){
 		print Info "$id\ttandem sequence\n";
 		$mark=1;
 		}
-	unless ($mark==1){
-		$seq=~s/$target//gi if $cleanN==1;
-		print ">$id\n$seq\n";
+
+#remove missing seq and length control
+	if ($cleanN==1){
+		$seq=~s/$target//gi;
+		my $len=length $seq;
+		(print Info "$id\tOnly $len bp left after cleanup\n" and $mark=1) if $len < $minlen;
 		}
+
+	print ">$id\n$seq\n" unless $mark==1;
 	}
 $/="\n";
 close Info;
