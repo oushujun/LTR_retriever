@@ -12,7 +12,8 @@ my $version="
 LTR.identifier.pl
 LTR.identifier: Alignment assisted examination of LTR candidates
 Author: Shujun Ou (oushujun\@msu.edu), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
-Version: 
+Version:
+	4.5 Improve TSD-motif identification 2018/12/08
 	4.0 Use Thread::Queue instead of Semaphore for multi-threading 2018/04/01
 	3.6 Enable multi-threading 2016/6/30
 	3.5 Add TE family annotation and age estimation to scn output 2016/6/16
@@ -313,7 +314,6 @@ sub Identifier() {
 	my $TSD="NA\t..\t..";
 	my $probTSD="NA";
 	my $motif="NA";
-#	my $store_motif="NA";
 	my $first_motif="NA"; #first tier: 5bp TSD + TGCA motif
 	my $second_motif="NA"; #second tier: 5bp TSD + known non-TGCA motif
 	my $third_motif="NA"; #third tier: <5bp TSD + TGCA motif
@@ -323,7 +323,7 @@ sub Identifier() {
 	foreach my $num (0..6) { #search for longest TSD. Minimum TSD-seed length: 9-6=3.
 		foreach (0..(6-$num)) {
 			my $len=3+$num;
-			next if ($len > length $lTSD) or (length $lTSD == 0) or (length $rTSD == 0); #avoid substr sequences out of range
+			next if ($len + $_ > length $lTSD) or (length $lTSD == 0) or (length $rTSD == 0); #avoid substr sequences out of range
 			my $seed="NA";
 			$seed=substr $lTSD, $_, $len;
 			if ($rTSD=~/$seed/i){
@@ -333,11 +333,9 @@ sub Identifier() {
 				$temp_lf_index=(length $lTSD)-1 if $temp_lf_index>(length $lTSD)-1;
 				$temp_rf_index=0 if $temp_rf_index<0;
 				$temp_motif=(substr $lTSD, $temp_lf_index, 2).(substr $rTSD, $temp_rf_index, 2);
-			#	$probTSD=$seed if uc $probTSD eq "NA"; #assign initial TSD to $probTSD
-				$probTSD=$seed; #assign $seed to $probTSD
+				$probTSD=$seed if defined $seed; #assign $seed to $probTSD
 				
 				$first_motif="TGCA_$probTSD" if ($temp_motif=~/TGCA/i and length $probTSD == 5); #first preferred 5bp TSD + TGCA motif
-#				$second_motif="${temp_motif}_$probTSD" if (uc $temp_motif ne "TGCA" and length $probTSD == 5); #take the non-TGCA motif when TSD equals to 5bp.
 				if (uc $temp_motif ne "TGCA" and length $probTSD == 5){
 					foreach my $std_motif (@motif){
 						$second_motif="${temp_motif}_$probTSD" if uc $temp_motif eq uc $std_motif; #identify 5bp TSD + known non-TGCA motif
@@ -348,16 +346,11 @@ sub Identifier() {
 				$third_motif="${temp_motif}_$probTSD" if ($temp_motif=~/TGCA/i and (length $probTSD < 5) and (length $probTSD > (length $third_motif) -5) ) ; #get the logest TSD (<5)
 				$fifth_motif="${temp_motif}_$probTSD" if (uc $temp_motif ne "TGCA" and (length $probTSD < 5) and (length $probTSD > (length $third_motif) -5) ); #get the logest TSD (<5)
 				$sixth_motif="${temp_motif}_$probTSD" if (length $probTSD > 5 and (length $probTSD > (length $third_motif) -5) ); #get the logest TSD (>5)
-
-#				$probTSD=$seed if (uc $store_motif ne "TGCA"); #this line will guarantee to get the longest nonTGCA motif before encountering TGCA
-#				$probTSD=$seed if ($temp_motif=~/TGCA/i and (uc $store_motif eq "TGCA") and (length $seed > length $probTSD)); #update to the longest TGCA motif
-#				$store_motif="TGCA" if ($temp_motif=~/TGCA/i and length $probTSD > 3); #only store the TGCA motif when TSD is longer than 3bp to avoid slippage.
-#				$store_motif=$temp_motif if ($store_motif ne "TGCA" and length $probTSD == 5); #take the non-TGCA motif when TSD equals to 5bp.
-			#	$store_motif="TGCA" if $temp_motif=~/TGCA/i; #obsolete
 				}
 			}
 		}
-print "$first_motif\t$second_motif\t$third_motif\t$fourth_motif\t$fifth_motif\t$sixth_motif\n";
+
+#Get TSD and motif with preference
 	if ($first_motif ne "NA"){
 		($motif, $probTSD)=($1, $2) if $first_motif=~/^([ATCGN]+)_([ATCGN]+)$/;
 		} elsif ($second_motif ne "NA"){
@@ -373,12 +366,8 @@ print "$first_motif\t$second_motif\t$third_motif\t$fourth_motif\t$fifth_motif\t$
 		}
 
 	my $TSDlen=length $probTSD;
-#	if ($TSDlen<=5 and uc $probTSD ne "NA"){
-#		$motif=$store_motif;
-#		}
 
 ##Correction of TSDs > 5bp
-#	elsif ($TSDlen>5 and lc $decision eq "pass") {
 	if ($TSDlen>5 and lc $decision eq "pass") {
 		foreach my $std_motif (@motif){
 			my ($lm, $rm)=($1, $2) if $std_motif=~/(..)(..)/;
@@ -474,9 +463,6 @@ print "$first_motif\t$second_motif\t$third_motif\t$fourth_motif\t$fifth_motif\t$
 		unless ($ac=~/right/i and $bd=~/left/i and $motif ne "NA"){
 			$decision="truncated";
 			}
-#		if (uc $motif ne "TGCA"){
-#			$decision="notperfect" if (length $TSD != 5 or $motif !~ /^T/i);
-#			}
 		unless (uc $motif eq "TGCA" or (length $probTSD == 5 and $motif =~ /^T/i)){ #TGCA + varying length TSD = pass; Txxx + 5bp TSD = pass
 			$decision="truncated";
 			}
