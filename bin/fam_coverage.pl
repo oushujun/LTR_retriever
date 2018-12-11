@@ -164,7 +164,7 @@ while (<MSK>) {
 	}
 close MSK;
 
-printf "#RM name family full left right total all bps percent class subclass note\n";
+printf "#RepeatMasker_entry TE_family Full_length Left_end_only Right_end_only Converted_copy_number Total_entries Total_length_in_bp Whole_genome_percentage Class Subclass Note\n";
 foreach my $key (sort {$cov{$b} <=> $cov{$a}} (keys %cov)) {
 	my $total = int ( $full{$key} + ($left{$key}+$right{$key})/2 + 0.5);
 	my $coverage = sprintf("%.5f", $cov{$key}*100/$whole);
