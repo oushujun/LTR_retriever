@@ -104,7 +104,7 @@ while (<MSK>) {
 			}
 		else {
 			$right_end = 1 if ($TE_head <= 20);
-			$left_end = 1 if ($TE_head <= 20);
+			$left_end = 1 if ($TE_left <= 20);
 			}
 		$right_end = 0 if ($subfam =~ /tir/i || $name =~ /tir/i);
                 }
