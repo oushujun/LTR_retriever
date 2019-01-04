@@ -119,7 +119,8 @@ foreach my $line (@list){
 	$start=1 if $start<=0;
 
 	next unless exists $genome{$chr};
-	next if $genome{$chr}=~/^\s+$/;
+#	next if $genome{$chr}=~/^\s+$/;
+	next if length $genome{$chr} < 10;
 	$stop=length $genome{$chr} if $stop>=length $genome{$chr};
 
 	if ($exclude==0){
