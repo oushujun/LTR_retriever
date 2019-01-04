@@ -285,8 +285,8 @@ sub Identifier() {
 		}
 
 ##boundary alignment
-	my ($ac, $bc, $bd, $ad)=('','','','');#alignment results between regions
-	my ($LTR1_up, $LTR1_do, $LTR2_up, $LTR2_do)=('','','','');
+	my ($ac, $bc, $bd, $ad)=(' ',' ',' ',' ');#alignment results between regions
+	my ($LTR1_up, $LTR1_do, $LTR2_up, $LTR2_do)=(' ',' ',' ',' ');
 #	----||||||||----....----||||||||----
 #	 a   5'LTR   b       c   3'LTR   d
 #	up60[1]   do60[1]   up60[2]   do60[2]
