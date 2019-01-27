@@ -13,6 +13,7 @@ LTR.identifier.pl
 LTR.identifier: Alignment assisted examination of LTR candidates
 Author: Shujun Ou (oushujun\@msu.edu), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
 Version:
+	4.6 Improvement: only consider SNPs for age estimation 2019/01/25
 	4.5 Improve TSD-motif identification 2018/12/08
 	4.0 Use Thread::Queue instead of Semaphore for multi-threading 2018/04/01
 	3.6 Enable multi-threading 2016/6/30
@@ -84,6 +85,7 @@ while (<List>){
 		}
 	my ($start, $end, $len, $ls, $le, $ll, $rs, $re, $rl, $sim, $id)=split;
 	$info{"$start..$end"}=[split]; #store in %info
+	$info{"$start..$end"}[9]*=0.01 if $info{"$start..$end"}[9] ne "NA"; #convert % to decimal
 	}
 close List;
 
@@ -189,7 +191,7 @@ sub Identifier() {
 		$try++;
 		}
 
-	my ($sim, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,0,0,0,0,0,0,0,0,0);
+	my ($div, $aln_len, $sim, $mismatch, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,1,0,0,0,0,0,0,0,0,0,0,0);
 	my $adjust="NO";
 	$decision="false" if $#Blast==0;
 
@@ -199,7 +201,7 @@ sub Identifier() {
 		$Blast[$i]=~s/^\s+//;
 		$decision="false" if $i>8;
 		last if $i>8;
-		($sim, $q_start, $q_end, $s_start, $s_end)=(split /\s+/,  $Blast[$i])[2,6,7,8,9];
+		($sim, $aln_len, $mismatch, $q_start, $q_end, $s_start, $s_end)=(split /\s+/,  $Blast[$i])[2,3,4,6,7,8,9];
 		$cor_adj=$info[0]-1;
 		($ls, $le, $rs, $re)=($info[3]-$cor_adj, $info[4]-$cor_adj, $info[6]-$cor_adj, $info[7]-$cor_adj);
 		($q_start, $q_end)=($q_end, $q_start) if $q_start>$q_end;
@@ -216,14 +218,14 @@ sub Identifier() {
 
 	$decision="false" if $pair==0;
 ##element age estimation by T=K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
-###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is the inverse of identity ($sim).
-	$sim=sprintf ("%.4f", $sim/100);
-	$info[9]=$sim;
+###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is estimated from identity ($sim) excluding indels.
+	$div=$mismatch/($sim*$aln_len/100 + $mismatch);
+	$info[9]=sprintf ("%.4f", 1-$div);
 	my $JK=1;
 	if ($sim>=0.34){
-		$JK=-3/4*log(1-4*(1-$sim)/3); #low identity sequence could not be adjusted by the JK formula
+		$JK=-3/4*log(1-4*$div/3); #low identity sequence could not be adjusted by the JK formula
 		} else {
-		$JK=1-$sim;
+		$JK=$div;
 		}
 	$info[19]=sprintf ("%.0f", $JK/(2*$miu));
 
@@ -468,7 +470,7 @@ sub Identifier() {
 			}
 		}
 
-	print "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$sim\t$info[12]\t$info[18]\t$info[17]\t$info[19]\n";#last four variables: strand/family/superfamily/age
+	print "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$info[9]\t$info[12]\t$info[18]\t$info[17]\t$info[19]\n";#last four variables: strand/family/superfamily/age
 	print "\tAdjust: $adjust\tlLTR: $ll\trLTR: $rl\n";
 	print "\tAlignment regions: $s_start, $s_end, $q_start, $q_end\n";
 	print "\tLTR coordinates: $ltr1_s, $ltr1_e, $ltr2_s, $ltr2_e\n";
