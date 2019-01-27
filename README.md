@@ -6,7 +6,19 @@ By default, the program will generate whole-genome LTR-RT annotation and the LTR
 
 ### Installation ###
 
-To run LTR_retriever you need to provide the paths to the following dependent programs.
+## Quick installation using conda ##
+
+You may use conda to quickly install all dependencies and LTR_retriever is then good to go:
+
+	conda create -n LTR_retriever
+	source activate LTR_retriever
+	conda install -c bioconda cd-hit repeatmasker
+	git clone https://github.com/oushujun/LTR_retriever.git
+	./LTR_retriever/LTR_retriever -h
+
+## Standard installation ##
+
+For the standard installation, you need to provide the paths to the following dependent programs.
 1. makeblastdb, blastn, and blastx in the BLAST+ package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
 2. cd-hit-est in the CDHIT package (http://weizhongli-lab.org/cd-hit/) OR 
    blastclust in the BLAST package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy/2.2.25/),
