@@ -108,7 +108,7 @@ if ($LTR==0){
 
 if ($LTR==1){
 
-##This is for LRharvest result analysis
+##This is for LTRharvest result analysis
 ##s(ret) e(ret) l(ret) s(lLTR) e(lLTR) l(lLTR) s(rLTR) e(rLTR) l(rLTR) sim(LTRs) seq-nr
 	s/^\s+//;
 	($element_start,  $element_end,  $element_length, $lLTR_start,  $lLTR_end,  $lLTR_length, $rLTR_start,  $rLTR_end,  $rLTR_length, $similarity, $seq_ID, $chr)=(split /\s+/, $_);
