@@ -9,11 +9,10 @@ my $help="
 ###### LTR_retriever ######
 ###########################
 
-A program for accurate identification of LTR-RTs from outputs of LTRharvest, LTR_FINDER, and 
-	MGEScan-LTR and generating non-redundant LTR-RT library for genome annotations.
+A program for accurate identification of LTR-RTs from outputs of LTRharvest and LTR_FINDER,
+	generates non-redundant LTR-RT library for genome annotations.
 
-Shujun Ou, Depeatment of Horticulture, Michigan State University, East Lansing, MI, 48824
-05/12/2017
+Shujun Ou (shujun.ou.1\@gmail.com) 03/26/2019
 
 Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
@@ -63,6 +62,13 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
 【Miscellaneous】
 -u           [FLOAT]	neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
+-step	     [STRING]	restart the program from a particular step. Existing outputs will be overwritten. Options: 
+				Init (default, from the beginning);
+				Major (Tandem repeat cleanup finished, structrual analyses next)
+				Trunc (Structural analyses finished, truncated LTR recycle next)
+				Promask (Truncated LTR recycle finished, protein contamination cleanup next)
+				Library (Protein contamination cleanup finished, initial library construction next)
+				Next (Initial library construction finished, non-TGCA analyses next)
 -threads     [INT]	number of threads (≤ total available threads, default 4)
 -help/-h		display this help information
 
@@ -115,9 +121,9 @@ my $PlantP="$script_path/database/alluniRefprexp082813";
 my $TEhmm="$script_path/database/TEfam.hmm";
 
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
-
+my $step = "Init"; #start the program from a particular step. Default: Init (from the beginning).
 my $threads=4;
-my $version="v2.1";
+my $version="v2.5";
 #my $scn=''; #store screen output information
 
 my $k=0;
@@ -156,14 +162,15 @@ foreach (@ARGV){
 	$set_cdhit=$1 if $argv=~/-cdhit\s+\[(.+?)\]/i;
 	$keep_trunc=0 if /^-notrunc$/i;
 	$annotation=0 if /^-noanno$/i;
+	$step = $ARGV[$k+1] if /^-step$/i;
 	$verbose=1 if /^-verbose|-v$/i;
 	$threads=$ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1]!~/^-/;
 	die $help if /^--help|-h$/i;
 	$k++;
         }
 
-die "Please specify the input sequence file!\n" unless (defined $genome and -s "$genome">0);
-die "Please specify LTRharvest or LTR_finder screen output file!\n" unless (defined $inharvest or defined $infinder);
+die "Please specify the input sequence file!\nUse -h for more help info\n" unless (defined $genome and -s "$genome">0);
+die "Please specify LTRharvest or LTR_finder screen output file!\nUse -h for more help info\n" unless (defined $inharvest or defined $infinder);
 
 #obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
 die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
@@ -277,7 +284,7 @@ $PlantP="$PlantP_base.$rand";
 `${blastplus}makeblastdb -in $PlantP -dbtype prot`;
 $date=`date +"%m-%d-%y_%H%M"`;
 chomp ($date);
-if (`ls $genome*|wc -l`>15){
+if ($step eq "Init" and `ls $genome*|wc -l`>15){
 	print "\n\t\t\t\tPrevious LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
 	`mkdir LTRretriever-pre$date; mv $genome*.out $genome*.out.gff* $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* $genome*.out*size.list $genome.out.LTR.distribution.txt LTRretriever-pre$date/ 2>/dev/null`;
 }
@@ -287,7 +294,14 @@ if (`ls $genome*|wc -l`>15){
 ######### To retrieve high quality LTR-RTs with TGCA motif #########
 ####################################################################
 
+#strat of the analysis
 my $index=$genome;
+$date=`date`;
+chomp ($date);
+print "$date\tLTR_retriever is starting from the $step step.\n";
+goto $step;
+Init:
+
 ##check the length of genome sequence IDs, if longer than 15bp, chop it.
 my $id_mode=0; #record the mode of id conversion.
 my $id_len=`grep \\> $genome|perl -ne 'chomp; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
@@ -362,6 +376,7 @@ print "$date\t$stg1_count clean candidates remained\n\n";
 goto NEXT if $stg1_count==0;
 
 ##Major program, align the boundaries
+Major:
 my $pass_count=&Identifier($index);
 $date=`date`;
 chomp ($date);
@@ -369,12 +384,15 @@ print "$date\tIntact LTR-RT found: $pass_count\n\n";
 goto NEXT if $pass_count==0;
 
 ##Recycle truncated candidates, mask candidates by false LTR
+Trunc:
 &trunc($index);
 
 ##clean up protein coding sequence from DNA TE, LINE, and normal plant genes
+Promask:
 &proMask($index);
 
 ##generate non-redudant library for pass LTR-RT candidates
+Library:
 $date=`date`;
 chomp ($date);
 my $prelib_size=-s "$index.ltrTE";
@@ -505,13 +523,15 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 		} else {
 		`cp $index.prelib.INT $index.prelib.INT.cln`;
 		}
-	`cat $index.prelib.LTR $index.prelib.INT.cln > $index.LTRlib`;
+	`perl $script_path/bin/cleanup_nestedIN.pl -in $index.prelib.INT.cln -minlen $minlen -cov 0.95 -blastplus $blastplus -threads $threads > $index.prelib.INT.cln2`;
+	`perl $script_path/bin/cleanup_nestedIN.pl -in $index.prelib.INT.cln2 -minlen $minlen -cov 0.95 -blastplus $blastplus -threads $threads > $index.prelib.INT.cln3`;
+	`cat $index.prelib.LTR $index.prelib.INT.cln3 > $index.LTRlib`;
 
 #update status
 	$date=`date`;
 	chomp ($date);
 	my $ori_size=-s "$index.prelib.INT";
-	my $cln_size=-s "$index.prelib.INT.cln";
+	my $cln_size=-s "$index.prelib.INT.cln3";
 	print "\nWarning: RepeatMasker seems to be not running correctly! Please check this program by running:
 	RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT
 	Please report any errors to https://github.com/oushujun/LTR_retriever/issues\n\n" if $ori_size>0 and $cln_size==0;
@@ -524,7 +544,7 @@ if ( -s "$index.nmtf.prelib"){
 	`grep INT $index.nmtf.prelib|perl $script_path/bin/output_by_list.pl 1 $index.nmtf.prelib 1 - -FA -ex >> $index.nmtf.LTRlib.fa`;
 	}
 
-##make the redundant lib (contains TGCA and non-TGCA LTR-RTs. Solo-LTR nested insertion and non-LTR protease are not removed, but plant protein is removed)
+##make the redundant lib (contains TGCA and non-TGCA LTR-RTs. LTR nested insertion and non-LTR protease are not removed, but plant protein is removed)
 `perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $genome.LTRlib.raw`;
 `perl $script_path/bin/output_by_list.pl 1 $genome.LTRlib.raw 2 $genome.LTRlib.exclude.tgt -FA -ex > $genome.LTRlib.redundant.fa`;
 
