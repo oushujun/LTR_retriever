@@ -1,6 +1,6 @@
 ### Introduction ###
 
-LTR_retriever is a command line program (in Perl) for accurate identification of LTR retrotransposons (LTR-RTs) from outputs of LTRharvest, LTR_FINDER, and/or MGEScan-LTR and generating non-redundant LTR-RT library for genome annotations.
+LTR_retriever is a command line program (in Perl) for accurate identification of LTR retrotransposons (LTR-RTs) from outputs of LTRharvest and LTR_FINDER, and generates non-redundant LTR-RT library for genome annotations.
 
 By default, the program will generate whole-genome LTR-RT annotation and the LTR Assembly Index (LAI) for evaluations of the assembly continuity of the input genome. Users can also run LAI separately (see `Usage`).
 
@@ -45,7 +45,9 @@ Two types of inputs are needed for LTR_retriever
 1. Genomic sequence
 2. LTR-RT candidates
 
-LTR_retriever takes multiple LTR-RT candidate inputs including the screen output of LTRharvest, the screen output of LTR_FINDER, and the candidate output of MGEScan-LTR. Users need to obtain the input file(s) from the aforementioned programs before running LTR_retriever. Either a single input source or a combination of multiple inputs are acceptable. For more details and examples please see the manual.
+LTR_retriever takes multiple LTR-RT candidate inputs including the screen output of LTRharvest and the screen output of LTR_FINDER. For outputs of other LTR identification programs, you may convert them to LTRharvest-like format and feed them to LTR_retriever. Users need to obtain the input file(s) from the aforementioned programs before running LTR_retriever. Either a single input source or a combination of multiple inputs are acceptable. For more details and examples please see the manual.
+
+Download executables for [LTR_FINDER](https://code.google.com/archive/p/ltr-finder/) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
 
 ### Outputs ###
 
@@ -87,10 +89,10 @@ For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/i
 
 ### Citations ###
 
-For LTR_retriever, please cite:
+If you find LTR_retriever useful, please cite:
 
 `Ou S. and Jiang N. (2018). LTR_retriever: A Highly Accurate and Sensitive Program for Identification of Long Terminal Repeat Retrotransposons. Plant Physiol. 176(2): 1410-1422.`
 
-For LAI, please cite:
+If you find LAI useful, please cite:
 
 `Ou S., Chen J. and Jiang N. (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. gky730:` https://doi.org/10.1093/nar/gky730
