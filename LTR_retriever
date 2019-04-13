@@ -546,7 +546,7 @@ if ( -s "$index.nmtf.prelib"){
 
 ##make the redundant lib (contains TGCA and non-TGCA LTR-RTs. LTR nested insertion and non-LTR protease are not removed, but plant protein is removed)
 `perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $genome.LTRlib.raw`;
-`perl $script_path/bin/output_by_list.pl 1 $genome.LTRlib.raw 2 $genome.LTRlib.exclude.tgt -FA -ex > $genome.LTRlib.redundant.fa`;
+`perl $script_path/bin/output_by_list.pl 1 $genome.LTRlib.raw 2 $genome.LTRlib.exclude.tgt -FA -ex | perl $script_path/bin/annotate_lib.pl $genome.retriever.all.scn - > $genome.LTRlib.redundant.fa`;
 
 ##update status
 my $redun_count=`grep -c \\> $genome.LTRlib.redundant.fa`;
