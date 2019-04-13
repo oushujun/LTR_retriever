@@ -17,7 +17,7 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
 
-Note: if you experience RepeatMasker errors, you may want to read #43 to fix the library bug.
+Note: if you experience RepeatMasker errors, you may want to read [#43](https://github.com/oushujun/LTR_retriever/issues/43) to fix the library bug.
 
 #### Standard installation ####
 
