@@ -26,7 +26,8 @@ while (<>){
 			$keep=0 if ($chr0 eq $chr2) and ($loc0 =~ /int/i) and (abs($s2-$e0)<300) and (abs($s0-$e2)<300); #if there is int exists in this working window, require it has at least 300bp distance from a solo-LTR
 			}
 #		print "$loc2\n" if $keep==1; #print the library entry out
-		print "$chr2:$s2..$e2\t$loc2\n" if $keep==1;  #print the actual locus of the solo LTR
+#		print "$chr2:$s2..$e2\t$loc2\n" if $keep==1;  #print the actual locus of the solo LTR
+		print "$loc2\t$chr2:$s2..$e2\n" if $keep==1;  #print the actual locus of the solo LTR
 		shift @arr;
 		}
 	}
