@@ -304,7 +304,7 @@ Init:
 
 ##check the length of genome sequence IDs, if longer than 15bp, chop it.
 my $id_mode=0; #record the mode of id conversion.
-my $id_len=`grep \\> $genome|perl -ne 'chomp; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
+my $id_len=`grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
 $id_len=~s/\s+$//;
 $id_len=(split /\s+/, $id_len)[-1];
 my $raw_id=`grep \\> $genome|wc -l`;
