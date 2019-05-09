@@ -9,9 +9,9 @@ my $path=$ARGV[1];
 open File, "<$ARGV[0]" or die $usage;
 open SCN, ">$ARGV[0].scn" or die $usage;
 print SCN "#this summary file is created from LTR_STRUC output files by get_loc.pl (Author: Shujun Ou, email: oushujun\@msu.edu)
-# start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity chr direction TSD motif\n";
+# start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len identity chr direction TSD motif\n";
 
-my ($from, $to, $chr, $LTR_len, $lLTR_len, $rLTR_len, $lLTR_end, $rLTR_str, $similarity, $TSD, $motif, $direction, $seq_id);
+my ($from, $to, $chr, $LTR_len, $lLTR_len, $rLTR_len, $lLTR_end, $rLTR_str, $identity, $TSD, $motif, $direction, $seq_id);
 $seq_id="NA";
 while (<File>){
 	if (/ID_STRING/){
@@ -28,7 +28,7 @@ while (<File>){
 			$LTR_len=$1 if /OVERALL LENGTH OF TRANSPOSON:\s+([0-9]+)\s+bp/i;
 			$lLTR_len=$1 if /LENGTH OF PUTATIVE 5' LTR:\s+([0-9]+)\s+bp/i;
 			$rLTR_len=$1 if /LENGTH OF PUTATIVE 3' LTR:\s+([0-9]+)\s+bp/i;
-			$similarity=$1 if /LTR PAIR HOMOLOGY:\s+([0-9.%]+)/i;
+			$identity=$1 if /LTR PAIR HOMOLOGY:\s+([0-9.]+)%/i;
 			$TSD=$1 if /DINUCLEOTIDES:\s+([a-z\/]+)/i;
 			$motif=$1 if /DIRECT REPEATS:\s+([a-z\/]+)/i;
 			last if /FLANK/i;
@@ -37,8 +37,8 @@ while (<File>){
 		($lLTR_len, $rLTR_len)=($rLTR_len, $lLTR_len) if $direction eq "-";
 		$lLTR_end=$from+$lLTR_len-1;
 		$rLTR_str=$to-$rLTR_len+1;
-		print SCN "$from $to $LTR_len $from $lLTR_end $lLTR_len $rLTR_str $to $rLTR_len $similarity $seq_id $chr $direction $TSD $motif\n";
-		$from=$to=$chr=$LTR_len=$lLTR_len=$rLTR_len=$lLTR_end=$rLTR_str=$similarity=$TSD=$motif=$direction="NA";
+		print SCN "$from $to $LTR_len $from $lLTR_end $lLTR_len $rLTR_str $to $rLTR_len $identity $seq_id $chr $direction $TSD $motif\n";
+		$from=$to=$chr=$LTR_len=$lLTR_len=$rLTR_len=$lLTR_end=$rLTR_str=$identity=$TSD=$motif=$direction="NA";
 		}
 	}
 close File;
