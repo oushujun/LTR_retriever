@@ -51,11 +51,11 @@ LTR_retriever takes multiple LTR-RT candidate inputs including the screen output
 
 It's sufficient and recommended to just provide LTR_retriever with LTRharvest and LTR_FINDER results. However, if you want to analyze results from LTR_STRUC, MGEScan 3.0.0, and LtrDetector, you can use the following scripts to convert their outputs to the LTRharvest format, then feed LTR_retriever with `-inharvest`. You may concatenate multiple LTRharvest format inputs into one file. For instructions, run:
 
-	`perl /your_path_to/LTR_retriever/bin/convert_ltr_struc.pl`
-	`perl /your_path_to/LTR_retriever/bin/convert_MGEScan3.0.pl`
-	`perl /your_path_to/LTR_retriever/bin/convert_ltrdetector.pl`
+	perl /your_path_to/LTR_retriever/bin/convert_ltr_struc.pl
+	perl /your_path_to/LTR_retriever/bin/convert_MGEScan3.0.pl
+	perl /your_path_to/LTR_retriever/bin/convert_ltrdetector.pl
 
-Download executables for [LTR_FINDER](https://code.google.com/archive/p/ltr-finder/) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
+Click to download executables for [LTR_FINDER](https://code.google.com/archive/p/ltr-finder/) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
 
 ### Outputs ###
 
