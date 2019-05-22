@@ -13,7 +13,8 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 	conda create -n LTR_retriever
 	source activate LTR_retriever
 	conda install -c conda-forge perl perl-text-soundex
-	conda install -c bioconda cd-hit repeatmasker
+	conda install -c bioconda cd-hit
+	conda install -c bioconda/label/cf201901 repeatmasker
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
 
