@@ -50,7 +50,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 -blastclust  [[STRING]]	trigger to use blastclust and customize parameters 
 			(default -blastclust [-L .9 -b T -S 80])
 -cdhit       [[STRING]]	trigger to use cd-hit-est (default) and customize parameters 
-			(default -cdhit [-c 0.8 -G 0.8 -s 0.9 -T 20 -aL 0.9 -aS 0.9])
+			(default -cdhit [-c 0.8 -G 0.8 -s 0.9 -aL 0.9 -aS 0.9 -M 0])
 -linelib     [FASTA]	provide LINE transposase database for LINE TE exclusion 
 			(default /database/Tpases020812LINE)
 -dnalib      [FASTA]	provide DNA TE transposase database for DNA TE exclusion 
