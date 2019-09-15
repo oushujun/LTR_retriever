@@ -79,8 +79,9 @@ if ($LTR==1 && $genome==0){
 
 if ($LTR==1 && $genome==1){
 	my @id=`grep \\> $ARGV[2]`;
+	my @rev_id = reverse @id;
 	my $i=0;
-	foreach (@id){
+	foreach (@id, @rev_id){
 		chomp;
 		s/>//g;
 		s/\s+//g;
