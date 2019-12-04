@@ -167,11 +167,9 @@ sub Identifier() {
 
 	my $exec="${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
 	my @Blast=();
-	my $try=0;
-	while ($try<100){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
+	for (my $try=0; $try<100; $try++){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
 		@Blast=qx(bash -c '$exec' 2> /dev/null) if defined $ltr;
 		last if $? == 0;
-		$try++;
 		}
 
 	my ($div, $aln_len, $sim, $mismatch, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,1,0,0,0,0,0,0,0,0,0,0,0);
@@ -180,6 +178,7 @@ sub Identifier() {
 
 	if ($#Blast>0){
 	my $pair=0; #0 indicates no alignment pair seems correct, 1 indicates at least 1 alignment pair seems right
+	my $aln_diff = 0;
 	for (my $i=1; defined $Blast[$i+1]; $i++){
 		$Blast[$i]=~s/^\s+//;
 		$decision="false" if $i>8;
@@ -190,11 +189,12 @@ sub Identifier() {
 		($q_start, $q_end)=($q_end, $q_start) if $q_start>$q_end;
 		($s_start, $s_end)=($s_end, $s_start) if $s_start>$s_end;
 		($s_start, $s_end, $q_start, $q_end)=($q_start, $q_end, $s_start, $s_end) if $s_start>$q_start;
-		if ($s_start>100 or $q_end-length($ltr)>100){ #if LTR alignment shift from the start or end for more than 100bp, it's probably FP
+		if ($s_start>100 or abs($q_end-length($ltr))>100){ #if LTR alignment shift from the start or end for more than 100bp, it's probably FP
 			$pair=0;
 			next;
 			} else {
 			$pair=1;
+			$aln_diff = abs((($s_start-$s_end)-($q_start-$q_end))); #for paired alignments, calculate the difference of length
 			last;
 			}
 		}
@@ -238,7 +238,7 @@ sub Identifier() {
 	$rl=$re-$rs+1;
 
 ##update element information in %info
-	if (abs($ll-$rl)<=$length_diff and $s_end<$q_start){
+	if (abs(abs($ll-$rl)-$aln_diff)<=$length_diff and $s_end<$q_start){
 		$info[3]=$ls+$cor_adj;
 		$info[4]=$le+$cor_adj;
 		$info[5]=$ll;
