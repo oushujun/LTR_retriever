@@ -1,4 +1,18 @@
-### Introduction ###
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/ltr_retriever/README.html) [![Anaconda-Server Badge](https://anaconda.org/bioconda/ltr_retriever/badges/license.svg)](https://anaconda.org/bioconda/emblmygff3)
+
+## Table of Contents
+
+   * [Introduction](#introduction)
+   * [Installation](#installation)
+      * [Quick installation using conda](#quick-installation-using-conda)
+      * [Step by step using conda ](#step-by-step-using-conda)
+      * [Standard installation](#standard-installation)
+   * [Inputs](#inputs)
+   * [Outputs](#outputs)
+   * [Usage](#usage)
+   * [Citations](#citations)
+
+### Introduction
 
 LTR_retriever is a command line program (in Perl) for accurate identification of LTR retrotransposons (LTR-RTs) from outputs of LTRharvest, LTR_FINDER, MGEScan 3.0.0, LTR_STRUC, and LtrDetector, and generates non-redundant LTR-RT library for genome annotations.
 
@@ -7,8 +21,11 @@ By default, the program will generate whole-genome LTR-RT annotation and the LTR
 
 ### Installation ###
 
-#### Quick installation using conda ####
+#### Quick installation using conda 
 
+     conda install -c bioconda ltr_retriever  
+
+#### Step by step using conda 
 You may use conda to quickly install all dependencies and LTR_retriever is then good to go:
 
 	conda create -n LTR_retriever
@@ -21,7 +38,7 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 Note: if you experience RepeatMasker errors, you may want to read [#43](https://github.com/oushujun/LTR_retriever/issues/43) to fix the library bug.
 
 
-#### Standard installation ####
+#### Standard installation
 
 For the standard installation, you need to provide the paths to the following dependent programs.
 1. makeblastdb, blastn, and blastx in the BLAST+ package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
@@ -43,7 +60,7 @@ Then modify lines below:
 	BLAST=/your_path_to/BLAST2.2.26/bin/ #not required if CDHIT provided
 
 
-### Inputs ###
+### Inputs 
 
 Two types of inputs are needed for LTR_retriever
 1. Genomic sequence
@@ -59,7 +76,7 @@ It's sufficient and recommended to just provide LTR_retriever with LTRharvest an
 
 Click to download executables for [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
 
-### Outputs ###
+### Outputs 
 
 The output of LTR_retriever includes:
 1. Intact LTR-RTs with coordinate and structural information
@@ -76,7 +93,7 @@ The output of LTR_retriever includes:
 	- LTR distribution on each chromosome (.out.LTR.distribution.txt)
 4. LTR Assembly Index (.out.LAI)
 
-### Usage ###
+### Usage 
 
 Good practice: It's highly recommended to use short and simple sequence names. For example, use letters, numbers, and _ to generate unique names shorter than 15 bits.
 
@@ -106,7 +123,7 @@ Or refer to the manual document.
 
 For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/issues
 
-### Citations ###
+### Citations 
 
 If you find LTR_retriever useful, please cite:
 
