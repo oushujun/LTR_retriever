@@ -12,6 +12,8 @@
    * [Usage](#usage)
    * [Citations](#citations)
 
+
+
 ### Introduction
 
 LTR_retriever is a command line program (in Perl) for accurate identification of LTR retrotransposons (LTR-RTs) from outputs of LTRharvest, LTR_FINDER, MGEScan 3.0.0, LTR_STRUC, and LtrDetector, and generates non-redundant LTR-RT library for genome annotations.
@@ -19,7 +21,7 @@ LTR_retriever is a command line program (in Perl) for accurate identification of
 By default, the program will generate whole-genome LTR-RT annotation and the LTR Assembly Index (LAI) for evaluations of the assembly continuity of the input genome. Users can also run LAI separately (see `Usage`).
 
 
-### Installation ###
+### Installation
 
 #### Quick installation using conda 
 
@@ -34,9 +36,6 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 	conda install -y -c bioconda cd-hit repeatmasker
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
-
-Note: if you experience RepeatMasker errors, you may want to read [#43](https://github.com/oushujun/LTR_retriever/issues/43) to fix the library bug.
-
 
 #### Standard installation
 
@@ -68,13 +67,14 @@ Two types of inputs are needed for LTR_retriever
 
 LTR_retriever takes multiple LTR-RT candidate inputs including the screen output of LTRharvest and the screen output of LTR_FINDER. For outputs of other LTR identification programs, you may convert them to LTRharvest-like format and feed them to LTR_retriever (with `-inharvest`). Users need to obtain the input file(s) from the aforementioned programs before running LTR_retriever. Either a single input source or a combination of multiple inputs are acceptable. For more details and examples please see the manual.
 
-It's sufficient and recommended to just provide LTR_retriever with LTRharvest and LTR_FINDER results. However, if you want to analyze results from LTR_STRUC, MGEScan 3.0.0, and LtrDetector, you can use the following scripts to convert their outputs to the LTRharvest format, then feed LTR_retriever with `-inharvest`. You may concatenate multiple LTRharvest format inputs into one file. For instructions, run:
+It's sufficient and recommended to use LTRharvest and LTR_FINDER results for LTR_retriever. However, if you want to analyze results from LTR_STRUC, MGEScan 3.0.0, and LtrDetector, you can use the following scripts to convert their outputs to the LTRharvest format, then feed LTR_retriever with `-inharvest`. You may concatenate multiple LTRharvest format inputs into one file. For instructions, run:
 
 	perl /your_path_to/LTR_retriever/bin/convert_ltr_struc.pl
 	perl /your_path_to/LTR_retriever/bin/convert_MGEScan3.0.pl
 	perl /your_path_to/LTR_retriever/bin/convert_ltrdetector.pl
 
-Click to download executables for [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel) and [LTRharvest](http://genometools.org/pub/binary_distributions/). For recommended parameters, please read the Manual.
+Click to download executables for [LTR_FINDER_parallel](https://github.com/oushujun/LTR_FINDER_parallel) and [LTRharvest](http://genometools.org/pub/binary_distributions/).
+
 
 ### Outputs 
 
@@ -93,9 +93,10 @@ The output of LTR_retriever includes:
 	- LTR distribution on each chromosome (.out.LTR.distribution.txt)
 4. LTR Assembly Index (.out.LAI)
 
+
 ### Usage 
 
-Good practice: It's highly recommended to use short and simple sequence names. For example, use letters, numbers, and _ to generate unique names shorter than 15 bits.
+Good practice: It's highly recommended to use short and simple sequence names. For example, use letters, numbers, and _ to generate unique names shorter than 15 bits. If there is long sequence names, LTR_retriever will try to convert it for you, but not always successful.
 
 To obtain raw input files with LTRharvest and LTR_FINDER_parallel:
 
@@ -121,7 +122,8 @@ For more details about the usage and parameter settings, please see the help pag
 Or refer to the manual document.
 
 
-For questions and Issues Please See: https://github.com/oushujun/LTR_retriever/issues
+For questions and Issues please see: https://github.com/oushujun/LTR_retriever/issues
+
 
 ### Citations 
 
