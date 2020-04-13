@@ -34,7 +34,7 @@ $step=~s/,//g;
 die "$usage\n" unless -s "$total";
 
 #extract LTR info from the RM.out file into bed format
-open TOTAL, "awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80)print \$5\"\t\"\$6\"\\t\"\$7\"\\t\"\$11}' $total|sort -suV -k1,3|" or die "ERROR: $!\n$usage\n" if $intact == 0;
+open TOTAL, "awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80 && \$1 >= 300) print \$5\"\t\"\$6\"\\t\"\$7\"\\t\"\$11}' $total|sort -suV -k1,3|" or die "ERROR: $!\n$usage\n" if $intact == 0;
 open TOTAL, "perl -nle 'my (\$id, \$superfam)=(split)[0,9]; my (\$chr, \$from, \$to)=(\$1, \$2, \$3) if \$id=~/^(.*)\:([0-9]+)\.\.([0-9]+)\$/; next unless defined \$chr; print \"\$chr\t\$from\t\$to\t\$superfam\"' $total|sort -suV -k1,3|" or die "ERROR: $!\n$usage\n" if $intact == 1;
 open Genome, "<$genome" or die $!;
 

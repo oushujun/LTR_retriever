@@ -22,7 +22,7 @@ while (<RMout>){
 	next if $SW_score!~/[0-9]+/;
 	$TE_ID=~s/_INT-int$/_INT/;
 	$element_length=$element_end-$element_start+1;
-	next if $SW_score<300 and $element_length<80;
+	next if $SW_score<300 or $element_length<80;
 	$strand="-" if $strand eq "C";
 	unless (exists $seq_flag{$chr}){
 		$seq_flag{$chr}=$chr;
