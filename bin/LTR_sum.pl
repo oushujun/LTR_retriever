@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 #Description: This is the script to calculate the LTR-RT distribution of different superfamilies

@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 #convert LTR_FINDER -w 2 format to LTRharvest format
 #Shujun Ou (shujun.ou.1@gmail.com) 11/13/2019

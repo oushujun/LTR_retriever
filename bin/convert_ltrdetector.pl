@@ -1,9 +1,11 @@
+#!/usr/bin/env perl
+
 #convert LtrDetector default output to LTR_retriever input format
 #Usage: perl convert.pl LtrDetector.bed.scn > out.scn
 #Author:Shujun OU (shujun.ou.1@gmail.com) 04/14/2019
 
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 my $usage = "\n\tperl convert.pl genome.fasta LtrDetector.bed.scn > out.scn\n\n";

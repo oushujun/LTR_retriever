@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 ##Generate gff3 file from pass list of LTR_retriever
 ##Usage: perl make_gff3.pl genome.fa LTR.pass.list
 ##Author: Shujun Ou (oushujun@msu.edu), Department of Horticulture, Michigan State University
@@ -7,7 +9,7 @@
 
 
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 open FA, "<$ARGV[0]" or die "ERROR: $!";

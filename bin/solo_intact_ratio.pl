@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 #compute solo-intact LTR ratio for given lists

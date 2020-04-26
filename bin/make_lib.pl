@@ -1,9 +1,11 @@
+#!/usr/bin/env perl
+
 #Shujun Ou
 #usage:  perl make_lib.pl *.scn.list *.ltrTE.lib *.ltrTE.lib.clust.info 
 
 
 
-#!usr/bin/perl -w
+use warnings
 use strict;
 
 open List, "<$ARGV[0]" or die "ERROR: $!";

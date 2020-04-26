@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 #Usage: perl cleanPro.pl fastafile blastxout(fmt6) -o [1|0] -l [int] -c [0,1] > sequence_name_out
 #Optional parameters:
 #-o [1|0] output option, default 1, to output the entries with protein hits, 0 for protein-free hits
@@ -8,7 +10,7 @@
 #Version: v1.0 12/17/2014
 
 
-#!usr/bin/perl -w
+use warnings;
 use strict;
 
 ##filters for the sequence alignment

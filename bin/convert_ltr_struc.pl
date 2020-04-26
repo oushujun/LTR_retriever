@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+use warnings;
 use strict;
 
 my $usage="\n\tperl convert_ltr_struc.pl log.txt output_path/

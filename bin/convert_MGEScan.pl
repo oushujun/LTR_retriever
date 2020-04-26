@@ -1,9 +1,11 @@
+#!/usr/bin/env perl
+
 #convert MGEScan-ltr candidate list to LTR_retriever input format
 #Usage: perl convert.pl genome.ltrpos > genome.MGEScan.scn
 #Author: Shujun OU (oushujun@msu.edu) 08/13/2016
 
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 print "#this summary file is created from MGEScan-ltr candidate list by convert_MGEScan.pl (Author: Shujun Ou, email: oushujun\@msu.edu 08/13/2016)

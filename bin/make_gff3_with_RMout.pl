@@ -1,9 +1,11 @@
+#!/usr/bin/env perl
+
 ##Generate gff3 file from RepeatMasker .out file of LTR_retriever
 ##Usage: perl make_gff3.pl genome.fa.out
 ##Author: Shujun Ou (oushujun@msu.edu), Department of Horticulture, Michigan State University
 ##Version: 1.0 01-27-2018
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 my $date=`date -u`;

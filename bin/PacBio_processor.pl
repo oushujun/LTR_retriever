@@ -1,9 +1,11 @@
+#!/usr/bin/env perl
+
 #covert PacBio fastq file into fasta file with simple filtering options
 #Usage: perl PacBio_processor.pl PacBio.fastq > PacBio.fasta
 #06/30/2016 Shujun Ou (oushujun@msu.edu)
 
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 my $minLength=500;
