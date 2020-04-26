@@ -1,10 +1,12 @@
+#!/usr/bin/env perl
+
 #To run MGEScan-ltr on genomes containing more than one sequence/scaffolds
 #Usage: perl run_MGEScan.pl genome
 #Author: Shujun Ou (oushujun@msu.edu)	08/14/2016
 
 
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 my $genome=$ARGV[0];

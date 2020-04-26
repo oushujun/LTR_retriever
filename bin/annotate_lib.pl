@@ -1,9 +1,11 @@
+#!/usr/bin/env perl
+
 ##To annotate library with family and direction information
 ##Usage: perl annotate_lib.pl $index.scn.adj $index.LTRlib.fa
 ##Shujun Ou (oushujun@msu.edu) 06/23/2016
 
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 open List, "<$ARGV[0]" or die "ERROR: $!";

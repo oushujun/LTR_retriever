@@ -1,8 +1,9 @@
+#!/usr/bin/env perl
+
 ##Shujun Ou
 ##usage: $ perl output_by_list.pl target_file list_file > outfile
 
-
-#!usr/bin/perl -w
+use warnings;
 use strict;
 
 my $usage="\n#usage: \$ perl output_by_list.pl DB_index_pos database LS_index_pos LIST [Exclusive]* [MSU_format] [FASTA_format] [version]> outfile

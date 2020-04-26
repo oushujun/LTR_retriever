@@ -1,8 +1,10 @@
+#!/usr/bin/env perl
+
 ##To annotate the gff file with information from the library
 ##Usage: perl annotate_gff.pl lib.fa gff > anno.gff
 ##Shujun Ou (oushujun@msu.edu)
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 my $usage="perl annotate_gff.pl lib.fa gff > anno.gff\n";

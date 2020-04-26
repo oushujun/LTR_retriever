@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#!/usr/bin/env perl
 
 $usage = "fam_summary.pl TE_fam.size.list genome_size_bp > TE_fam.sum.txt\n";
 

@@ -1,7 +1,9 @@
+#!/usr/bin/env perl
+
 ##Shujun Ou
 ##Usage: perl Six-frame_translate.pl sequence.nt.fa > sequence.aa.fa
 
-#!/usr/bin/env perl -w
+use warnings;
 use strict;
 
 my %codon2aa = qw(
