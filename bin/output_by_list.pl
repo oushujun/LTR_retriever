@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
+use warnings;
+use strict;
 
 ##Shujun Ou
 ##usage: $ perl output_by_list.pl target_file list_file > outfile
 
-use warnings;
-use strict;
 
 my $usage="\n#usage: \$ perl output_by_list.pl DB_index_pos database LS_index_pos LIST [Exclusive]* [MSU_format] [FASTA_format] [version]> outfile
 	* [] parameters are optional. 
@@ -16,6 +16,7 @@ output_by_list.pl
 output_by_list: program for extracting information in database by provided list
 Author: Shujun Ou, Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
 Version: 1.5 2014/05/12
+update: 1.6 2019/07/25
 \n";
 
 my $msuL=0;
@@ -45,11 +46,13 @@ while(<LS>){
 	s/^\s+//;
 	chomp;
 	my $loc=(split)[$list_pos];
+	next unless defined $loc;
 	$loc=~s/\|.*$//;
 	$loc=~s/\[.*\]//g;
 	if ($msuL){ #for MSU LOC position recognision 
-		$loc=(split /:/, $loc)[1];
-		$loc=~s/\.\..*$//;
+		$loc=~s/#.*//;
+		$loc=~s/\.+$//;
+		$loc=~s/^.*[_:\-.]+([0-9]+)[_:\-.]+([0-9]+)$/$1..$2/;
 		}
 	$data{$loc}=undef;
 }
@@ -60,13 +63,16 @@ while(<DB>){
 	s/>//g;
 	s/^\s+//;
 	my $pos=(split)[$data_pos];
+	next unless defined $pos;
 	if ($pos=~/pos/i){ print $_ }
 	$pos=~s/\[.*\]//g;
 	if ($pos=~/^([0-9]+),.*$/){$pos=$1}
-	my ($p1, $p2)=($1, $2) if $pos=~/(.*)\|(.*)$/;
+	my ($p1, $p2)=(0, 0);
+	($p1, $p2)=($1, $2) if $pos=~/(.*)\|(.*)$/;
 	if ($msuD){
-		$pos=(split /:/, $pos)[1];
-		$pos=~s/\.\..*$//;
+		$pos=~s/#.*//;
+		$pos=~s/\.+$//;
+		$pos=~s/^.*[_:\-.]+([0-9]+)[_:\-.]+([0-9]+)$/$1..$2/;
 		}
         if (exists $data{$pos} or exists $data{$p1} or exists $data{$p2}){
 		if ($exclude==0){
