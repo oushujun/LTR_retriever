@@ -74,6 +74,7 @@ while (<TOTAL>){
 	my ($chr, $from, $to, $superfam)=(split)[0,1,2,3];
 	next unless exists $total{$chr};
 	my $len=$to-$from+1;
+	next if $from + $len > length $total{$chr};
 	substr($total{$chr}, $from-1, $len)="a" x $len; #substitute '0' with 'a' where LTR sequence is occurred
 	substr($copia{$chr}, $from-1, $len)="c" x $len if $superfam =~ /Copia/i; #substitute '0' with 'a' where LTR sequence is occurred
 	substr($gypsy{$chr}, $from-1, $len)="g" x $len if $superfam =~ /Gypsy/i; #substitute '0' with 'a' where LTR sequence is occurred
