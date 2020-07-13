@@ -19,68 +19,80 @@ Shujun Ou (shujun.ou.1\@gmail.com) 03/26/2019
 Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
 【Input Options】
--genome      [File]	specify the genome sequence file (FASTA)
+-genome      [File]	Specify the genome sequence file (FASTA)
 -inharvest   [File]	LTR-RT candidates from LTRharvest
 -infinder    [File]	LTR-RT candidates from LTR_FINDER
 -inmgescan   [File]	LTR-RT candidates from MGEScan_LTR
 -nonTGCA     [File]	Non-canonical LTR-RT candidates from LTRharvest
 
 【Output options】
--verbose/-v		retain intermediate outputs (developer mode)
--noanno			disable whole genome LTR-RT annotation (no GFF output)
+-verbose/-v		Retain intermediate outputs (developer mode)
+-noanno			Disable whole genome LTR-RT annotation (no GFF3 output)
 
 【Filter options】
--misschar    [CHR]	specify the ambiguous character (default N)
--Nscreen		disable filtering ambiguous sequence in candidates
--missmax     [INT]	maximum number of ambiguous bp allowed in a candidate (default 10)
--missrate    [0-1]	maximum percentage of ambiguous bp allowed in a candidate (default 0.8)
--minlen      [INT]	minimum bp of the LTR region (default 100)
--max_ratio   [FLOAT]	maximum length ratio of internal region/LTR region (default 50)
--minscore    [INT]	minimum alignment length (INT/2) to identify tandem repeats (default 1000)
--flankmiss   [1-60]	maximum ambiguous length (bp) allowed in 60bp-flanking sequences (default 25)
--flanksim    [0-100]	minimum percentage of identity for flanking sequence alignment (default 60)
--flankaln    [0-1]	maximum alignment portion allowed for 60bp-flanking sequences (default 0.6)
--motif       [[STRING]]	specify non-canonical motifs to search for
+-misschar    [CHR]	Specify the ambiguous character (default N)
+-Nscreen		Disable filtering ambiguous sequence in candidates
+-missmax     [INT]	Maximum number of ambiguous bp allowed in a candidate (default 10)
+-missrate    [0-1]	Maximum percentage of ambiguous bp allowed in a candidate (default 0.8)
+-minlen      [INT]	Minimum bp of the LTR region (default 100)
+-max_ratio   [FLOAT]	Maximum length ratio of internal region/LTR region (default 50)
+-minscore    [INT]	Minimum alignment length (INT/2) to identify tandem repeats (default 1000)
+-flankmiss   [1-60]	Maximum ambiguous length (bp) allowed in 60bp-flanking sequences (default 25)
+-flanksim    [0-100]	Minimum percentage of identity for flanking sequence alignment (default 60)
+-flankaln    [0-1]	Maximum alignment portion allowed for 60bp-flanking sequences (default 0.6)
+-motif       [[STRING]]	Specify non-canonical motifs to search for
 			(default -motif [TCCA TGCT TACA TACT TGGA TATA TGTA TGCA])
 -notrunc		Discard truncated LTR-RTs and nested LTR-RTs (will dampen sensitivity)
--procovTE     [0-1]	maximum portion of allowed for cumulated DNA TE database and LINE database 
+-procovTE    [0-1]	Maximum portion of allowed for cumulated DNA TE database and LINE database 
 			lignments (default 0.7)
--procovPL     [0-1]	maximum portion allowed for cumulated plant protein database alignments (default 0.7)
--prolensig   [INT]	minimum alignment length (aa) for LINE/DNA transposase/plant protein alignment (default 30)
+-procovPL    [0-1]	Maximum portion allowed for cumulated plant protein database alignments (default 0.7)
+-prolensig   [INT]	Minimum alignment length (aa) for LINE/DNA transposase/plant protein alignment (default 30)
 
 【Library options】
--blastclust  [[STRING]]	trigger to use blastclust and customize parameters 
+-blastclust  [[STRING]]	Trigger to use blastclust and customize parameters 
 			(default -blastclust [-L .9 -b T -S 80])
--cdhit       [[STRING]]	trigger to use cd-hit-est (default) and customize parameters 
+-cdhit       [[STRING]]	Trigger to use cd-hit-est (default) and customize parameters 
 			(default -cdhit [-c 0.8 -G 0.8 -s 0.9 -aL 0.9 -aS 0.9 -M 0])
--linelib     [FASTA]	provide LINE transposase database for LINE TE exclusion 
+-linelib     [FASTA]	Provide LINE transposase database for LINE TE exclusion 
 			(default /database/Tpases020812LINE)
--dnalib      [FASTA]	provide DNA TE transposase database for DNA TE exclusion 
+-dnalib      [FASTA]	Provide DNA TE transposase database for DNA TE exclusion 
 			(default /database/Tpases020812DNA)
--plantprolib [FASTA]	provide plant protein database for coding sequence exclusion 
+-plantprolib [FASTA]	Provide plant protein database for coding sequence exclusion 
 			(default /database/alluniRefprexp082813)
--TEhmm       [Pfam]	provide Pfam database for TE identification 
+-TEhmm       [Pfam]	Provide Pfam database for TE identification 
 			(default /database/TEfam.hmm)
+【Dependencies】
+-trf_path    [path]	Path to the trf program. (default: find from ENV)
+-hmmer       [path]	Path to the HMMER program. (default: find from ENV)
+-blastplus   [path]	Path to the BLAST+ program. (default: find from ENV)
+-blast       [path]	Path to the BLAST program. Required if -blastclust is used. (default: find from ENV)
+-cdhit_path  [path]	Path to the CD-HIT program. Required if -cdhit is used. (default: find from ENV)
+-repeatmasker [path]	Path to the RepeatMasker program. (default: find from ENV)
 
 【Miscellaneous】
--u           [FLOAT]	neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
--step	     [STRING]	restart the program from a particular step. Existing outputs will be overwritten. Options: 
+-u           [FLOAT]	Neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
+-step	     [STRING]	Restart the program from a particular step. Existing outputs will be overwritten. Options: 
 				Init (default, from the beginning);
 				Major (Tandem repeat cleanup finished, structrual analyses next)
 				Trunc (Structural analyses finished, truncated LTR recycle next)
 				Promask (Truncated LTR recycle finished, protein contamination cleanup next)
 				Library (Protein contamination cleanup finished, initial library construction next)
 				Next (Initial library construction finished, non-TGCA analyses next)
--threads     [INT]	number of threads (≤ total available threads, default 4)
--help/-h		display this help information
+-threads     [INT]	Number of threads (≤ total available threads, default 4)
+-help/-h		Display this help information
 
-######Questions and Issues Please See: https://github.com/oushujun/LTR_retriever ######
+###### For Questions and Issues Please See: https://github.com/oushujun/LTR_retriever ######
 
 ";
 
 #obtain the exact path for the program location
 my $script_path = dirname(__FILE__);
 my $trf=""; #path to the trf program
+my $blastplus='';
+my $repeatmasker='';
+my $hmmer='';
+my $blast='';
+my $cdhitpath='';
 
 
 my $inharvest=''; #screen output of LTRharvest with -motif 'TGCA' control
@@ -113,7 +125,6 @@ my $set_bclust="-L 0.9 -b T -S 80"; #set parameters for blastclust
 my $set_cdhit="-c 0.8 -G 0.8 -s 0.9 -aL 0.9 -aS 0.9 -M 0"; #set parameters for cdhit
 
 my $keep_trunc="1"; #1 will recycle information from truncated LTR-RTs; 0 will disable this module
-my $gff3=1; #0 will not make gff3 file; 1 will.
 my $verbose=0; #0 will delete intermediate files after analysis; 1 will not.
 my $annotation=1; #1 will perform whole genome LTR-RT annotation; 0 will not
 
@@ -162,13 +173,18 @@ foreach (@ARGV){
 	$set_cdhit=$1 if $argv=~/-cdhit\s+\[(.+?)\]/i;
 	$keep_trunc=0 if /^-notrunc$/i;
 	$annotation=0 if /^-noanno$/i;
-	$step = $ARGV[$k+1] if /^-step$/i;
+	$step = $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1]!~/^-/;
+	$trf = $ARGV[$k+1] if /^-trf_path$/i and $ARGV[$k+1]!~/^-/;
+	$hmmer = $ARGV[$k+1] if /^-hmmer$/i and $ARGV[$k+1]!~/^-/;
+	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1]!~/^-/;
+	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1]!~/^-/;
+	$cdhitpath = $ARGV[$k+1] if /^-cdhit_path$/i and $ARGV[$k+1]!~/^-/;
+	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1]!~/^-/;
 	$verbose=1 if /^-verbose|-v$/i;
 	$threads=$ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1]!~/^-/;
 	die $help if /^--help|-h$/i;
 	$k++;
         }
-
 die "Please specify the input sequence file!\nUse -h for more help info\n" unless (defined $genome and -s "$genome">0);
 die "Please specify LTRharvest or LTR_finder screen output file!\nUse -h for more help info\n" unless (defined $inharvest or defined $infinder);
 
@@ -177,13 +193,6 @@ die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ a
 die "\nERROR: The specified file $infinder is not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
 die "\nERROR: The specified file $inmgescan is not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
 die "\nERROR: The specified file $inharvest is not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
-
-##read paths to dependent programs
-my $blastplus='';
-my $repeatmasker='';
-my $hmmer='';
-my $blast='';
-my $cdhitpath='';
 
 print "
 ##########################
@@ -219,29 +228,29 @@ while (<Path>){
 	$path{$program}=$path;
 	}
 close Path;
-$blastplus=$path{"BLAST+"};
-$repeatmasker=$path{"RepeatMasker"};
-$hmmer=$path{"HMMER"};
-$blast=$path{"BLAST"};
-$cdhitpath=$path{"CDHIT"};
+$blastplus=$path{"BLAST+"} if $blastplus eq '';
+$repeatmasker=$path{"RepeatMasker"} if $repeatmasker eq '';
+$hmmer=$path{"HMMER"} if $hmmer eq '';
+$blast=$path{"BLAST"} if $blast eq '';
+$cdhitpath=$path{"CDHIT"} if $cdhitpath eq '';
 
 ##test paths to dependent programs
 #makeblastdb
 $blastplus=`which makeblastdb 2>/dev/null` if $blastplus eq '';
-$blastplus=~s/makeblastdb\n//;
+$blastplus=~s/makeblastdb\n?//;
 die "makeblastdb is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
 #blastn
 $blastplus=`which blastn 2>/dev/null` if $blastplus eq '';
-$blastplus=~s/blastn\n//;
+$blastplus=~s/blastn\n?//;
 die "blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
 #blastx
 $blastplus=`which blastx 2>/dev/null` if $blastplus eq '';
-$blastplus=~s/blastx\n//;
+$blastplus=~s/blastx\n?//;
 die "blastx is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
 #RepeatMasker
 my $rand=int(rand(1000000));
 $repeatmasker=`which RepeatMasker 2>/dev/null` if $repeatmasker eq '';
-$repeatmasker=~s/RepeatMasker\n//;
+$repeatmasker=~s/RepeatMasker\n?//;
 die "RepeatMasker is not exist in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
 my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
@@ -249,15 +258,15 @@ die "The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/
 `rm dummy060817.fa.$rand*`;
 #hmmsearch
 $hmmer=`which hmmsearch 2>/dev/null` if $hmmer eq '';
-$hmmer=~s/hmmsearch\n//;
+$hmmer=~s/hmmsearch\n?//;
 die "hmmsearch is not exist in the HMMER path $hmmer!\n" unless -X "${hmmer}hmmsearch";
 #blastclust
 $blast=`which blastclust 2>/dev/null` if $blast eq '';
-$blast=~s/blastclust\n//;
+$blast=~s/blastclust\n?//;
 die "blastclust is not exist in the BLAST path $blast!\n" if (!(-X "${blast}blastclust") and $blastclust);
 #cd-hit-est
 $cdhitpath=`which cd-hit-est 2>/dev/null` if $cdhitpath eq '';
-$cdhitpath=~s/cd-hit-est\n//;
+$cdhitpath=~s/cd-hit-est\n?//;
 die "cd-hit-est is not exist in the CDHIT path $cdhitpath!\n" if (!(-X "${cdhitpath}cd-hit-est") and $cdhit);
 die "neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}blastclust" or -X "${cdhitpath}cd-hit-est");
 #trf
@@ -599,7 +608,7 @@ chomp ($date);
 print "$date\tTotal intact LTR-RTs found: $pass_count
 \t\t\t\tTotal intact non-TGCA LTR-RTs found: $nmtf_count\n\n";
 
-`perl $script_path/bin/make_gff3.pl $genome $genome.pass.list` if $gff3==1;
+`perl $script_path/bin/make_gff3.pl $genome $genome.pass.list`;
 ##Annotate LTR-RT in the genome
 $date=`date`;
 chomp ($date);
@@ -613,7 +622,8 @@ if ($annotation==1){
 	`perl $script_path/bin/fam_coverage.pl $genome.LTRlib.fa $genome.out $genome_size > $genome.out.fam.size.list`;
 	`perl $script_path/bin/fam_summary.pl $genome.out.fam.size.list $genome_size > $genome.out.superfam.size.list`;
 	`perl $script_path/bin/LTR_sum.pl -genome $genome -all $genome.out > $genome.out.LTR.distribution.txt`;
-	`perl $script_path/bin/make_gff3_with_RMout.pl $genome.out`;
+	`perl $script_path/bin/RMout2bed.pl $genome.out > $genome.out.bed`;
+	`perl $script_path/bin/bed2gff.pl $genome.out.bed > $genome.out.gff3`;
 	my $info=`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
 	print "$info";
 	}
@@ -635,8 +645,8 @@ print "
 
 Table output for intact LTR-RTs (detailed info)
 	$genome.pass.list (All LTR-RTs)
-	$genome.nmtf.pass.list (Non-TGCA LTR-RTs)\n";
-print "\t$genome.pass.list.gff3 (GFF3 format for intact LTR-RTs)\n" if $gff3==1;
+	$genome.nmtf.pass.list (Non-TGCA LTR-RTs)
+	$genome.pass.list.gff3 (GFF3 format for intact LTR-RTs)\n";
 
 print "
 LTR-RT library
@@ -647,7 +657,7 @@ LTR-RT library
 
 print "
 Whole-genome LTR-RT annotation by the non-redundant library
-	$genome.out.gff (GFF format)
+	$genome.out.gff3 (GFF3 format)
 	$genome.out.fam.size.list (LTR family summary)
 	$genome.out.superfam.size.list (LTR superfamily summary)
 " if $annotation==1;
