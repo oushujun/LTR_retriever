@@ -5,7 +5,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.8.7";
+my $version="v2.9.0";
 my $help="
 ##########################
 ### LTR_retriever $version ###
@@ -605,11 +605,29 @@ if ($annotation==1){
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
 	my $genome_size=`grep "total length" $genome.tbl|awk '{print \$3}'`;
 	chomp $genome_size;
+
+	# summarize LTR distributions
 	`perl $script_path/bin/fam_coverage.pl $genome.LTRlib.fa $genome.out $genome_size > $genome.out.fam.size.list`;
 	`perl $script_path/bin/fam_summary.pl $genome.out.fam.size.list $genome_size > $genome.out.superfam.size.list`;
 	`perl $script_path/bin/LTR_sum.pl -genome $genome -all $genome.out > $genome.out.LTR.distribution.txt`;
-	`perl $script_path/bin/RMout2bed.pl $genome.out > $genome.out.bed`;
-	`perl $script_path/bin/bed2gff.pl $genome.out.bed > $genome.out.gff3`;
+
+	# combine homology-based and strutrual-based annotation
+	`perl $script_path/bin/RMout2bed.pl $genome.out > $genome.out.bed`; # a regular enriched bed
+	`perl $script_path/bin/bed2gff.pl $genome.out.bed LTR_annot > $genome.out.gff3`;
+	`perl $script_path/bin/gff2bed.pl $genome.out.gff3 homology > $genome.out.bed`; # add the last column to this bed
+	`perl $script_path/bin/gff2bed.pl $genome.pass.list.gff3 structural > $genome.pass.list.bed`;
+	`perl $script_path/bin/combine_overlap.pl $genome.pass.list.bed $genome.pass.list.bed.cmb 5`;
+
+	`perl $script_path/bin/get_frag.pl $genome.out.bed $genome.pass.list.bed.cmb $threads`;
+	`perl $script_path/bin/keep_nest.pl $genome.pass.list.bed $genome.out.bed $threads`;
+	`grep homology $genome.pass.list.bed-$genome.out.bed > $genome.pass.list.bed-$genome.out.bed.homo`;
+	`sort -suV $genome.pass.list.bed-$genome.out.bed.homo $genome.out.bed-$genome.pass.list.bed.cmb > $genome.LTR.homo.bed`;
+	`perl $script_path/bin/bed2gff.pl $genome.LTR.homo.bed LTR_homo > $genome.LTR.homo.gff3`;
+	`cat $genome.pass.list.gff3 $genome.LTR.homo.gff3 > $genome.LTR.gff3.raw`;
+	`grep -v '^#' $genome.LTR.gff3.raw | sort -sV -k1,1 -k4,4 | perl -0777 -ne '\$date=\`date\`; \$date=~s/\\s+\$//; print "##gff-version 3\\n##date \$date\\n##Identity: Sequence identity (0-1) between the library sequence and the target region.\\n##ltr_identity: Sequence identity (0-1) between the left and right LTR regions.\\n##tsd: target site duplication.\\n##seqid source sequence_ontology start end score strand phase attributes\\n\$_"' - > $genome.LTR.gff3`;
+	`rm $genome.LTR.gff3.raw`;
+
+	# calculate LAI
 	my $info=`perl $script_path/LAI -genome $genome -intact $genome.pass.list -all $genome.out -t $threads -q -blast $blastplus`;
 	print "$info";
 	}
@@ -641,7 +659,7 @@ LTR-RT library
 
 print "
 Whole-genome LTR-RT annotation by the non-redundant library
-	$genome.out.gff3 (GFF3 format)
+	$genome.LTR.gff3 (GFF3 format)
 	$genome.out.fam.size.list (LTR family summary)
 	$genome.out.superfam.size.list (LTR superfamily summary)
 " if $annotation==1;
