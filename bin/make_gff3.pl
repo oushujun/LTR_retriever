@@ -13,17 +13,20 @@
 use warnings;
 use strict;
 
-open FA, "<$ARGV[0]" or die "ERROR: $!";
-open List, "<$ARGV[1]" or die "ERROR: $!";
+my $usage = "\n\tperl make_gff3.pl genome.fa LTR.pass.list\n\n";
+open FA, "<$ARGV[0]" or die "ERROR: $usage";
+open List, "<$ARGV[1]" or die "ERROR: $usage";
 open GFF, ">$ARGV[1].gff3" or die "ERROR: $!";
 
 my $date=`date -u`;
 chomp ($date);
 print GFF "##gff-version 3\n##date $date
-##seqid source repeat_class/superfamily start end score strand phase attributes\n";
+##ltr_identity: Sequence identity (0-1) between the left and right LTR region.
+##tsd: target site duplication.
+##seqid source sequence_ontology start end score strand phase attributes\n";
 
 #defined sequence ontology
-my %SO = (Cent => "SO:0001797", TIR => "SO:0000208", MITE => "SO:0000338", Helitron => "SO:0000544", LINE => "SO:0000194", SINE => "SO:0000206", long_terminal_repeat => "SO:0000286", Low_complexity => "SO:0001005", LTRRT => "SO:0000186", "rDNA/spacer" => "SO:0001860", repeat_region => "SO:0000657", telomeric_repeat => "SO:0001496", subtelomere => "SO:0001997", nonLTR => "SO:0000189", target_site_duplication => "SO:0000434", primer_binding_site => "SO:0005850");
+my %SO = (repeat_region => "SO:0000657", long_terminal_repeat => "SO:0000286", target_site_duplication => "SO:0000434", primer_binding_site => "SO:0005850", "LTR_retrotransposon" => "SO:0000186", "Copia_LTR_retrotransposon" => "SO:0002264", "Gypsy_LTR_retrotransposon" => "SO:0002265");
 
 $/="\n>";
 my $chr_info='';
@@ -57,7 +60,10 @@ while (<List>){
 	$rTSD=~s/\.\./\t/;
 	$element_start=(split /\s+/, $lTSD)[0];
 	$element_end=(split /\s+/, $rTSD)[1];
-	my $id = "$chr:$lLTR_start..$rLTR_end#LTR/$supfam";
+	my $id = "$chr:$lLTR_start..$rLTR_end";
+	my $so = "LTR_retrotransposon";
+	$so = "Copia_LTR_retrotransposon" if $supfam eq "Copia";
+	$so = "Gypsy_LTR_retrotransposon" if $supfam eq "Gypsy";
 	if ($TSD eq "NA"){
 		$element_start=$lLTR_start;
 		$element_end=$rLTR_end;
@@ -67,13 +73,15 @@ while (<List>){
 		print GFF "##sequence-region   $chr_ori 1 $seq_flag{$chr_ori}[1]\n"; #seqence length
 		delete $seq_flag{$chr_ori};
 		}
-	my $info = "Name=$id;motif=$motif;tsd=$TSD;ltr_identity=$sim;Method=structural";
-	print GFF "$chr\t$annotator\trepeat_region\t$element_start\t$element_end\t.\t$strand\t.\tID=repeat_region$i;Sequence_ontology=$SO{'repeat_region'};$info\n";
-	print GFF "$chr\t$annotator\ttarget_site_duplication\t$lTSD\t.\t$strand\t.\tID=lTSD_$i;Parent=repeat_region$i;Sequence_ontology=$SO{'target_site_duplication'};$info\n" unless $TSD eq "NA";
-	print GFF "$chr\t$annotator\tlong_terminal_repeat\t$lLTR_start\t$lLTR_end\t.\t$strand\t.\tID=lLTR_$i;Parent=repeat_region$i;Sequence_ontology=$SO{'long_terminal_repeat'};$info\n";
-	print GFF "$chr\t$annotator\tLTR/$supfam\t$lLTR_start\t$rLTR_end\t.\t$strand\t.\tID=LTRRT_$i;Parent=repeat_region$i;Sequence_ontology=$SO{'LTRRT'};$info\n";
-	print GFF "$chr\t$annotator\tlong_terminal_repeat\t$rLTR_start\t$rLTR_end\t.\t$strand\t.\tID=rLTR_$i;Parent=repeat_region$i;Sequence_ontology=$SO{'long_terminal_repeat'};$info\n";
-	print GFF "$chr\t$annotator\ttarget_site_duplication\t$rTSD\t.\t$strand\t.\tID=rTSD_$i;Parent=repeat_region$i;Sequence_ontology=$SO{'target_site_duplication'};$info\n" unless $TSD eq "NA";
+#	my $info = "Name=$id;motif=$motif;tsd=$TSD;ltr_identity=$sim;Method=structural";
+	my $info = "Name=$id;Classification=LTR/$supfam";
+	my $info2 = "ltr_identity=$sim;Method=structural;motif=$motif;tsd=$TSD";
+	print GFF "$chr\t$annotator\trepeat_region\t$element_start\t$element_end\t.\t$strand\t.\tID=repeat_region_$i;$info;Sequence_ontology=$SO{'repeat_region'};$info2\n";
+	print GFF "$chr\t$annotator\ttarget_site_duplication\t$lTSD\t.\t$strand\t.\tID=lTSD_$i;Parent=repeat_region_$i;$info;Sequence_ontology=$SO{'target_site_duplication'};$info2\n" unless $TSD eq "NA";
+	print GFF "$chr\t$annotator\tlong_terminal_repeat\t$lLTR_start\t$lLTR_end\t.\t$strand\t.\tID=lLTR_$i;Parent=repeat_region_$i;$info;Sequence_ontology=$SO{'long_terminal_repeat'};$info2\n";
+	print GFF "$chr\t$annotator\t$so\t$lLTR_start\t$rLTR_end\t.\t$strand\t.\tID=LTRRT_$i;Parent=repeat_region_$i;$info;Sequence_ontology=$SO{$so};$info2\n";
+	print GFF "$chr\t$annotator\tlong_terminal_repeat\t$rLTR_start\t$rLTR_end\t.\t$strand\t.\tID=rLTR_$i;Parent=repeat_region_$i;$info;Sequence_ontology=$SO{'long_terminal_repeat'};$info2\n";
+	print GFF "$chr\t$annotator\ttarget_site_duplication\t$rTSD\t.\t$strand\t.\tID=rTSD_$i;Parent=repeat_region_$i;$info;Sequence_ontology=$SO{'target_site_duplication'};$info2\n" unless $TSD eq "NA";
 	print GFF "###\n";
 	$i++;
 	}

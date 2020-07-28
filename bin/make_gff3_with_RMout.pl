@@ -36,7 +36,7 @@ close SO;
 
 my $date=`date -u`;
 chomp ($date);
-open RMout, "sort -sV $ARGV[0]|" or die "ERROR: $!";
+open RMout, "sort -sV -k5,5 $ARGV[0]|" or die "ERROR: $!";
 open GFF, ">$ARGV[0].gff3" or die "ERROR: $!";
 print GFF "##gff-version 3\n##date $date
 ##seqid source repeat_class/superfamily start end sw_score strand phase attributes\n";
@@ -46,11 +46,7 @@ my $i = 0; #annotation count
 while (<RMout>){
 	s/^\s+//;
 	my ($SW_score, $div, $iden, $chr, $chr_len, $element_start, $element_end, $element_length, $left_len, $strand, $TE_ID, $TE_class);
-	($SW_score, $div, undef, undef, $chr, $element_start, $element_end, $left_len, $strand, $TE_ID, $TE_class)=(split /\s+/, $_);
-print "$_\t$SW_score, $div, $chr, $element_start, $element_end, $left_len, $strand, $TE_ID, $TE_class\n" unless defined $TE_class;
-#4198    0.6  1.9  0.0  211000022278032      5282     5751     (1185) C TE_00000504_INT LTR/Gypsy     (4238)   9137    8659     4
-#10000 NA 0.001 0.001 2L 7343381 7350438 NA NA 2L:7343381..7350438#LTR/Gypsy LTR/Gypsy
-#next;
+	($SW_score, $div, $chr, $element_start, $element_end, $left_len, $strand, $TE_ID, $TE_class)=(split)[0,1,4,5,6,7,8,9,10];
 	next unless defined $SW_score and $SW_score =~ /[0-9]+/;
 	my $so = $TE_class;
 	if (exists $class{$TE_class}){
@@ -64,7 +60,6 @@ print "$_\t$SW_score, $div, $chr, $element_start, $element_end, $left_len, $stra
 	$element_length=$element_end-$element_start+1;
 	next if $SW_score<300 and $element_length<80;
 	$strand="-" if $strand eq "C";
-	$strand="." if $strand eq "NA";
 	unless (exists $seq_flag{$chr}){
 		$seq_flag{$chr}=$chr;
 		$left_len=~s/[\(\) ]+//g;
@@ -72,8 +67,7 @@ print "$_\t$SW_score, $div, $chr, $element_start, $element_end, $left_len, $stra
 		$chr_len=$element_end+$left_len;
 		print GFF "##sequence-region $chr 1 $chr_len\n";
 		}
-	$iden = 1 - $div/100 if $iden =~ /^[0-9.e\-\*x]+$/;
-	$iden = "NA" if $div eq "NA";
+	$iden = 1 - $div/100;
 	my $info = "ID=TE_annot_$i;Name=$TE_ID#$TE_class;Classification=$TE_class;Sequence_ontology=$SO{$so};Identity=$iden;Method=homology";
 	print GFF "$chr\t$annotator\t$so\t$element_start\t$element_end\t$SW_score\t$strand\t.\t$info\n";
 	$i++; #annotation count
