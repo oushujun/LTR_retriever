@@ -23,6 +23,8 @@ By default, the program will generate whole-genome LTR-RT annotation and the LTR
 
 ### Installation
 
+LTR_retriever is installation-free but requires dependencies: TRF, BLAST+, BLAST or CD-HIT, HMMER, and RepeatMasker. You may specify the path to these programs in the command line (run `LTR_retriever -h` for details) or install them in the following ways:
+
 #### Quick installation using conda 
 
      conda install -c bioconda ltr_retriever  
@@ -39,29 +41,20 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 
 #### Standard installation
 
-For the standard installation, you need to provide the paths to the following dependent programs.
-1. makeblastdb, blastn, and blastx in the BLAST+ package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
-2. cd-hit-est in the CDHIT package (http://weizhongli-lab.org/cd-hit/) OR 
-   blastclust in the BLAST package (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy/2.2.25/),
-3. hmmsearch in the HMMER package (http://hmmer.org/; v3.1b2 or higher), and
-4. RepeatMasker (http://www.repeatmasker.org/).
+You can also provide the fixed paths to the following dependent programs.
+1. makeblastdb, blastn, and blastx in [the BLAST+ package](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
+2. cd-hit-est in [the CDHIT package](http://weizhongli-lab.org/cd-hit/) OR 
+   blastclust in [the BLAST package](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy/2.2.25/),
+3. hmmsearch in [the HMMER package](http://hmmer.org/; v3.1b2 or higher), and
+4. [RepeatMasker](http://www.repeatmasker.org/).
 
 Simply modify the 'paths' file in the LTR_retriever directory
 
 	vi /your_path_to/LTR_retriever/paths
 
-Then modify lines below:
-
-	BLAST+=/your_path_to/BLAST+2.2.30/bin/
-	RepeatMasker=/your_path_to/RepeatMasker4.0.0/
-	HMMER=/your_path_to/HMMER3.1b2/bin/
-	CDHIT=/your_path_to/CDHIT4.6.1/
-	BLAST=/your_path_to/BLAST2.2.26/bin/ #not required if CDHIT provided
-
-
 ### Inputs 
 
-Two types of inputs are needed for LTR_retriever
+Two types of inputs are required for LTR_retriever
 1. Genomic sequence
 2. LTR-RT candidates
 
@@ -96,7 +89,7 @@ The output of LTR_retriever includes:
 
 ### Usage 
 
-Good practice: It's highly recommended to use short and simple sequence names. For example, use letters, numbers, and _ to generate unique names shorter than 15 bits. If there is long sequence names, LTR_retriever will try to convert it for you, but not always successful.
+Best practice: It's highly recommended to use short and simple sequence names. For example, use letters, numbers, and _ to generate unique names shorter than 15 bits. If there are long sequence names, LTR_retriever will try to convert it for you, but not always successful.
 
 To obtain raw input files with LTRharvest and LTR_FINDER_parallel:
 
