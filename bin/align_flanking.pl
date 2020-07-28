@@ -72,7 +72,7 @@ $boundary_aln="$left_align,"."$right_align" if $boundary_ctrl==1;
 ## Align the flanking sequence
 my @Blast=();
 my $try=0;
-while ($try<100){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
+while ($try<10){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 10 times to guarantee the blast is run correctly
 	@Blast=qx(bash -c '${blastplus}blastn -subject <(echo -e \"$File3\") -query <(echo -e \"$File4\") -evalue 1000 -word_size $w_size -dust no -outfmt 6' 2> /dev/null) if (defined $seq3 and defined $seq4);
 #blast outfmt=6 looks like this:
 #query id, subject id, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score

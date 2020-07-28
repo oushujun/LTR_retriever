@@ -168,7 +168,7 @@ sub Identifier() {
 
 	my $exec="${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
 	my @Blast=();
-	for (my $try=0; $try<100; $try++){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 100 times to guarantee the blast is run correctly
+	for (my $try=0; $try<10; $try++){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 10 times to guarantee the blast is run correctly
 		@Blast=qx(bash -c '$exec' 2> /dev/null) if defined $ltr;
 		last if $? == 0;
 		}
