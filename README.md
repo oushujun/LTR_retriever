@@ -42,10 +42,10 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 #### Standard installation
 
 You can also provide the fixed paths to the following dependent programs.
-1. makeblastdb, blastn, and blastx in [the BLAST+ package](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
+1. makeblastdb, blastn, and blastx in [the BLAST+ package](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
 2. cd-hit-est in [the CDHIT package](http://weizhongli-lab.org/cd-hit/) OR 
-   blastclust in [the BLAST package](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy/2.2.25/),
-3. hmmsearch in [the HMMER package](http://hmmer.org/; v3.1b2 or higher), and
+   blastclust in [the BLAST package](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.25/),
+3. hmmsearch in [the HMMER package](http://hmmer.org/) (v3.1b2 or higher), and
 4. [RepeatMasker](http://www.repeatmasker.org/).
 
 Simply modify the 'paths' file in the LTR_retriever directory
@@ -122,8 +122,8 @@ For questions and Issues please see: https://github.com/oushujun/LTR_retriever/i
 
 If you find LTR_retriever useful, please cite:
 
-`Ou S. and Jiang N. (2018). LTR_retriever: A Highly Accurate and Sensitive Program for Identification of Long Terminal Repeat Retrotransposons. Plant Physiol. 176(2): 1410-1422.`
+`Ou S. and Jiang N. (2018). LTR_retriever: A Highly Accurate and Sensitive Program for Identification of Long Terminal Repeat Retrotransposons. Plant Physiol. 176(2): 1410-1422.` [open access](http://www.plantphysiol.org/content/176/2/1410)
 
 If you find LAI useful, please cite:
 
-`Ou S., Chen J. and Jiang N. (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. gky730:` https://doi.org/10.1093/nar/gky730
+`Ou S., Chen J. and Jiang N. (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. gky730.` [open access](https://doi.org/10.1093/nar/gky730)
