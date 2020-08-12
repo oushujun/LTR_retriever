@@ -36,7 +36,7 @@ my $align_score=1000; #-e para, dft:1000
 my $max_seed=2000; #maximum period size to report
 my $cleanN=0; #1 will remove $target="n" in output sequence
 my $trf=1; #1 will enable tandem repeat finder (default), 0 will not
-my $trf_path="$script_path/trf409.legacylinux64"; #Path to the trf program, default Linux version
+my $trf_path=''; #Path to the trf program
 my $file;
 
 my $k=0;
@@ -55,6 +55,14 @@ foreach (@ARGV){
 	}
 
 die $usage unless -s $file;
+
+# check TRF
+$trf_path=`which trf 2>/dev/null` if $trf_path eq '';
+$trf_path=~s/\n$//;
+`$trf_path 2>/dev/null`;
+die "Error: No Tandem Repeat Finder is working on the current system.
+	Please report it to https://github.com/oushujun/EDTA/issues" if $?==32256;
+die "\n\tTandem Repeat Finder not found!\n\n$usage" unless $trf_path ne '';
 
 my %tandem;
 my $tandem='';
