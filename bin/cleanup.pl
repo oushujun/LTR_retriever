@@ -41,16 +41,16 @@ my $file;
 
 my $k=0;
 foreach (@ARGV){
-	$target=$ARGV[$k+1] if /^-misschar$/i;
-	$func_nc=0 if /^-Nscreen$/i;
-	$n_count=$ARGV[$k+1] if /^-nc$/i;
-	$n_rate=$ARGV[$k+1] if /^-nr$/i;
-	$minlen=$ARGV[$k+1] if /^-minlen$/i;
-	$align_score=$ARGV[$k+1] if /^-minscore$/i;
-	$file=$ARGV[$k+1] if /^-f$/i;
-	$cleanN=1 if /^-cleanN$/i;
-	$trf=0 if /^-trf$/i;
-	$trf_path=$ARGV[$k+1] if /^-trf_path$/i;
+	$target=$ARGV[$k+1] if /^-misschar$/i and $ARGV[$k+1]!~/^-/;
+	$func_nc=0 if /^-Nscreen$/i and $ARGV[$k+1]!~/^-/;
+	$n_count=$ARGV[$k+1] if /^-nc$/i and $ARGV[$k+1]!~/^-/;
+	$n_rate=$ARGV[$k+1] if /^-nr$/i and $ARGV[$k+1]!~/^-/;
+	$minlen=$ARGV[$k+1] if /^-minlen$/i and $ARGV[$k+1]!~/^-/;
+	$align_score=$ARGV[$k+1] if /^-minscore$/i and $ARGV[$k+1]!~/^-/;
+	$file=$ARGV[$k+1] if /^-f$/i and $ARGV[$k+1]!~/^-/;
+	$cleanN=1 if /^-cleanN$/i and $ARGV[$k+1]!~/^-/;
+	$trf=0 if /^-trf$/i and $ARGV[$k+1]!~/^-/;
+	$trf_path=$ARGV[$k+1] if /^-trf_path$/i and $ARGV[$k+1]!~/^-/;
 	$k++;
 	}
 
