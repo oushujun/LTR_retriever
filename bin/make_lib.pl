@@ -5,7 +5,7 @@
 
 
 
-use warnings
+use warnings;
 use strict;
 
 open List, "<$ARGV[0]" or die "ERROR: $!";
