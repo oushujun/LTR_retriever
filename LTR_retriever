@@ -359,6 +359,12 @@ if ($id_len>15){
 		}
 	}
 
+## check if genome writable
+
+if (not -w $genome and $annotation==1){
+	die "$genome is not writable, which may raise RepeatMask error\n\n";
+}
+
 chomp ($date=`date`);
 print "$date\tStart to convert inputs...\n";
 `perl $script_path/bin/convert_ltr_finder.pl $infinder $id_mode > $index.retriever.scn` if -s $infinder;
