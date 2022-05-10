@@ -190,10 +190,10 @@ die "Please specify the input sequence file!\nUse -h for more help info\n" unles
 die "Please specify LTRharvest and/or LTR_finder screen output file!\nUse -h for more help info\n" unless (defined $inharvest or defined $infinder);
 
 #obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
-die "\nERROR: The specified file $nonTGCA is not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
-die "\nERROR: The specified file $infinder is not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
-die "\nERROR: The specified file $inmgescan is not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
-die "\nERROR: The specified file $inharvest is not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
+die "\nERROR: The specified file $nonTGCA does not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
+die "\nERROR: The specified file $infinder does not exist.\n\n" if $infinder!~/^$/ and !-e "$infinder";
+die "\nERROR: The specified file $inmgescan does not exist.\n\n" if $inmgescan!~/^$/ and !-e "$inmgescan";
+die "\nERROR: The specified file $inharvest does not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
 
 print "
 ##########################
@@ -241,7 +241,7 @@ $cdhit_path=$path{"CDHIT"} if $cdhit_path eq '';
 #RepeatMasker
 my $rand=int(rand(1000000));
 chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
-$repeatmasker=~s/RepeatMasker\n?// unless -d $repeatmasker;
+$repeatmasker=~s/RepeatMasker\n?$// unless -d $repeatmasker;
 $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
@@ -250,27 +250,27 @@ die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_t
 `rm dummy060817.fa.$rand*`;
 #makeblastdb, blastn, blastx
 chomp ($blastplus=`which makeblastdb 2>/dev/null`) if $blastplus eq '';
-$blastplus=~s/makeblastdb\n?//;
-$blastplus=~s/blastn\n?//;
-$blastplus=~s/blastx\n?//;
+$blastplus=~s/makeblastdb\n?$//;
+$blastplus=~s/blastn\n?$//;
+$blastplus=~s/blastx\n?$//;
 $blastplus="$blastplus/" if $blastplus ne '' and $blastplus !~ /\/$/;
-die "Error: makeblastdb is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
-die "Error: blastn is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
-die "Error: blastx is not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
+die "Error: makeblastdb does not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}makeblastdb";
+die "Error: blastn does not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastn";
+die "Error: blastx does not exist in the BLAST+ path $blastplus!\n" unless -X "${blastplus}blastx";
 #blastclust
 chomp ($blast=`which blastclust 2>/dev/null`) if $blast eq '';
-$blast=~s/blastclust\n?// unless -d $blast;
+$blast=~s/blastclust\n?$// unless -d $blast;
 $blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "Error: blastclust is not found in the BLAST path $blast!\n" if (!(-X "${blast}blastclust") and $blastclust);
 #cd-hit-est
 chomp ($cdhit_path=`which cd-hit-est 2>/dev/null`) if $cdhit_path eq '';
-$cdhit_path=~s/cd-hit-est\n?//;
+$cdhit_path=~s/cd-hit-est\n?$//;
 $cdhit_path="$cdhit_path/" if $cdhit_path ne '' and $cdhit_path !~ /\/$/;
 die "Error: cd-hit-est is not found in the CDHIT path $cdhit_path!\n" if (!(-X "${cdhit_path}cd-hit-est") and $cdhit);
 die "Error: neither the path of CDHIT nor BLAST is specified!\n" unless (-X "${blast}blastclust" or -X "${cdhit_path}cd-hit-est");
 #hmmsearch
 chomp ($hmmer=`which hmmsearch 2>/dev/null`) if $hmmer eq '';
-$hmmer=~s/hmmsearch\n?//;
+$hmmer=~s/hmmsearch\n?$//;
 $hmmer="$hmmer/" if $hmmer ne '' and $hmmer !~ /\/$/;
 die "Error: hmmsearch is not found in the HMMER path $hmmer!\n" unless -X "${hmmer}hmmsearch";
 #trf
