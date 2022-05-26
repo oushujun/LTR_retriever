@@ -5,10 +5,11 @@ use File::Basename;
 ##This script is to estimate the mean LTR sequence identity in the genome
 ##The script also extracts coordinate information for intact LTRs and all LTRs to calculate the LAI score
 ##Users should provide the LTR_retriever *pass.list file and the RepeatMasker *out file as inputs
-##Author: Shujun Ou (oushujun@msu.edu)
+##Author: Shujun Ou (shujun.ou.1@gmail.com)
 ##First version: 11/23/2016
 ##Beta v2: 02/05/2018
 ##Beta v3: 02/19/2018
+##Beta v3.1: 03/24/2022
 
 my $usage="
 The LTR Assembly Index (LAI) is developed to evaluate the assembly continunity of repetitive sequences
@@ -27,6 +28,7 @@ Options:
 			LAI will calculated only on these sequences if provided. So user can also specify sequence of interest for LAI calculation.
 	-iden [0-100]	Mean LTR identity (%) in the monoploid (1x) genome. This parameter will inactivate de novo estimation (same speed to -qq).
 	-totLTR [0-100]	Specify the total LTR sequence content (%) in the genome instead of estimating from the -all RepeatMasker file.
+	-genome_size [int] Specify the genome size (bp) instead of using the length of the provided sequence file.
 	-blast [path]	The path to the blastn program. If left unspecified, then blastn must be accessible via shell ENV.
 	-t [number]	Number of threads to run blastn.
 	-h		Display this help info.
@@ -37,6 +39,7 @@ my $step="300000"; #300Kb/step
 my $iden="NA"; #mean identity (%) of LTR sequences in the monoploid (1x) genome
 my $iden_slope="2.8138"; #the correction slope for LTR sequence identity (age). Don't change this unless you are confident.
 my $totLTR="NA"; #the total LTR sequence content (%) in the genome. Will be estimated from the -all RepeatMasker file if unspecified.
+my $genome_size="NA"; #the genome size. Will calculate from the provided file if unspecified.
 my $quick=0; #quick estimation of LTR identity (may sacrifice ~0.5% of accuracy)
 my $qquick=0; #Obtain only raw LAI for within species comparison (very quick)
 my $threads=4; #Number of threads to run blastn
@@ -62,6 +65,7 @@ foreach (@ARGV){
 	$iden=$ARGV[$k+1] if /^-iden$/i;
 	$iden_slope=$ARGV[$k+1] if /^-k_iden$/i;
 	$totLTR=$ARGV[$k+1] if /^-totLTR$/i;
+	$genome_size=$ARGV[$k+1] if /^-genome_size$/i;
 	$blast=$ARGV[$k+1] if /^-blast$/i;
 	$threads=$ARGV[$k+1] if /^-t$/i;
 	$fuse=0 if /^-unlock$/i;
@@ -151,7 +155,7 @@ print "$date\tCalculate LAI:\n";
 `awk '{if (\$6~/[0-9]/ && \$7-\$6+1>=80 && \$11~/LTR/) print \$5"\\t"\$6"\\t"\$7}' $all > $all.bed`;
 
 #calculate the LAI score
-`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR > $all.LAI`;
+`perl $script_path/bin/LAI_calc3.pl -intact $intact.bed -all $all.bed -genome $genome -window $window -step $step -iden $iden -k_iden $iden_slope -totLTR $totLTR -genome_size $genome_size > $all.LAI`;
 
 `rm $intact.bed $all.bed`;
 

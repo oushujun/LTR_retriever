@@ -4,7 +4,8 @@ use strict;
 
 #Description: This is the core script to calculate the LTR Assembly Index
 #Author: Shujun Ou (oushujun@msu.edu)
-#Last updated: 02/19/2018 (beta3)
+#Last updated:  03/24/2022 (beta3.1)
+#		02/19/2018 (beta3)
 #Note: Memory consumption of this scrip is approx. 2X the size of the input genome
 
 #usage: perl LAI_calc.pl -i Intact_LTR.bed -a All_LTR.bed -g genome.fa [options]
@@ -16,10 +17,12 @@ my $totLTR="NA"; #the total LTR sequence content (%) in the genome. Will be esti
 my $intact="";
 my $total="";
 my $genome="";
+my $genome_size='NA'; # lengnth of the genome
 
 my $k=0;
 foreach (@ARGV){
 	$genome=$ARGV[$k+1] if /^-genome$/i;
+	$genome_size=$ARGV[$k+1] if /^-genome_size$/i;
 	$intact=$ARGV[$k+1] if /^-intact$/i;
 	$total=$ARGV[$k+1] if /^-all$/i;
 	$window=$ARGV[$k+1] if /^-window$/i;
@@ -63,6 +66,7 @@ while (<Genome>){
 	}
 $/="\n";
 close Genome;
+$genome_len = $genome_size if $genome_size ne 'NA';
 
 while (<INTACT>){
 	s/^\s+//;
