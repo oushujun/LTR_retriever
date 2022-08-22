@@ -450,7 +450,7 @@ if (`grep -c -v \'#\' $index.ltrTE.pass.list`>0){
 
 ##cleanup highly masked sequence and tandem sequence from masked LTR regions (no internal)
 	if (-s "$index2.ltrTE.LTR.masked"){
-		`perl $script_path/bin/cleanup.pl -trf_path $trf -minscore 150 -Nscreen -nr 0.6 -minlen $minlen -f $index2.ltrTE.LTR.masked > $index2.ltrTE.stg1`;
+		`perl $script_path/bin/cleanup.pl -trf 1 -trf_path $trf -minscore 150 -Nscreen -nr 0.6 -minlen $minlen -f $index2.ltrTE.LTR.masked > $index2.ltrTE.stg1`;
 		} else {
 		`cp $index2.ltrTE.LTR $index2.ltrTE.stg1`;
 		}
@@ -523,7 +523,7 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	&makeLib("$index.prelib.LTR");
 	`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
 	if (-e "$index.prelib.INT.masked"){
-		`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf -trf_path $trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+		`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
 		} else {
 		`cp $index.prelib.INT $index.prelib.INT.cln`;
 		}
@@ -682,7 +682,7 @@ print "$date\tModule 1: Start to clean up candidates...
 \t\t\t\tSequences containing tandem repeats will be discarded.\n\n";
 
 my $index=$_[0];
-`perl $script_path/bin/cleanup.pl $Nscreen -trf_path $trf -misschar $misschar -nc $missmax -nr $missrate -minlen $minlen -minscore $minscore -f $index.ltrTE.fa > $index.ltrTE.stg1`;
+`perl $script_path/bin/cleanup.pl $Nscreen -trf 1 -trf_path $trf -misschar $misschar -nc $missmax -nr $missrate -minlen $minlen -minscore $minscore -f $index.ltrTE.fa > $index.ltrTE.stg1`;
 my $count=0;
 $count=`grep -c \\> $index.ltrTE.stg1`;
 $count=~s/\s+//g;
@@ -754,7 +754,7 @@ die "ERROR: RepeatMasker is not running properly!
 		RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
 	Please report errors to https://github.com/oushujun/LTR_retriever/issues\nProgram halt!\n" unless -s "$index.ltrTE.trunc.masked";
 
-`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf -trf_path $trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
+`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
 `cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
 `cat $index.ltrTE.trunc.cln >> $genome.LTRlib.raw`;
 	} else {
