@@ -51,17 +51,18 @@ my $output=''; #stores output info
 
 $/="\n>";
 while (<Genome>){
-	next if /^>\s?$/;
 	chomp;
 	s/>//g;
 	s/^\s+//;
+	next if /^$/;
+	next unless /\n/; # skip sequences that lack headers
 	my ($chr, $seq)=(split /\n/, $_, 2);
 	next unless defined $seq and defined $chr;
 	$seq=~s/\s+//g;
 	$chr=~s/\s+.*//; #remove space at the end of the seq ID
 	push @seqID, $chr;
 	my $gap = 0;
-	$gap = $seq =~ tr/[NnXx]/{NnXx]/;
+	$gap = $seq =~ tr/[NnXx]/[NnXx]/;
 	$seq=length($seq);
 	$genome_len += $seq - $gap; # exclude gap length in genome size calculation
 	$length{$chr}=$seq;

@@ -122,7 +122,7 @@ if ($monoploid ne ''){
 	$genome = "$genome.$monoploid.fa";
 	$all = "$all.$monoploid.out";
 	} else {
-	print "$date\tCalculation of LAI will be based on the whole genome.\n\t\t\t\tPlease use the -mono parameter if your genome is a recent ployploid, for high identity between homeologues will overcorrect raw LAI scores.\n";
+	print "$date\tCalculation of LAI will be based on the whole genome.\n\t\t\t\tPlease use the -mono parameter if your genome is a recent ployploid, otherwise high identity between LTR homeologues will overcorrect raw LAI scores and result in low LAI.\n";
 	}
 
 #estimate mean identity of LTR sequences in the genome
