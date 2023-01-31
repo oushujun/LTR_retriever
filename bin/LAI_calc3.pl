@@ -56,8 +56,9 @@ while (<Genome>){
 	s/>//g;
 	s/^\s+//;
 	my ($chr, $seq)=(split /\n/, $_, 2);
+	next unless defined $seq and defined $chr;
 	$seq=~s/\s+//g;
-	$chr=~s/\s+$//; #remove space at the end of the seq ID
+	$chr=~s/\s+.*//; #remove space at the end of the seq ID
 	push @seqID, $chr;
 	my $gap = 0;
 	$gap = $seq =~ tr/[NnXx]/{NnXx]/;
