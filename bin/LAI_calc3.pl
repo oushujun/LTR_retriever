@@ -3,8 +3,9 @@ use warnings;
 use strict;
 
 #Description: This is the core script to calculate the LTR Assembly Index
-#Author: Shujun Ou (oushujun@msu.edu)
-#Last updated:  03/24/2022 (beta3.1)
+#Author: Shujun Ou (shujun.ou.1@gmail.com)
+#Last updated:  01/30/2023 (beta3.2)
+#		03/24/2022 (beta3.1)
 #		02/19/2018 (beta3)
 #Note: Memory consumption of this scrip is approx. 2X the size of the input genome
 
@@ -58,8 +59,10 @@ while (<Genome>){
 	$seq=~s/\s+//g;
 	$chr=~s/\s+$//; #remove space at the end of the seq ID
 	push @seqID, $chr;
+	my $gap = 0;
+	$gap = $seq =~ tr/[NnXx]/{NnXx]/;
 	$seq=length($seq);
-	$genome_len+=$seq;
+	$genome_len += $seq - $gap; # exclude gap length in genome size calculation
 	$length{$chr}=$seq;
 	$intact{$chr}='0' x $seq; #create a '0' string that has the same length as the chr
 	$total{$chr}='0' x $seq; #create another '0' string that has the same length as the chr

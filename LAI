@@ -10,6 +10,7 @@ use File::Basename;
 ##Beta v2: 02/05/2018
 ##Beta v3: 02/19/2018
 ##Beta v3.1: 03/24/2022
+##Beta v3.2: 01/30/2023
 
 my $usage="
 The LTR Assembly Index (LAI) is developed to evaluate the assembly continunity of repetitive sequences
