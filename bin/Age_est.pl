@@ -120,7 +120,7 @@ close Age;
 #the subroutine to estimate mean identity of a given sequence set
 sub Age_est {
 my $RMout=$_[0];
-`perl $script_path/call_seq_by_list.pl $RMout.LAI.LTRlist -C $genome > $RMout.LAI.LTR.fa`;
+`perl $script_path/call_seq_by_list.pl $RMout.LAI.LTRlist -C $genome -rmvoid > $RMout.LAI.LTR.fa`;
 
 die "$RMout.LAI.LTR.fa is empty, please check the $genome file and the $RMout.LAI.LTRlist file\n" unless -s "$RMout.LAI.LTR.fa";
 
