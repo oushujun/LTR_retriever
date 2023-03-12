@@ -5,7 +5,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.0";
+my $version="v2.9.1";
 my $help="
 ##########################
 ### LTR_retriever $version ###
@@ -238,16 +238,6 @@ $cdhit_path=$path{"CDHIT"} if $cdhit_path eq '';
 
 
 ##test paths to dependent programs
-#RepeatMasker
-my $rand=int(rand(1000000));
-chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
-$repeatmasker=~s/RepeatMasker\n?$// unless -d $repeatmasker;
-$repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
-die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
-`cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
-my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
-die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
-`rm dummy060817.fa.$rand*`;
 #makeblastdb, blastn, blastx
 chomp ($blastplus=`which makeblastdb 2>/dev/null`) if $blastplus eq '';
 $blastplus=~s/makeblastdb\n?$//;
@@ -262,6 +252,19 @@ chomp ($blast=`which blastclust 2>/dev/null`) if $blast eq '';
 $blast=~s/blastclust\n?$// unless -d $blast;
 $blast="$blast/" if $blast ne '' and $blast !~ /\/$/;
 die "Error: blastclust is not found in the BLAST path $blast!\n" if (!(-X "${blast}blastclust") and $blastclust);
+
+#RepeatMasker
+my $rand=int(rand(1000000));
+chomp ($repeatmasker=`which RepeatMasker 2>/dev/null`) if $repeatmasker eq '';
+$repeatmasker=~s/RepeatMasker\n?$// unless -d $repeatmasker;
+$repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/;
+die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
+`cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
+`${blastplus}makeblastdb -in ./dummy060817.fa.$rand -dbtype nucl`;
+my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
+die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/done//gi;
+`rm dummy060817.fa.$rand* 2>/dev/null`;
+
 #cd-hit-est
 chomp ($cdhit_path=`which cd-hit-est 2>/dev/null`) if $cdhit_path eq '';
 $cdhit_path=~s/cd-hit-est\n?$//;
@@ -450,7 +453,9 @@ if (`grep -c -v \'#\' $index.ltrTE.pass.list`>0){
 ##condense the pass.LTR lib if size exceed 15M to enhance speed
 	&makeLib("$index.ltrTE.pass.LTR") if (-s "$index.ltrTE.pass.LTR")>15000000;
 	`mv $index.ltrTE.pass.LTR.clust $index.ltrTE.pass.LTR` if -s "$index.ltrTE.pass.LTR.clust";
+	`${blastplus}makeblastdb -in $index.ltrTE.pass.LTR -dbtype nucl`;
 	`${repeatmasker}RepeatMasker -e ncbi -qq -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.pass.LTR -cutoff 225 $index2.ltrTE.LTR 2>/dev/null`;
+	`rm $index.ltrTE.pass.LTR.* 2>/dev/null`;
 	}
 
 ##cleanup highly masked sequence and tandem sequence from masked LTR regions (no internal)
@@ -526,7 +531,9 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.INT.list -FA > $index.prelib.INT`;
 	`perl $script_path/bin/output_by_list.pl 1 $index.prelib 1 $index.prelib.LTR.list -FA > $index.prelib.LTR`;
 	&makeLib("$index.prelib.LTR");
+	`${blastplus}makeblastdb -in $index.prelib.LTR.clust -dbtype nucl`;
 	`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
+	`rm $index.prelib.LTR.clust.* > /dev/null 2>&1`;
 	if (-e "$index.prelib.INT.masked"){
 		`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
 		} else {
@@ -607,7 +614,9 @@ chomp ($date=`date`);
 if ($annotation==1){
 	chomp ($date=`date`);
 	print "$date\tStart to annotate whole-genome LTR-RTs...\n\t\t\t\tUse -noanno if you don't want whole-genome LTR-RT annotation.\n\n";
+	`${blastplus}makeblastdb -in $genome.LTRlib.fa -dbtype nucl`;
 	`${repeatmasker}RepeatMasker -e ncbi -pa $threads -q -no_is -norna -nolow -div 40 -lib $genome.LTRlib.fa -cutoff 225 $genome > /dev/null 2>&1`;
+	`rm $genome.LTRlib.fa.* > /dev/null 2>&1`;
 	my $genome_size=`grep "total length" $genome.tbl|awk '{print \$3}'`;
 	chomp $genome_size;
 
@@ -750,7 +759,9 @@ if ($trunc>0){
 `awk '{print \$1"\\t"\$1}\' $index.ltrTE.veryfalse.list > $index.ltrTE.veryfalse`;
 `perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
+`${blastplus}makeblastdb -in $index.ltrTE.mask.lib -dbtype nucl`;
 my $info=`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc 2>/dev/null`;
+`rm $index.ltrTE.mask.lib.* 2>/dev/null`;
 `cp $index.ltrTE.trunc $index.ltrTE.trunc.masked` if $info=~/No repetitive sequences were detected/;
 
 #file checking
