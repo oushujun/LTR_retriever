@@ -67,7 +67,7 @@ die "\n\tTandem Repeat Finder not found!\n\n$usage" unless $trf_path ne '';
 my %tandem;
 my $tandem='';
 $tandem=`$trf_path $file 2 7 7 80 10 $align_score $max_seed -ngs -h -l 6` if $trf==1;
-while ($tandem=~s/\@(.*)\n?//){
+while ($tandem=~s/^\@(.*)\n?//){ #improved by Andreas Wallberg
 	$tandem{$1}=$1;
 	}
 
