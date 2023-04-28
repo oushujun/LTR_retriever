@@ -24,7 +24,7 @@ while (<Intact>){
 	if (exists $all{$id}){
 		$all{$id}[1]++; #count intact number
 		} else {
-		$all{$id}=["0", "0"]; #initialize count of solo and intact number
+		$all{$id}=["0", "1"]; #initialize count of solo and intact number
 		}
 	}
 close Intact;
@@ -36,7 +36,7 @@ while (<Solo>){
 	if (exists $all{$id}){
 		$all{$id}[0]++; #count solo number
 		} else {
-		$all{$id}=["0", "0"];
+		$all{$id}=["1", "0"];
 		}
 	}
 close Solo;
