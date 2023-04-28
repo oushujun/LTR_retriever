@@ -32,7 +32,7 @@ close Intact;
 while (<Solo>){
 	chomp;
 	s/^\s+//;
-	my $id=(split)[0];
+	my $id=(split)[4];
 	if (exists $all{$id}){
 		$all{$id}[0]++; #count solo number
 		} else {
