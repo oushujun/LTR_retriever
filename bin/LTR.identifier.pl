@@ -13,8 +13,9 @@ my $usage="
 my $version="
 LTR.identifier.pl
 LTR.identifier: Alignment assisted examination of LTR candidates
-Author: Shujun Ou (oushujun\@msu.edu), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
+Author: Shujun Ou (shujun.ou.1\@gmail.com), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
 Version:
+	4.7 Incorporate TEsorter results 2023/05/01
 	4.6 Improvement: only consider SNPs for age estimation 2019/01/25
 	4.5 Improve TSD-motif identification 2018/12/08
 	4.0 Use Thread::Queue instead of Semaphore for multi-threading 2018/04/01
@@ -91,19 +92,40 @@ while (<List>){
 	}
 close List;
 
-##protein family and strand annotation
+##protein superfamily and strand annotation
 my %anno;
 if (defined $ANNO){
+	# listing orders that belong to LTRs and not LTRs
+	my @notLTR = ("mixture", "notLTR", "TIR", "Helitron", "LINE", "SINE", "Maverick", "pararetrovirus");
+	my @yesLTR = ("LTR", "DIRS");
 	open ANNO, "<$ANNO" or die "ERROR: Can't read the .anno file!\n";
 	while (<ANNO>){
 		next if /^#/;
 		s/^\s+//;
-		my ($id, $superfam, $fam, $strand)=(split)[0,1,2,3];
-		#Chr1:106472..118130|Chr1:106522..118080
+		my ($id, $order, $superfamily, $strand)=(split)[0,1,2,3];
+		#id is like: Chr1:106472..118130|Chr1:106522..118080
 		$id=~s/.*\|.*:([0-9]+\.\.[0-9]+)$/$1/;
-		$scn{$id}[12]=$strand;
-		$scn{$id}[17]=$superfam;
-		$scn{$id}[18]=$fam;
+
+		# convert order to two categories
+		$order = "LTR" if grep { $_ eq $order } @yesLTR;
+		$order = "notLTR" if grep { $_ eq $order } @notLTR;
+
+		# assign values to the big table
+		if (defined $scn{$id}[12]){
+			$scn{$id}[12] = $strand if $scn{$id}[12] eq '?';
+			} else {
+			$scn{$id}[12] = $strand;
+			}
+		if (defined $scn{$id}[17]){
+			$scn{$id}[17] = "notLTR" if $order eq "notLTR";
+			} else {
+			$scn{$id}[17]=$order;
+			}
+		if (defined $scn{$id}[18]){
+			$scn{$id}[18] = $superfamily if $scn{$id}[18] eq 'unknown';
+			} else {
+			$scn{$id}[18]=$superfamily;
+			}
 		}
 	close ANNO;
 	}
@@ -404,7 +426,7 @@ sub Identifier() {
 
 ##update coordinates and structural info
 #($start, $end, $len, $ls, $le, $ll, $rs, $re, $rl, $sim, $id)
-#start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
+#start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif order superfamily age(ya)
 #10030396  10042892  12497  10030396  10031396  1001  10041892  10042892  1001  0.985  0  Chr1  NA  CATAC  10030391..10030395  10042893..10042897  TGCA  LTR  Gypsy  27361111
 		$info[0]=$ltr1_s;
 		$info[1]=$ltr2_e;
@@ -430,8 +452,8 @@ sub Identifier() {
 	$info[14]="NA" unless defined $info[14]; #TSD left coor
 	$info[15]="NA" unless defined $info[15]; #TSD right coor
 	$info[16]="NA" unless defined $info[16]; #motif
-	$info[17]="NA" unless defined $info[17]; #superfamily
-	$info[18]="unknown" unless defined $info[18]; #family
+	$info[17]="NA" unless defined $info[17]; #order
+	$info[18]="unknown" unless defined $info[18]; #superfamily
 	$info[19]="NA" unless defined $info[19]; #age (ya)
 
 ##TSD control, boundary control, MISC control, and reporting
@@ -454,7 +476,7 @@ sub Identifier() {
 			}
 		}
 
-	#last four variables: strand/family/superfamily/age
+	#last four variables: strand/superfamily/order/age
 	my $defalse = "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$info[9]\t$info[12]\t$info[18]\t$info[17]\t$info[19]
 	Adjust: $adjust\tlLTR: $ll\trLTR: $rl
 	Alignment regions: $s_start, $s_end, $q_start, $q_end

@@ -66,7 +66,7 @@ while (<File>){
 	}
 close File;
 
-print "#TE\tSuperfamily\tFamily\tStrand\thmmmatchs\n";
+print "#TE\tOrder\tSuperfamily\tStrand\thmmmatchs\n";
 foreach (keys %TE){
 #Final decision of family and strand based on occurrance frequency
 	my ($gypsy, $copia,$pos_strand, $neg_strand)=@{$TE{$_}}[1,2,3,4];
