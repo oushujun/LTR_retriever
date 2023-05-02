@@ -5,7 +5,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.2";
+my $version="v2.9.3";
 my $help="
 ##########################
 ### LTR_retriever $version ###
@@ -69,6 +69,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 -cdhit_path  [path]	Path to the CD-HIT program. Required if -cdhit is used. (default: find from ENV)
 -hmmer       [path]	Path to the HMMER program. (default: find from ENV)
 -trf_path    [path]	Path to the trf program. (default: find from ENV)
+-tesorter    [path]	Path to the TEsorter program. (default: find from ENV)
 
 【Miscellaneous】
 -u           [FLOAT]	Neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
@@ -94,6 +95,7 @@ my $blast=''; #path to the blast program
 my $cdhit_path=''; #path to the CD-HIT program
 my $hmmer=''; #path to the HMMER program
 my $trf=""; #path to the trf program
+my $TEsorter=''; #path to the TEsorter program
 
 my $inharvest=''; #screen output of LTRharvest with -motif 'TGCA' control
 my $infinder=''; #screen output of LTR_finder
@@ -180,13 +182,14 @@ foreach (@ARGV){
 	$cdhit_path = $ARGV[$k+1] if /^-cdhit_path$/i and $ARGV[$k+1]!~/^-/;
 	$hmmer = $ARGV[$k+1] if /^-hmmer$/i and $ARGV[$k+1]!~/^-/;
 	$trf = $ARGV[$k+1] if /^-trf_path$/i and $ARGV[$k+1]!~/^-/;
+	$TEsorter = $ARGV[$k+1] if /^-tesorter$/i and $ARGV[$k+1]!~/^-/;
 	$verbose=1 if /^-verbose|-v$/i;
 	$threads=$ARGV[$k+1] if /^-threads$/i and $ARGV[$k+1]!~/^-/;
 	die $help if /^--help|-h$/i;
 	$k++;
         }
 
-die "Please specify the input sequence file!\nUse -h for more help info\n" unless (defined $genome and -s "$genome">0);
+die "Please specify the input sequence file!\nUse -h for more help info\n" unless (defined $genome and -s $genome);
 die "Please specify LTRharvest and/or LTR_finder screen output file!\nUse -h for more help info\n" unless (defined $inharvest or defined $infinder);
 
 #obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
@@ -235,7 +238,7 @@ $repeatmasker=$path{"RepeatMasker"} if $repeatmasker eq '';
 $hmmer=$path{"HMMER"} if $hmmer eq '';
 $blast=$path{"BLAST"} if $blast eq '';
 $cdhit_path=$path{"CDHIT"} if $cdhit_path eq '';
-
+$TEsorter=$path{"TEsorter"} if $TEsorter eq '';
 
 ##test paths to dependent programs
 #makeblastdb, blastn, blastx
@@ -278,9 +281,10 @@ $hmmer="$hmmer/" if $hmmer ne '' and $hmmer !~ /\/$/;
 die "Error: hmmsearch is not found in the HMMER path $hmmer!\n" unless -X "${hmmer}hmmsearch";
 #trf
 chomp ($trf=`which trf 2>/dev/null`) if $trf eq '';
-$trf=~s/\n$//;
-`$trf 2>/dev/null`;
-die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" if $?==32256;
+die "Error: Tandem Repeat Finder is not found in the TRF path $trf!\n" unless -e $trf && -X $trf;
+#TEsorter
+chomp ($TEsorter=`which TEsorter 2>/dev/null`) if $TEsorter eq '';
+die "Error: TEsorter is not found in the TEsorter path $TEsorter!\n" unless -e $TEsorter && -X $TEsorter;
 
 print "All passed!\n";
 
@@ -309,6 +313,7 @@ if (not -w $genome and $annotation==1){
 	die "$genome is not writable, which may raise RepeatMask error\n\n";
 }
 
+
 ####################################################################
 ######### To retrieve high quality LTR-RTs with TGCA motif #########
 ####################################################################
@@ -325,7 +330,7 @@ print "$date\tLTR_retriever is starting from the $step step.\n";
 goto $step;
 Init:
 
-##check the length of genome sequence IDs, if longer than 15bp, chop it.
+##check the length of genome sequence IDs, if longer than 13bp, chop it.
 my $id_mode=0; #record the mode of id conversion.
 my $id_len=`grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
 $id_len=~s/\s+$//;
@@ -339,11 +344,11 @@ if ($raw_id>$old_id){
 	die "$date\tDuplicated sequence found in the provided genome! Please remove the duplicated sequece and regenerate input candidates for LTR_retriever\n";
 	}
 
-if ($id_len>15){
+if ($id_len>13){
 	chomp ($date=`date`);
-	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (15)\n";
+	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (13)\n";
 	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,15}).*/>\$1/g;} print "\$_"' $genome > $genome.mod`;
+	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,13}).*/>\$1/g;} print "\$_"' $genome > $genome.mod`;
 	my $new_id=`grep \\> $genome.mod|sort -u|wc -l`;
 	chomp ($date=`date`);
 	if ($old_id==$new_id){
@@ -362,7 +367,7 @@ if ($id_len>15){
 			print "$date\tSeq ID conversion successful!\n\n";
 			} else {
 			`rm $genome.mod`;
-			die "$date\tERROR: Fail to convert seq IDs to less than 15 characters! Please provide a genome with shorter seq IDs.\n\n";
+			die "$date\tERROR: Fail to convert seq IDs to ≤ 13 characters! Please provide a genome with shorter seq IDs.\n\n";
 			}
 		}
 	}
@@ -716,6 +721,10 @@ my $index=$_[0];
 `${hmmer}hmmsearch --tblout $index.retriever.scn.extend.fa.aa.tbl --notextw --cpu $threads -E 0.05 --domE 0.05 --noali $TEhmm $index.retriever.scn.extend.fa.aa > $index.retriever.scn.extend.fa.aa.scn`;
 `touch $index.retriever.scn.extend.fa.aa.tbl` unless -s "$index.retriever.scn.extend.fa.aa.tbl";
 `perl $script_path/bin/annotate_TE.pl $index.retriever.scn.extend.fa.aa.tbl > $index.retriever.scn.extend.fa.aa.anno`;
+`$TEsorter $index.retriever.scn.extend.fa -p $threads 2>/dev/null`;
+`awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv >> $index.retriever.scn.extend.fa.aa.anno`;
+
+# identify intact LTR retrotransposons
 `perl $script_path/bin/LTR.identifier.pl $index -list $index.retriever.scn -seq $index.retriever.scn.extend.fa -anno $index.retriever.scn.extend.fa.aa.anno -flanksim $flanksim -flankmiss $flankmiss -flankaln $flankaln -minlen $minlen $tsdaln -u $miu -threads $threads -blastplus $blastplus -motif @motif > $index.defalse`;
 `perl -nle 'next unless /pass/i; print \$_ unless /notLTR/i or /mixture/i' $index.defalse > $index.ltrTE.pass.list`;
 my $count=0;
