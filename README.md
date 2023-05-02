@@ -23,7 +23,7 @@ By default, the program will generate whole-genome LTR-RT annotation and the LTR
 
 ### Installation
 
-LTR_retriever is installation-free but requires dependencies: TRF, BLAST+, BLAST or CD-HIT, HMMER, and RepeatMasker. You may specify the path to these programs in the command line (run `LTR_retriever -h` for details) or install them in the following ways:
+LTR_retriever is installation-free but requires dependencies: TRF, BLAST+, BLAST or CD-HIT, HMMER, RepeatMasker, and TEsorter. You may specify the path to these programs in the command line (run `LTR_retriever -h` for details) or install them in the following ways:
 
 #### Quick installation using conda 
 
@@ -35,7 +35,7 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 	conda create -n LTR_retriever
 	conda activate LTR_retriever
 	conda install -y -c conda-forge perl perl-text-soundex
-	conda install -y -c bioconda cd-hit repeatmasker
+	conda install -y -c bioconda cd-hit repeatmasker tesorter
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
 
@@ -45,8 +45,9 @@ You can also provide the fixed paths to the following dependent programs.
 1. makeblastdb, blastn, and blastx in [the BLAST+ package](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/),
 2. cd-hit-est in [the CDHIT package](http://weizhongli-lab.org/cd-hit/) OR 
    blastclust in [the BLAST package](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.25/),
-3. hmmsearch in [the HMMER package](http://hmmer.org/) (v3.1b2 or higher), and
-4. [RepeatMasker](http://www.repeatmasker.org/).
+3. hmmsearch in [the HMMER package](http://hmmer.org/) (v3.1b2 or higher),
+4. [RepeatMasker](http://www.repeatmasker.org/), and 
+5. [TEsorter](https://github.com/zhangrengang/TEsorter).
 
 Simply modify the 'paths' file in the LTR_retriever directory
 
