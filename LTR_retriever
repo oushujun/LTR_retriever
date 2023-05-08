@@ -5,11 +5,11 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.3";
+my $version="v2.9.4";
 my $help="
-##########################
+############################
 ### LTR_retriever $version ###
-##########################
+############################
 
 A program for accurate identification of LTR-RTs from outputs of LTRharvest and
 	LTR_FINDER, generates non-redundant LTR-RT library for genome annotations.
@@ -721,7 +721,7 @@ my $index=$_[0];
 `${hmmer}hmmsearch --tblout $index.retriever.scn.extend.fa.aa.tbl --notextw --cpu $threads -E 0.05 --domE 0.05 --noali $TEhmm $index.retriever.scn.extend.fa.aa > $index.retriever.scn.extend.fa.aa.scn`;
 `touch $index.retriever.scn.extend.fa.aa.tbl` unless -s "$index.retriever.scn.extend.fa.aa.tbl";
 `perl $script_path/bin/annotate_TE.pl $index.retriever.scn.extend.fa.aa.tbl > $index.retriever.scn.extend.fa.aa.anno`;
-`$TEsorter $index.retriever.scn.extend.fa -p $threads 2>/dev/null`;
+`$TEsorter $index.retriever.scn.extend.fa --disable-pass2 -p $threads 2>/dev/null`;
 `awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv >> $index.retriever.scn.extend.fa.aa.anno`;
 
 # identify intact LTR retrotransposons
