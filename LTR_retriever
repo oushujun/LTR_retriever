@@ -723,7 +723,7 @@ my $index=$_[0];
 `perl $script_path/bin/annotate_TE.pl $index.retriever.scn.extend.fa.aa.tbl > $index.retriever.scn.extend.fa.aa.anno`;
 `$TEsorter $index.retriever.scn.extend.fa --disable-pass2 -p $threads 2>/dev/null`;
 `touch $index.retriever.scn.extend.fa.rexdb.cls.tsv` unless -s "$index.retriever.scn.extend.fa.rexdb.cls.tsv";
-`awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv | perl -nle 's/([0-9]+\\.\\.[0-9]+)_(.*:[0-9]+\\.\\.[0-9]+)/\$1\\|\$2/; print \$_' >> $index.retriever.scn.extend.fa.aa.anno`;
+`awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv | perl -nle 's/([0-9]+\\.\\.[0-9]+)_(.*:[0-9]+\\.\\.[0-9]+)/\$1\\|\$2/; print \$_' >> $index.retriever.scn.extend.fa.aa.anno 2>/dev/null`;
 
 # identify intact LTR retrotransposons
 `perl $script_path/bin/LTR.identifier.pl $index -list $index.retriever.scn -seq $index.retriever.scn.extend.fa -anno $index.retriever.scn.extend.fa.aa.anno -flanksim $flanksim -flankmiss $flankmiss -flankaln $flankaln -minlen $minlen $tsdaln -u $miu -threads $threads -blastplus $blastplus -motif @motif > $index.defalse`;
