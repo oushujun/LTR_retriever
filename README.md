@@ -28,21 +28,22 @@ LTR_retriever is installation-free but requires dependencies: TRF, BLAST+, BLAST
 #### Quick installation using conda 
 
 Direct installation using the yml file:
-	`conda env create -f /your_path_to/LTR_retriever/LTR_retriever.yml`
+
+	conda env create -f /your_path_to/LTR_retriever/LTR_retriever.yml
 
 Alternatively, you may use the conda recipe, but due to the large number of dependencies, conda solve may take hours... Unfortunately, the conda recipe currently could not be installed properly with `mamba`.
 
-	`conda install -c bioconda -c conda-forge ltr_retriever`
+	conda install -c bioconda -c conda-forge ltr_retriever
 
 #### Step by step using conda 
 You may use conda to quickly install all dependencies and LTR_retriever is then good to go:
 
-	`conda create -n LTR_retriever`
-	`conda activate LTR_retriever`
-	`conda install -y -c conda-forge perl perl-text-soundex`
-	`conda install -y -c bioconda cd-hit repeatmasker tesorter`
-	`git clone https://github.com/oushujun/LTR_retriever.git`
-	`./LTR_retriever/LTR_retriever -h`
+	conda create -n LTR_retriever
+	conda activate LTR_retriever
+	conda install -y -c conda-forge perl perl-text-soundex
+	conda install -y -c bioconda cd-hit repeatmasker tesorter
+	git clone https://github.com/oushujun/LTR_retriever.git
+	./LTR_retriever/LTR_retriever -h
 
 #### Standard installation
 
