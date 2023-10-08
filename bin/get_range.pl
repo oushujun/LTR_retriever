@@ -117,13 +117,13 @@ if ($LTR==1){
 #34 4594 4561 34 291 258 4335 4594 260 0.962     + CTCAC 29..33, 4595..4599 TG,TG,CA,CA
 #start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
 
-	$chr=$chr{"$element_start..$element_end"} if $genome==0;
-#	if ($genome==1 and !$chr) {
-	if ($genome==1) {
-		if (exists $chr{$seq_ID}){
+	$chr=$chr{"$element_start..$element_end"} if $genome==0 and !defined $chr;
+	if (!defined $chr or $chr =~ /^[NA|\.|\-|\?]$/i){
+		if ($genome==1 and exists $chr{$seq_ID}){
 			$chr=$chr{$seq_ID};
-			} else {
-			$chr=$seq_ID;
+			}
+		else {
+			die "No sequence ID is found in: \n$_\n";
 			}
 		}
 
