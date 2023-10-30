@@ -5,7 +5,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.6";
+my $version="v2.9.7";
 my $help="
 ############################
 ### LTR_retriever $version ###
@@ -565,7 +565,7 @@ if ( -s "$index.nmtf.prelib"){
 	}
 
 ##make the redundant lib (contains TGCA and non-TGCA LTR-RTs. LTR nested insertion and non-LTR protease are not removed, but plant protein is removed)
-`perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $genome.LTRlib.raw`;
+`perl -i -nle 's/>(.*)\\|(.*)\\[(.+)\\]/>\$2\\|LTR_\$3/g;print "\$_"' $genome.LTRlib.raw`;
 `perl $script_path/bin/output_by_list.pl 1 $genome.LTRlib.raw 2 $genome.LTRlib.exclude.tgt -FA -ex | perl $script_path/bin/annotate_lib.pl $genome.retriever.all.scn - > $genome.LTRlib.redundant.fa`;
 
 ##update status
@@ -763,7 +763,7 @@ if ($trunc>0){
 `perl $script_path/bin/get_range.pl 1 $index.retriever.scn.adj $index.ltrTE.trunc.list -i -N -L`;
 `cat $index.retriever.scn.adj.list|sort -fu > $index.retriever.scn.adj.list.unq; mv $index.retriever.scn.adj.list.unq $index.retriever.scn.adj.list`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.adj.list -C $genome > $index.ltrTE.trunc`; #IN and the longer LTR region
-`perl -i -ne 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $index.ltrTE.trunc`;
+`perl -i -nle 's/>(.*)\\|(.*)\\[(.+)\\]/>\$2\\|LTR_\$3/g;print "\$_"' $index.ltrTE.trunc`;
 
 `perl -nle 'next unless /false/i; next unless /notLTR/i; print \$_ unless /motif:TGCA/i;' $index.defalse > $index.ltrTE.veryfalse.list`;
 `awk '{print \$1"\\t"\$1}\' $index.ltrTE.veryfalse.list > $index.ltrTE.veryfalse`;
@@ -874,7 +874,7 @@ if ($blastclust==1){
 if ($cdhit==1){
 	`${cdhit_path}cd-hit-est -i $seq -o $seq.clust $set_cdhit -T $threads`;
 	}
-`perl -i -nle 's/>(.*)\\|(.*)\\[(.+)\\]/>\$1\\|LTR_\$3/g;print "\$_"' $seq.clust`;
+`perl -i -nle 's/>(.*)\\|(.*)\\[(.+)\\]/>\$2\\|LTR_\$3/g;print "\$_"' $seq.clust`;
 }
 
 sub getLTR {
