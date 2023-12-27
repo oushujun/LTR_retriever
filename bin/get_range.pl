@@ -2,14 +2,15 @@
 use warnings;
 use strict;
 
-my $usage="to out put some information from the ltrharvest_screen.scn/ltrdigest_tabout.csv/RepeatMasker.out file
-	Usage: perl get_range.l [0/1] LTRharvest.scn/ltrdigest_tabout.csv/RepeatMasker.out your_LTRharvest.ltrTE.fa(optional when RepeatMasker.out)
-	eg. perl get_range.pl 1 Rice_TIGR7.nmtf.scn.adj Rice_TIGR7.nmtf.ltrTE.pass.list -x
+my $usage="to out put some information from the ltrharvest_screen.scn/ltrdigest_tabout.csv file
+	Usage: perl get_range.pl LTRharvest.scn/ltrdigest_tabout.csv your_LTRharvest.ltrTE.fa
+	eg. perl get_range.pl Rice_TIGR7.nmtf.scn.adj Rice_TIGR7.nmtf.ltrTE.pass.list -x
 	Author: Shujun Ou 01-01-2014
 ";
 
 my $version="
-	Version: 
+	Version:
+		v2.0 Shujun Ou	12-27-2023 Remove RepeatMasker support for simplification. Clean up code. 
 		v1.9 Shujun Ou	03-17-2016 Add -fl parameter to output LTR regions with 50 bp two-end-extended coordinates, also change -x to 50bp extension.
 		v1.8 Shujun Ou	04-16-2015 Add -g parameter to take whole genome file as input, instead of the *ltrTE.fa file from LTRharvest
 		v1.7 Shujun Ou	04-08-2015 Add -int parameter to output the internal region coordinates to the fasta name
@@ -22,8 +23,6 @@ my $version="
 ";
 
 if ($#ARGV<1){die "ERROR: $usage"}
-my $LTR=$ARGV[0]; #0 for RepeatMasker analysis, 1 for LTRharvest and LTRdigest analysis
-die "ERROR: $usage" unless $LTR=~/^[01]$/;
 
 my $IN=1; #1 for internal length/ratio control (default), 0 for no control
 my $min_inlen=100; #minimum internal length
@@ -37,7 +36,7 @@ my $longer=0; #0 for no right and left LTR length comparison, 1 will output the 
 my $full=0; #0 will not output full length loci. 1 will output the full range loci.
 my $in=0; #0 will not output internal region to the list. 1 will output lLTR, rLTR and internal region in separate lines.
 my $int=0; #0 will not output internal region coordinates to the sequence ID. 1 will output start and end position of internal region in the fasta name
-my $genome=0; #0 means $ARGV[2] is not genome file; 1 means $ARGV[2] is the genome file with the sequence order same as the LTRharvest sequence number
+my $genome=0; #0 means $ARGV[1] is not genome file; 1 means $ARGV[1] is the genome file with the sequence order same as the LTRharvest sequence number
 #my $select=0; #0 will output all regions, 1 will output specific regions ([1], [IN] or [2]) that indicated at the first column
 
 my $k=0;
@@ -55,14 +54,14 @@ foreach my $para (@ARGV){
 	$k++;
 	}
 
-open TBL, "<$ARGV[1]" or die "ERROR: $!";
-open LTRlist, ">$ARGV[1].list" unless $extend==1;
-open Extend, ">$ARGV[1].extend" if $extend==1;
-open Full, ">$ARGV[1].full" if $full==1;
+open TBL, "<$ARGV[0]" or die "ERROR: $!";
+open LTRlist, ">$ARGV[0].list" unless $extend==1;
+open Extend, ">$ARGV[0].extend" if $extend==1;
+open Full, ">$ARGV[0].full" if $full==1;
 
 my %chr;
-if ($LTR==1 && $genome==0){
-	open FA, "<$ARGV[2]" or die "ERROR: $!";
+if ($genome==0){
+	open FA, "<$ARGV[1]" or die "ERROR: $!";
 	while (<FA>){
 		s/>//;
 		$chr{"$2..$3"}=$1 if (/^(\S+).*\[([0-9]+),([0-9]+)\]/); #eg: >9311_chr01 (dbseq-nr 0) [101308,114181]
@@ -71,15 +70,14 @@ if ($LTR==1 && $genome==0){
 		$chr{"$2..$3"}=$1 if (/^(\S+)\|([0-9]+)\.\.([0-9]+)/);#eg: >Chr1|106522..118080
 		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|(\S+)/);#eg: >Chr1:106522..118080|Chr1
 		$chr{"$2..$3"}=$1 if (/^(\S+):([0-9]+)..([0-9]+)\[[12]\]/); #eg: >gi.478805265.gb.AQOG01029926.1:10426..15413[1]
-#print "$id\n";
 		$chr{"$2..$3"}=$1 if (/(\S+)\:([0-9]+)\.\.([0-9]+)/); #eg: gi.478789307.gb.AQOG01045884.1:56716..59758     pass    motif:AAAG      TSD:TGAAG
 		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|/);#eg: >Chr1:106522..118080|
-#print "$1\n";
 		}
 	}
 
-if ($LTR==1 && $genome==1){
-	my @id=`grep \\> $ARGV[2]`;
+# index and reverse index sequences in $genome, reverse index is for LTRharvest -rev parameter
+if ($genome==1){
+	my @id=`grep \\> $ARGV[1]`;
 	my @rev_id = reverse @id;
 	my $i=0;
 	foreach (@id, @rev_id){
@@ -95,40 +93,33 @@ while (<TBL>){
 	if (/^#/){next}
 	if (/perc/ or /score/){next;}
 	if (/^\s+$/){next}
+	if (/^$/){next}
+	s/^\s+//;
 	my ($element_start, $element_end, $element_length, $sequence, $lLTR_start, $lLTR_end, $lLTR_length, $rLTR_start, $rLTR_end, $rLTR_length, $lTSD_start, $lTSD_end, $lTSD_motif, $rTSD_start, $rTSD_end, $rTSD_motif, $PPT_start, $PPT_end, $PPT_motif, $PPT_strand, $PPT_offset, $PBS_start, $PBS_end, $PBS_strand, $tRNA, $tRNA_motif, $PBS_offset, $tRNA_offset, $PBS_tRNA_edist, $Protein_domain_hits, $similarity, $seq_ID, $chr);
 
-##This is for RepeatMasker out file analysis
-##    SW   perc perc perc  query     position in query              matching                    repeat          position in repeat
-## score   div. del. ins.  sequence  begin    end          (left)   repeat                      class/family begin   end    (left)    ID
-##121374    0.3  0.0  0.0  Chr1       2991444  3005061 (38467215) C Os2091in-Osr28_AP002539     LTR/Gypsy       (0)  13617       1  304
-if ($LTR==0){
-	s/^\s+//;
-	(undef, $similarity, undef, undef, $seq_ID, $element_start, $element_end, undef)=split;
-	$seq_ID=(split /_/, $seq_ID)[0];
-	print LTRlist "$seq_ID:$element_start..$element_end\t$seq_ID:$element_start..$element_end\n";
-	}
-
-if ($LTR==1){
-
-##This is for LTRharvest result analysis
-##s(ret) e(ret) l(ret) s(lLTR) e(lLTR) l(lLTR) s(rLTR) e(rLTR) l(rLTR) sim(LTRs) seq-nr
-	s/^\s+//;
+	##This is for LTRharvest result analysis
+	##s(ret) e(ret) l(ret) s(lLTR) e(lLTR) l(lLTR) s(rLTR) e(rLTR) l(rLTR) sim(LTRs) seq-nr
+	#start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
+	#34 4594 4561 34 291 258 4335 4594 260 0.962     + CTCAC 29..33, 4595..4599 TG,TG,CA,CA
 	($element_start,  $element_end,  $element_length, $lLTR_start,  $lLTR_end,  $lLTR_length, $rLTR_start,  $rLTR_end,  $rLTR_length, $similarity, $seq_ID, $chr)=(split /\s+/, $_);
-#34 4594 4561 34 291 258 4335 4594 260 0.962     + CTCAC 29..33, 4595..4599 TG,TG,CA,CA
-#start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
 
-	$chr=$chr{"$element_start..$element_end"} if $genome==0 and !defined $chr;
-	if (!defined $chr or $chr =~ /^[NA|\.|\-|\?]$/i){
-		if ($genome==1 and exists $chr{$seq_ID}){
-			$chr=$chr{$seq_ID};
+	if ($genome==1) {
+	# if $ARGV[1] is a sequence file, then output all entriess in $ARGV[0], here we try to obtain $chr for LTRharvest entries from the sequence file
+	# use chr as primary sequence ID and seq_ID as secondary
+		if (!defined $chr or $chr =~ /^[NA|\.|\-|\+|\?]$/i){ # if $chr is missing, it could be replaced by direction (NA, -, ., +, ?)
+			if (exists $chr{$seq_ID}){
+				$chr=$chr{$seq_ID};
+				} else {
+				$chr=$seq_ID;
+				}
 			}
-		else {
-			die "No sequence ID is found in: \n$_\n";
-			}
+		} else {
+		# if $ARGV[1] is a list file, then only output entries in $ARGV[1]
+		$chr=$chr{"$element_start..$element_end"};
+		next unless defined $chr;
 		}
 
 	next unless defined $lLTR_length and defined $rLTR_length;
-#	print "ERROR: could not recognize the following line:\n\t$_" unless defined $lLTR_length and defined $rLTR_length;
 	my $long="NA";
 	if ($lLTR_length>=$rLTR_length){
 		$long="left";
@@ -136,7 +127,7 @@ if ($LTR==1){
 		$long="right"
 		}
 
-##to obtain the boundary sequences
+	##to obtain the boundary sequences
 	my ($int_str, $int_end)=($lLTR_end+1,$rLTR_start-1);
 	if ($boundary==1){
 		$lLTR_start+=10;
@@ -145,7 +136,7 @@ if ($LTR==1){
 		$rLTR_end-=10;
 		}
 
-##for internal region length control
+	##for internal region length control
 	my $mark=1;
 	if ($IN==1){
 		my $in_len=$rLTR_start-$lLTR_end;
@@ -167,9 +158,6 @@ if ($LTR==1){
 		print Full "$chr:$element_start..$element_end\t$chr:$element_start..$element_end\n" if defined $chr;
 		}
 
-##This is for LTRdigest result analysis 
-#	($element_start,  $element_end,  $element_length,  $sequence,  $lLTR_start,  $lLTR_end,  $lLTR_length,  $rLTR_start,  $rLTR_end,  $rLTR_length,  $lTSD_start,  $lTSD_end,  $lTSD_motif,  $rTSD_start,  $rTSD_end,  $rTSD_motif,  $PPT_start,  $PPT_end,  $PPT_motif,  $PPT_strand,  $PPT_offset,  $PBS_start,  $PBS_end,  $PBS_strand,  $tRNA,  $tRNA_motif,  $PBS_offset,  $tRNA_offset,  $PBS_tRNA_edist,  $Protein_domain_hits)=split (/\t/,$_);
-
 	if ($mark==1 and defined $chr and $extend!=1 and $int==0){
 		print LTRlist "$chr:$element_start..$element_end\[1]\t$chr:$lLTR_start..$lLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "left"));
 		print LTRlist "$chr:$element_start..$element_end\[2]\t$chr:$rLTR_start..$rLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "right"));
@@ -180,10 +168,8 @@ if ($LTR==1){
 		print LTRlist "$chr:$element_start..$element_end\[1]($int_str..$int_end-$similarity)\t$chr:$lLTR_start..$lLTR_end\n";
 		print LTRlist "$chr:$element_start..$element_end\[2]($int_str..$int_end-$similarity)\t$chr:$rLTR_start..$rLTR_end\n";
 		}	
-	}
 }
 
-close FA if $LTR==1;
 close Extend if $extend==1;
 close Full if $full==1;
 close LTRlist unless $extend==1;
