@@ -5,11 +5,11 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.7";
+my $version="v2.9.8";
 my $help="
-############################
+##############################
 ### LTR_retriever $version ###
-############################
+##############################
 
 A program for accurate identification of LTR-RTs from outputs of LTRharvest and
 	LTR_FINDER, generates non-redundant LTR-RT library for genome annotations.
@@ -540,7 +540,7 @@ if (-s "$index.prelib.INT.list" and -s "$index.prelib.LTR.list"){
 	`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.prelib.LTR.clust -cutoff 225 $index.prelib.INT > /dev/null 2>&1`;
 	`rm $index.prelib.LTR.clust.* > /dev/null 2>&1`;
 	if (-e "$index.prelib.INT.masked"){
-		`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
+		`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN 1 -f $index.prelib.INT.masked > $index.prelib.INT.cln`; #only non-solo-LTR-nested IN regions
 		} else {
 		`cp $index.prelib.INT $index.prelib.INT.cln`;
 		}
@@ -784,7 +784,7 @@ die "ERROR: RepeatMasker is not running properly!
 		RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
 	Please report errors to https://github.com/oushujun/LTR_retriever/issues\nProgram halt!\n" unless -s "$index.ltrTE.trunc.masked";
 
-`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
+`perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN 1 -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
 `cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
 `cat $index.ltrTE.trunc.cln >> $genome.LTRlib.raw`;
 	} else {
