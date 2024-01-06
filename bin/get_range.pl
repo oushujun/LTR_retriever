@@ -64,14 +64,21 @@ if ($genome==0){
 	open FA, "<$ARGV[1]" or die "ERROR: $!";
 	while (<FA>){
 		s/>//;
-		$chr{"$2..$3"}=$1 if (/^(\S+).*\[([0-9]+),([0-9]+)\]/); #eg: >9311_chr01 (dbseq-nr 0) [101308,114181]
-		$chr{"$2..$3"}=$1 if (/^(\S+)_[0-9]+.*\[([0-9]+),([0-9]+)\]/); #eg: >gi.478805111.gb.AQOG01030080.1_1 (dbseq-nr 173) [4033,8637]
-		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|([0-9]+)\.\.([0-9]+)/); #eg: >Chr1:106522..118080|106502..118100
-		$chr{"$2..$3"}=$1 if (/^(\S+)\|([0-9]+)\.\.([0-9]+)/);#eg: >Chr1|106522..118080
-		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|(\S+)/);#eg: >Chr1:106522..118080|Chr1
-		$chr{"$2..$3"}=$1 if (/^(\S+):([0-9]+)..([0-9]+)\[[12]\]/); #eg: >gi.478805265.gb.AQOG01029926.1:10426..15413[1]
-		$chr{"$2..$3"}=$1 if (/(\S+)\:([0-9]+)\.\.([0-9]+)/); #eg: gi.478789307.gb.AQOG01045884.1:56716..59758     pass    motif:AAAG      TSD:TGAAG
-		$chr{"$2..$3"}=$1 if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|/);#eg: >Chr1:106522..118080|
+		my ($from, $to, $chr, $strand);
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+).*\[([0-9]+),([0-9]+)\]/); #eg: >9311_chr01 (dbseq-nr 0) [101308,114181]
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+)_[0-9]+.*\[([0-9]+),([0-9]+)\]/); #eg: >gi.478805111.gb.AQOG01030080.1_1 (dbseq-nr 173) [4033,8637]
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|([0-9]+)\.\.([0-9]+)/); #eg: >Chr1:106522..118080|106502..118100
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+)\|([0-9]+)\.\.([0-9]+)/);#eg: >Chr1|106522..118080
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|(\S+)/);#eg: >Chr1:106522..118080|Chr1
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+):([0-9]+)..([0-9]+)\[[12]\]/); #eg: >gi.478805265.gb.AQOG01029926.1:10426..15413[1]
+		($from, $to, $chr) = ($2, $3, $1) if (/(\S+)\:([0-9]+)\.\.([0-9]+)/); #eg: gi.478789307.gb.AQOG01045884.1:56716..59758 pass motif:AAAG
+		($from, $to, $chr) = ($2, $3, $1) if (/^(\S+)\:([0-9]+)\.\.([0-9]+)\|/);#eg: >Chr1:106522..118080|
+		
+		# keep reverse direction to allow - strand inputs
+		if (defined $from) {
+			$strand = $from < $to ? "+" : "-";
+			($chr{"$from..$to"}, $chr{"$to..$from"}) = ([$chr, $strand], [$chr, $strand]) if defined $from;
+			}
 		}
 	}
 
@@ -84,7 +91,7 @@ if ($genome==1){
 		chomp;
 		s/>//g;
 		s/\s+//g;
-		$chr{$i}=$_;
+		$chr{$i}=[$_, '+'];
 		$i++;
 		}
 	}
@@ -95,29 +102,31 @@ while (<TBL>){
 	if (/^\s+$/){next}
 	if (/^$/){next}
 	s/^\s+//;
-	my ($element_start, $element_end, $element_length, $sequence, $lLTR_start, $lLTR_end, $lLTR_length, $rLTR_start, $rLTR_end, $rLTR_length, $lTSD_start, $lTSD_end, $lTSD_motif, $rTSD_start, $rTSD_end, $rTSD_motif, $PPT_start, $PPT_end, $PPT_motif, $PPT_strand, $PPT_offset, $PBS_start, $PBS_end, $PBS_strand, $tRNA, $tRNA_motif, $PBS_offset, $tRNA_offset, $PBS_tRNA_edist, $Protein_domain_hits, $similarity, $seq_ID, $chr);
+	my ($element_start, $element_end, $element_length, $sequence, $lLTR_start, $lLTR_end, $lLTR_length, $rLTR_start, $rLTR_end, $rLTR_length, $lTSD_start, $lTSD_end, $lTSD_motif, $rTSD_start, $rTSD_end, $rTSD_motif, $PPT_start, $PPT_end, $PPT_motif, $PPT_strand, $PPT_offset, $PBS_start, $PBS_end, $PBS_strand, $tRNA, $tRNA_motif, $PBS_offset, $tRNA_offset, $PBS_tRNA_edist, $Protein_domain_hits, $similarity, $seq_ID, $chr, $strand);
 
 	##This is for LTRharvest result analysis
 	##s(ret) e(ret) l(ret) s(lLTR) e(lLTR) l(lLTR) s(rLTR) e(rLTR) l(rLTR) sim(LTRs) seq-nr
 	#start end len lLTR_str lLTR_end lLTR_len rLTR_str rLTR_end rLTR_len similarity seqid chr direction TSD lTSD rTSD motif superfamily family age(ya)
 	#34 4594 4561 34 291 258 4335 4594 260 0.962     + CTCAC 29..33, 4595..4599 TG,TG,CA,CA
 	($element_start,  $element_end,  $element_length, $lLTR_start,  $lLTR_end,  $lLTR_length, $rLTR_start,  $rLTR_end,  $rLTR_length, $similarity, $seq_ID, $chr)=(split /\s+/, $_);
+	$strand = "+";
 
 	if ($genome==1) {
 	# if $ARGV[1] is a sequence file, then output all entriess in $ARGV[0], here we try to obtain $chr for LTRharvest entries from the sequence file
 	# use chr as primary sequence ID and seq_ID as secondary
 		if (!defined $chr or $chr =~ /^[NA|\.|\-|\+|\?]$/i){ # if $chr is missing, it could be replaced by direction (NA, -, ., +, ?)
 			if (exists $chr{$seq_ID}){
-				$chr=$chr{$seq_ID};
+				($chr, $strand)=($chr{$seq_ID}[0], $chr{$seq_ID}[1]);
 				} else {
 				$chr=$seq_ID;
 				}
 			}
 		} else {
 		# if $ARGV[1] is a list file, then only output entries in $ARGV[1]
-		$chr=$chr{"$element_start..$element_end"};
+		($chr, $strand)=($chr{"$element_start..$element_end"}[0], $chr{"$element_start..$element_end"}[1]);
 		next unless defined $chr;
 		}
+	($element_start, $element_end) = ($element_end, $element_start) if $strand eq '-'; # strand sensitive
 
 	next unless defined $lLTR_length and defined $rLTR_length;
 	my $long="NA";

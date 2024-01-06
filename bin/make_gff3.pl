@@ -60,7 +60,7 @@ while (<List>){
 	$rTSD=~s/\.\./\t/;
 	$element_start=(split /\s+/, $lTSD)[0];
 	$element_end=(split /\s+/, $rTSD)[1];
-	my $id = "$chr:$lLTR_start..$rLTR_end";
+	my $id = $strand eq '-' ? "$chr:$rLTR_end..$lLTR_start" : "$chr:$lLTR_start..$rLTR_end"; # strand sensitive $id
 	my $so = "LTR_retrotransposon";
 	$so = "Copia_LTR_retrotransposon" if $supfam eq "Copia";
 	$so = "Gypsy_LTR_retrotransposon" if $supfam eq "Gypsy";
@@ -73,7 +73,6 @@ while (<List>){
 		print GFF "##sequence-region   $chr_ori 1 $seq_flag{$chr_ori}[1]\n"; #seqence length
 		delete $seq_flag{$chr_ori};
 		}
-#	my $info = "Name=$id;motif=$motif;tsd=$TSD;ltr_identity=$sim;Method=structural";
 	my $info = "Name=$id;Classification=LTR/$supfam";
 	my $info2 = "ltr_identity=$sim;Method=structural;motif=$motif;tsd=$TSD";
 	print GFF "$chr\t$annotator\trepeat_region\t$element_start\t$element_end\t.\t$strand\t.\tID=repeat_region_$i;$info;Sequence_ontology=$SO{'repeat_region'};$info2\n";

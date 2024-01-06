@@ -77,6 +77,7 @@ while (<INTACT>){
 	s/^\s+//;
 	my ($chr, $from, $to)=(split)[0,1,2];
 	next unless exists $intact{$chr};
+	($from, $to) = ($to, $from) if $from > $to; # fix direction
 	my $len=$to-$from+1;
 	substr($intact{$chr}, $from-1, $len)="i" x $len; #substitute '0' with 'i' where intact LTR-RT is occurred
 	}

@@ -455,6 +455,7 @@ sub Identifier() {
 	$info[17]="NA" unless defined $info[17]; #order
 	$info[18]="unknown" unless defined $info[18]; #superfamily
 	$info[19]="NA" unless defined $info[19]; #age (ya)
+	$info[19]="0" if $info[19] eq "-0";
 
 ##TSD control, boundary control, MISC control, and reporting
 	my $internal=($ltr1_e+1)."..".($ltr2_s-1);
@@ -477,7 +478,8 @@ sub Identifier() {
 		}
 
 	#last four variables: strand/superfamily/order/age
-	my $defalse = "$chr:$ltr1_s..$ltr2_e\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$info[9]\t$info[12]\t$info[18]\t$info[17]\t$info[19]
+	my $locus = $info[12] eq '-' ? "$chr:$ltr2_e..$ltr1_s" : "$chr:$ltr1_s..$ltr2_e";
+	my $defalse = "$locus\t$decision\tmotif:$motif\tTSD:$TSD\tIN:$internal\t$info[9]\t$info[12]\t$info[18]\t$info[17]\t$info[19]
 	Adjust: $adjust\tlLTR: $ll\trLTR: $rl
 	Alignment regions: $s_start, $s_end, $q_start, $q_end
 	LTR coordinates: $ltr1_s, $ltr1_e, $ltr2_s, $ltr2_e

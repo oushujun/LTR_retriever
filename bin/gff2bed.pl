@@ -22,6 +22,7 @@ while (<GFF>){
 	my ($method, $type, $TE_class, $class, $iden) = (undef, undef, undef, undef, 'NA');
 	my ($chr, $sequence_ontology, $element_start, $element_end, $score, $strand, $phase, $extra) = (split)[0,2,3,4,5,6,7,8];
 	next unless defined $chr and defined $element_start;
+	($element_start, $element_end) = ($element_end, $element_start) if $element_start > $element_end; # fix direction
 
 	# get class info for summary categories
 	$class = $sequence_ontology;
@@ -61,7 +62,7 @@ while (<GFF>){
 	$type = $1 if $sequence_ontology =~ /^(.*)\/.*/ and $1 !~ /DNA|MITE/i;
 
 	# get assortive structural info
-	my $TE_ID = "$chr:$element_start..$element_end";
+	my $TE_ID = $strand eq '-' ? "$chr:$element_end..$element_start" : "$chr:$element_start..$element_end"; # strand sensitive for $TE_ID
 	$TE_ID = $1 if $extra =~ s/Name=(.*?);//i;
 	$TE_class = $1 if $extra =~ s/Classification=(.*?);//i;
 	$iden = $1 if $extra =~ s/ltr_identity=([0-9.e\-]+);//i or $extra =~ s/Identity=([0-9.e\-]+);//i;
