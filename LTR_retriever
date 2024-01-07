@@ -5,11 +5,11 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.8";
+my $version="v2.9.9";
 my $help="
-##############################
+############################
 ### LTR_retriever $version ###
-##############################
+############################
 
 A program for accurate identification of LTR-RTs from outputs of LTRharvest and
 	LTR_FINDER, generates non-redundant LTR-RT library for genome annotations.
@@ -199,9 +199,9 @@ die "\nERROR: The specified file $inmgescan does not exist.\n\n" if $inmgescan!~
 die "\nERROR: The specified file $inharvest does not exist.\n\n" if $inharvest!~/^$/ and !-e "$inharvest";
 
 print "
-##########################
+############################
 ### LTR_retriever $version ###
-##########################\n
+############################\n
 Contributors: Shujun Ou, Ning Jiang\n
 For LTR_retriever, please cite:
 
@@ -304,7 +304,7 @@ $PlantP="$PlantP_base.$rand";
 chomp ($date=`date +"%m-%d-%y_%H%M"`);
 if ($step eq "Init" and `ls $genome*|wc -l`>15){
 	print "\n\t\t\t\tPrevious LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
-	`mkdir LTRretriever-pre$date; mv $genome*.out $genome*.out.gff* $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* $genome*.out*size.list $genome.out.LTR.distribution.txt LTRretriever-pre$date/ 2>/dev/null`;
+	`mkdir LTRretriever-pre$date; mv $genome*.tbl $genome*.out $genome*.cat* $genome*.masked $genome*.out.gff* $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* $genome*.out*size.list $genome.out.LTR.distribution.txt LTRretriever-pre$date/ 2>/dev/null`;
 }
 
 ## check if genome writable
