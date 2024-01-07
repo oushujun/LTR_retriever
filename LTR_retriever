@@ -714,7 +714,7 @@ chomp ($date=`date`);
 print "$date\tModules 2-5: Start to analyze the structure of candidates...
 \t\t\t\tThe terminal motif, TSD, boundary, orientation, age, and superfamily will be identified in this step.\n\n";
 my $index=$_[0];
-`perl $script_path/bin/get_range.pl $index.retriever.scn $index.ltrTE.stg1 -x`;
+`perl $script_path/bin/get_range.pl $index.retriever.scn $index.ltrTE.stg1 -x -strict 1`;
 `cat $index.retriever.scn.extend |sort -fu > $index.retriever.scn.extend.unq; mv $index.retriever.scn.extend.unq $index.retriever.scn.extend`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.extend -C $genome > $index.retriever.scn.extend.fa`; #full TE sequence with 50bp-extended on each side
 

@@ -7,6 +7,7 @@ eg1. perl call_seq_by_LOC.pl array_list itself >result	##call LOC sequence withi
 eg2. perl call_seq_by_LOC.pl array_list -C your_database up_2000 >result	##call sequence of upper 2000 bp region in the list, from the provided database
 
 Update history:
+	v2.6	add -strict parameter to control inclusiveness of input range (2024/01/07)
 	v2.5	do not output sequence with all Ns (2023/01/30)
 	v2.4	output sequences without headers
 	v2.3	output a list of entirely excluded sequences
@@ -34,6 +35,7 @@ my $rmvoid=0; #0 for output empty sequences anyways; 1 for output only non-empty
 my $exclude=0; #0 for output sequence specified by list (default); 1 for exclude sequence specified by list
 my $coverage=1; #work with $exclude, if the excluded portion is too long (default 1, [0-1]), discard the entire sequence
 my $purge=0; #work with $exclude, switch on=1/off=0(default) to clean up aligned region and joint unaligned sequences
+my $strict=0; #0=flexible, will adjust coordinate start and stop if they extend outside of the sequence; 1 will skip the entry if exceed.
 my $genome;
 
 my $i=0;
@@ -56,6 +58,7 @@ foreach my $para (@ARGV){
 	$header=$ARGV[$i+1] if $para=~/^-header$/i;
 	$coverage=$ARGV[$i+1] if $para=~/^-cov$/i;
 	$purge=$ARGV[$i+1] if $para=~/^-purge$/i;
+	$strict=$ARGV[$i+1] if $para=~/^-strict$/i;
 	$exclude=1 if $para=~/^-ex$/i;
 	$i++;
 	}
@@ -123,12 +126,17 @@ foreach my $line (@list){
 		$stop=$start+$length-1;
 		}
 
-	$start=1 if $start<=0;
 
 	next unless exists $genome{$chr};
-#	next if $genome{$chr}=~/^\s+$/;
 	next if length $genome{$chr} < 10;
-	$stop=length $genome{$chr} if $stop>=length $genome{$chr};
+
+	# adjust boundary if they exceed the sequence range
+	if ($strict == 0){
+		$start=1 if $start<=0;
+		$stop=length $genome{$chr} if $stop>=length $genome{$chr};
+		} else {
+		next if $start<=0 or $stop>=length $genome{$chr};
+		}
 
 	if ($exclude==0){
 		$seq=substr ($genome{$chr}, $start-1, $stop-$start+1) if exists $genome{$chr};

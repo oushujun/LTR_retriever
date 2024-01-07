@@ -160,7 +160,7 @@ while (<TBL>){
 		$lLTR_end+=50;
 		$rLTR_start-=50;
 		$rLTR_end+=50;
-		print Extend "$chr:$element_start..$element_end\t$chr:$lLTR_start..$rLTR_end\n" if defined $chr;
+		print Extend "$chr:$element_start..$element_end\t$chr:$lLTR_start..$rLTR_end\n" if defined $chr and $lLTR_start > 0;
 		}
 
 	if ($full==1){
