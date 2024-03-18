@@ -49,7 +49,7 @@ foreach (@ARGV){
 	$align_score=$ARGV[$k+1] if /^-minscore$/i and $ARGV[$k+1]!~/^-/;
 	$file=$ARGV[$k+1] if /^-f$/i and $ARGV[$k+1]!~/^-/;
 	$cleanN=1 if /^-cleanN$/i and $ARGV[$k+1]!~/^-/;
-	$trf=0 if /^-trf$/i and $ARGV[$k+1]!~/^-/;
+	$trf=$ARGV[$k+1] if /^-trf$/i and $ARGV[$k+1]!~/^-/;
 	$trf_path=$ARGV[$k+1] if /^-trf_path$/i and $ARGV[$k+1]!~/^-/;
 	$k++;
 	}
