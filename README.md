@@ -5,7 +5,7 @@
    * [Introduction](#introduction)
    * [Installation](#installation)
       * [Quick installation using conda](#quick-installation-using-conda)
-      * [Step by step installation using conda...](#step-by-step-installation-using-conda)
+      * [Step by step installation using conda](#step-by-step-installation-using-conda)
       * [Standard installation](#standard-installation)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
@@ -36,7 +36,7 @@ Alternatively, you may use the conda recipe, but due to the large number of depe
 	conda install -c bioconda -c conda-forge ltr_retriever
 
 <details>
-<summary>Step by step installation using conda...</summary>
+<summary>Step by step installation using conda</summary>
 You may use conda to quickly install all dependencies and LTR_retriever is then good to go:
 
 	conda create -n LTR_retriever
