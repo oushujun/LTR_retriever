@@ -5,7 +5,7 @@
    * [Introduction](#introduction)
    * [Installation](#installation)
       * [Quick installation using conda](#quick-installation-using-conda)
-      * [Step by step installation using conda...](#step-by-step-using-conda)
+      * [Step by step installation using conda...](#step-by-step-installation-using-conda)
       * [Standard installation](#standard-installation)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
