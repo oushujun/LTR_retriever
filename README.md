@@ -45,6 +45,7 @@ You may use conda to quickly install all dependencies and LTR_retriever is then 
 	conda install -y -c bioconda cd-hit 'repeatmasker <4.1.5' rmblast tesorter
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
+</details>
 
 #### Standard installation
 
