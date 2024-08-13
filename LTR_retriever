@@ -307,13 +307,6 @@ if ($step eq "Init" and `ls $genome*|wc -l`>15){
 	`mkdir LTRretriever-pre$date; mv $genome*.tbl $genome*.out $genome*.cat* $genome*.masked $genome*.out.gff* $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* $genome*.out*size.list $genome.out.LTR.distribution.txt LTRretriever-pre$date/ 2>/dev/null`;
 }
 
-## check if genome writable
-
-if (not -w $genome and $annotation==1){
-	die "$genome is not writable, which may raise RepeatMask error\n\n";
-}
-
-
 ####################################################################
 ######### To retrieve high quality LTR-RTs with TGCA motif #########
 ####################################################################
