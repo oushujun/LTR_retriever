@@ -114,7 +114,7 @@ while (<TBL>){
 	if ($genome==1) {
 	# if $ARGV[1] is a sequence file, then output all entriess in $ARGV[0], here we try to obtain $chr for LTRharvest entries from the sequence file
 	# use chr as primary sequence ID and seq_ID as secondary
-		if (!defined $chr or $chr =~ /^[NA|\.|\-|\+|\?]$/i){ # if $chr is missing, it could be replaced by direction (NA, -, ., +, ?)
+		if ($chr eq '' or !defined $chr or $chr =~ /^[NA|\.|\-|\+|\?]$/i){ # if $chr is missing, it could be replaced by direction (NA, -, ., +, ?)
 			if (exists $chr{$seq_ID}){
 				($chr, $strand)=($chr{$seq_ID}[0], $chr{$seq_ID}[1]);
 				} else {
