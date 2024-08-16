@@ -5,7 +5,6 @@
    * [Introduction](#introduction)
    * [Installation](#installation)
       * [Quick installation using conda](#quick-installation-using-conda)
-      * [Step by step using conda ](#step-by-step-using-conda)
       * [Standard installation](#standard-installation)
    * [Inputs](#inputs)
    * [Outputs](#outputs)
@@ -35,15 +34,18 @@ Alternatively, you may use the conda recipe, but due to the large number of depe
 
 	conda install -c bioconda -c conda-forge ltr_retriever
 
-#### Step by step using conda 
+<details>
+<summary>Step by step installation using conda</summary>
 You may use conda to quickly install all dependencies and LTR_retriever is then good to go:
 
 	conda create -n LTR_retriever
 	conda activate LTR_retriever
-	conda install -y -c conda-forge perl perl-text-soundex
-	conda install -y -c bioconda cd-hit repeatmasker tesorter
+	conda install -y -c conda-forge perl perl-text-soundex libstdcxx-ng
+	conda install -y -c bioconda cd-hit 'repeatmasker <4.1.5' rmblast tesorter
 	git clone https://github.com/oushujun/LTR_retriever.git
 	./LTR_retriever/LTR_retriever -h
+</details>
+
 
 #### Standard installation
 

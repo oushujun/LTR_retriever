@@ -5,7 +5,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v2.9.9";
+my $version="v3.0.0";
 my $help="
 ############################
 ### LTR_retriever $version ###
@@ -306,13 +306,6 @@ if ($step eq "Init" and `ls $genome*|wc -l`>15){
 	print "\n\t\t\t\tPrevious LTR_retriever results found, backed up to LTRretriever-pre$date\n\n";
 	`mkdir LTRretriever-pre$date; mv $genome*.tbl $genome*.out $genome*.cat* $genome*.masked $genome*.out.gff* $genome*.LAI $genome*.LTRlib* $genome*defalse $genome*.ltrTE* $genome*.retriever.* $genome*.prelib* $genome*.pass.list* $genome*.out*size.list $genome.out.LTR.distribution.txt LTRretriever-pre$date/ 2>/dev/null`;
 }
-
-## check if genome writable
-
-if (not -w $genome and $annotation==1){
-	die "$genome is not writable, which may raise RepeatMask error\n\n";
-}
-
 
 ####################################################################
 ######### To retrieve high quality LTR-RTs with TGCA motif #########
