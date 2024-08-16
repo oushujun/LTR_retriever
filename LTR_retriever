@@ -5,7 +5,7 @@ use File::Basename;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
-my $version="v3.0.0";
+my $version="v3.0.1";
 my $help="
 ############################
 ### LTR_retriever $version ###
@@ -80,6 +80,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 				Promask (Truncated LTR recycle finished, protein contamination cleanup next)
 				Library (Protein contamination cleanup finished, initial library construction next)
 				Next (Initial library construction finished, non-TGCA analyses next)
+-stop	     [STRING]	Stop the program when finishing the specified step. Refer to -step for possible step options.
 -threads     [INT]	Number of threads (≤ total available threads, default 4)
 -help/-h		Display this help information
 
@@ -137,6 +138,7 @@ my $TEhmm="$script_path/database/TEfam.hmm";
 
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
 my $step = "Init"; #start the program from a particular step. Default: Init (from the beginning).
+my $stop = "End"; #stop the program when finishing the specified step. Default: End (the whole pipeline)
 my $threads=4;
 
 my $k=0;
@@ -176,6 +178,7 @@ foreach (@ARGV){
 	$keep_trunc=0 if /^-notrunc$/i;
 	$annotation=0 if /^-noanno$/i;
 	$step = $ARGV[$k+1] if /^-step$/i and $ARGV[$k+1]!~/^-/;
+	$stop = $ARGV[$k+1] if /^-stop$/i and $ARGV[$k+1]!~/^-/;
 	$repeatmasker = $ARGV[$k+1] if /^-repeatmasker$/i and $ARGV[$k+1]!~/^-/;
 	$blastplus = $ARGV[$k+1] if /^-blastplus$/i and $ARGV[$k+1]!~/^-/;
 	$blast = $ARGV[$k+1] if /^-blast$/i and $ARGV[$k+1]!~/^-/;
@@ -387,6 +390,13 @@ print "\t\t\t\tTotal candidates: $total_candidate
 ##cleanup the NNNs and tandem sequence
 my $stg1_count=&cleanTandem($index);
 
+##Stopping the program if needed
+if ($stop =~ /^Init$/i){
+	chomp ($date=`date`);
+	print "$date\tLTR_retriever is stopping after the $stop step.\n";
+	exit;
+        }
+
 #update status
 chomp ($date=`date`);
 print "$date\t$stg1_count clean candidates remained\n\n";
@@ -399,13 +409,34 @@ chomp ($date=`date`);
 print "$date\tIntact LTR-RT found: $pass_count\n\n";
 goto NEXT if $pass_count==0;
 
+##Stopping the program if needed
+if ($stop =~ /^Major$/i){
+	chomp ($date=`date`);
+	print "$date\tLTR_retriever is stopping after the $stop step.\n";
+	exit;
+	}
+
 ##Recycle truncated candidates, mask candidates by false LTR
 Trunc:
 &trunc($index);
 
+##Stopping the program if needed
+if ($stop =~ /^Trunc$/i){
+	chomp ($date=`date`);
+	print "$date\tLTR_retriever is stopping after the $stop step.\n";
+	exit;
+	}
+
 ##clean up protein coding sequence from DNA TE, LINE, and normal plant genes
 Promask:
 &proMask($index);
+
+##Stopping the program if needed
+if ($stop =~ /^Promask$/i){
+	chomp ($date=`date`);
+	print "$date\tLTR_retriever is stopping after the $stop step.\n";
+	exit;
+	}
 
 ##generate non-redudant library for pass LTR-RT candidates
 Library:
@@ -420,6 +451,13 @@ print "$date\tSequence clustering for $index.ltrTE ...\n";
 `perl $script_path/bin/annotate_lib.pl $index.retriever.scn.adj $index.ltrTE.clust > $index.prelib`;
 my $lib_count=`grep -c \\> $index.prelib`;
 print "$date\tUnique lib sequence: $lib_count\n";
+
+##Stopping the program if needed
+if ($stop =~ /^Library$/i){
+	chomp ($date=`date`);
+	print "$date\tLTR_retriever is stopping after the $stop step.\n";
+	exit;
+	}
 
 ####################################################################
 ####### To retrieve high quality LTR-RTs with non-TGCA motif #######
