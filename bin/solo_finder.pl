@@ -6,7 +6,10 @@ use strict;
 #Shujun Ou (oushujun@msu.edu)
 #12-14-2020
 
-my $usage="perl this_script.pl -i RepeatMasker.out -info lib.LTR.info > solo_list";
+my $usage="
+perl .../LTR_retriever/bin/find_LTR.pl -lib TElib.fa > lib.LTR.info
+perl this_script.pl -i RepeatMasker.out -info lib.LTR.info > solo_list\n";
+
 my $SWscore=300; #minumum Smith-Waterman alignment score
 my $minlen=80; #bp, shortest solo LTR length allowed
 my $mincov=0.8; #minimum coverage of the library LTR sequence
@@ -48,10 +51,9 @@ while (<RM>){
 	next if $supfam !~ /LTR|RLX|RLC|RLG/i;
 	next unless exists $info{$loc};
 	next if $score<=$SWscore or $end-$start<=$minlen; #require alignment score>300 or alignment length>100bp
-	($libs, $libr) = ($libr, $libs) if $dir =~ "C";
+	($libs, $libr) = ($libr, $libs) if $dir =~ /[\-C]/;
 	# determine if this is an LTR region
 	my $is_ltr = 0;
-#	print "$_\n";
 	$is_ltr = find_ltr ($info{$loc}, $libs, $libe);
 	push @arr, [$_, $is_ltr];
 	if (@arr>5){

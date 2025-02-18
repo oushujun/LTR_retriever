@@ -7,6 +7,7 @@ use strict;
 #07-25-2017
 
 my $usage="perl this_script.pl RepeatMasker.out > intact_list";
+die "\n$usage\n\n" unless $ARGV[0];
 
 my @arr;
 while (<>){

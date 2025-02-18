@@ -9,7 +9,8 @@ use strict;
 
 my $usage="\n\tperl solo_intact_ratio.pl solo_list intact_list > solo_intact_ratio\n
 	To make solo and intact lists:
-		perl solo_finder.pl RepeatMasker.out > solo_list
+		perl find_LTR.pl -lib TElib.fa > TElib.fa.info
+		perl solo_finder.pl -i RepeatMasker.out -lib TElib.fa.info > solo_list
 		perl intact_finder_coarse.pl RepeatMasker.out > intact_list\n\n";
 
 open Solo, "<$ARGV[0]" or die $usage;
