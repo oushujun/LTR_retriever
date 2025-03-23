@@ -42,6 +42,7 @@ my $miu="1.3e-8"; #neutral mutation rate, default: 1.3e-8 (rice) per bp per ya
 my @motif=qw/TGCT TACA TACT TGGA TATA TGTA TGCA/;
 my $threads="4"; #threads to run this program
 my $blastplus=''; #path to the blast+ directory
+my $timeout = 120; # timeout blastn after 120s.
 
 #obtain the exact path for the program location
 my $script_path = dirname(__FILE__);
@@ -188,7 +189,7 @@ sub Identifier() {
 	my $motif2="$seq[-2]"."$seq[-1]";
 	my $candidate_seq=">$name\\n$ltr"; #just candidate LTR including internal region, no extended sequences
 
-	my $exec="${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
+	my $exec="timeout -s KILL $timeout ${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
 	my @Blast=();
 	for (my $try=0; $try<10; $try++){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 10 times to guarantee the blast is run correctly
 		@Blast=qx(bash -c '$exec' 2> /dev/null) if defined $ltr;

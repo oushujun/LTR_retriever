@@ -55,7 +55,7 @@ foreach my $id (keys %seq){
 	next unless exists $seq{$id};
 	my $seq = ">$id\n$seq{$id}\n";
 	my $length = length $seq{$id};
-	my $exec="${blastplus}blastn -outfmt 6 -num_threads $threads -query <(echo -e \"$seq\") -db $IN";
+	my $exec="timeout -s KILL 120s ${blastplus}blastn -outfmt 6 -num_threads $threads -query <(echo -e \"$seq\") -db $IN";
 	my @Blast=();
 	@Blast=qx(bash -c '$exec' 2> /dev/null);
 	foreach (@Blast){

@@ -19,6 +19,7 @@ my $w_size=$ARGV[2]; #alignment word size
 my $boundary_ctrl=$ARGV[3]; #boundary alignment control
 my $blastplus='';
 $blastplus=$ARGV[6] if defined $ARGV[6]; #path to the blast+ directory containing blastn
+my $timeout = 120; # timeout blastn after 120s.
 
 ## Align the left and right boundaries
 my ($bond, $seq3, $seq4, $left_align, $right_align, $left3, $left4, $right3, $right4, $boundary_aln);
@@ -73,7 +74,7 @@ $boundary_aln="$left_align,"."$right_align" if $boundary_ctrl==1;
 my @Blast=();
 my $try=0;
 while ($try<10){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 10 times to guarantee the blast is run correctly
-	@Blast=qx(bash -c '${blastplus}blastn -subject <(echo -e \"$File3\") -query <(echo -e \"$File4\") -evalue 1000 -word_size $w_size -dust no -outfmt 6' 2> /dev/null) if (defined $seq3 and defined $seq4);
+	@Blast=qx(bash -c 'timeout -s KILL $timeout ${blastplus}blastn -subject <(echo -e \"$File3\") -query <(echo -e \"$File4\") -evalue 1000 -word_size $w_size -dust no -outfmt 6' 2> /dev/null) if (defined $seq3 and defined $seq4);
 #blast outfmt=6 looks like this:
 #query id, subject id, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score
 #kasalath2       kasalath_chr01_91544_103018     88.00   25      3       0       7       31      1       25      5e-07   30.7
