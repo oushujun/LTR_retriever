@@ -73,6 +73,7 @@ Usage: LTR_retriever -genome genomefile -inharvest LTRharvest_input [options]
 
 【Miscellaneous】
 -u           [FLOAT]	Neutral mutation rate (per bp per ya) (default 1.3e-8 (from rice))
+-model/-m    [STRING]	Gap-compressed distance model. Available: K2P, JC69, pdist. (default: K2P)
 -step	     [STRING]	Restart the program from a particular step. Existing outputs will be overwritten. Options:
 				Init (default, from the beginning);
 				Major (Tandem repeat cleanup finished, structrual analyses next)
@@ -137,6 +138,7 @@ my $PlantP="$script_path/database/alluniRefprexp082813";
 my $TEhmm="$script_path/database/TEfam.hmm";
 
 my $miu="1.3e-8"; #neutral mutation rate of the target species (per bp per ya), e.g., rice: 1.3e-8 (Ma and Bennetzen 2004); mammal: 2.2e−9 (S. Kumar 2002); Drosophila: 1.6e-8 (Bowen and McDonald 2001);
+my $model="K2P"; #Gap-compressed distance model. available: K2P, JC69, pdist. (default: K2P)
 my $step = "Init"; #start the program from a particular step. Default: Init (from the beginning).
 my $stop = "End"; #stop the program when finishing the specified step. Default: End (the whole pipeline)
 my $threads=4;
@@ -171,6 +173,7 @@ foreach (@ARGV){
 	$PlantP=$ARGV[$k+1] if /^-plantprolib$/i and $ARGV[$k+1]!~/^-/;
 	$TEhmm=$ARGV[$k+1] if /^-TEhmm$/i and $ARGV[$k+1]!~/^-/;
 	$miu=$ARGV[$k+1] if /^-u$/i and $ARGV[$k+1]!~/^-/;
+	$model=uc $ARGV[$k+1] if /^-m$|^-model$/i;
 	$blastclust=1 if /^-blastclust$/i;
 	$set_bclust=$1 if $argv=~/-blastclust\s+\[(.+?)\]/i;
 	$cdhit=1 if /^-cdhit$/i;
@@ -194,6 +197,7 @@ foreach (@ARGV){
 
 die "Please specify the input sequence file!\nUse -h for more help info\n" unless (defined $genome and -s $genome);
 die "Please specify LTRharvest and/or LTR_finder screen output file!\nUse -h for more help info\n" unless (defined $inharvest or defined $infinder);
+die "Error: You specified -model $model, but only K2P, JC69, or pdist models are supported!\n" unless $model =~ /K2P|JC69|PDIST/i;
 
 #obtain initial LTR-RT candidates from LTRharvest and/or LTR_finder screen outputs
 die "\nERROR: The specified file $nonTGCA does not exist.\n\n" if $nonTGCA!~/^$/ and !-e "$nonTGCA";
@@ -761,7 +765,7 @@ my $index=$_[0];
 `awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv | perl -nle 's/([0-9]+\\.\\.[0-9]+)_(.*:[0-9]+\\.\\.[0-9]+)/\$1\\|\$2/; print \$_' >> $index.retriever.scn.extend.fa.aa.anno 2>/dev/null`;
 
 # identify intact LTR retrotransposons
-`perl $script_path/bin/LTR.identifier.pl $index -list $index.retriever.scn -seq $index.retriever.scn.extend.fa -anno $index.retriever.scn.extend.fa.aa.anno -flanksim $flanksim -flankmiss $flankmiss -flankaln $flankaln -minlen $minlen $tsdaln -u $miu -threads $threads -blastplus $blastplus -motif @motif > $index.defalse`;
+`perl $script_path/bin/LTR.identifier.pl $index -list $index.retriever.scn -seq $index.retriever.scn.extend.fa -anno $index.retriever.scn.extend.fa.aa.anno -flanksim $flanksim -flankmiss $flankmiss -flankaln $flankaln -minlen $minlen $tsdaln -u $miu -model $model -threads $threads -blastplus $blastplus -motif @motif > $index.defalse`;
 `perl -nle 'next unless /pass/i; print \$_ unless /notLTR/i or /mixture/i' $index.defalse > $index.ltrTE.pass.list`;
 my $count=0;
 $count=`grep -v -c \'#\' $index.ltrTE.pass.list`;

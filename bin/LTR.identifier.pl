@@ -15,6 +15,7 @@ LTR.identifier.pl
 LTR.identifier: Alignment assisted examination of LTR candidates
 Author: Shujun Ou (shujun.ou.1\@gmail.com), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
 Version:
+	4.8 Add the pdist and K2P model 2025/03/23
 	4.7 Incorporate TEsorter results 2023/05/01
 	4.6 Improvement: only consider SNPs for age estimation 2019/01/25
 	4.5 Improve TSD-motif identification 2018/12/08
@@ -38,6 +39,7 @@ my $boundary_ctrl=1; #1 for boundaries alignment, 0 for no alignment
 my $boundary_N=25; #if any boundary has more than 25 bp missing (nN-), report as false positive
 my $length_diff=15;     #boundary adjustments for length difference between adjusted LTSs higher than this value will be discarted.
 my $minlen=100; #dft=100, minmum LTR region length for nmtf candidates
+my $model="K2P"; #distance model, default K2P, available: K2P, JC69, pdist
 my $miu="1.3e-8"; #neutral mutation rate, default: 1.3e-8 (rice) per bp per ya
 my @motif=qw/TGCT TACA TACT TGGA TATA TGTA TGCA/;
 my $threads="4"; #threads to run this program
@@ -65,9 +67,10 @@ foreach (@ARGV){
 	$boundary_N=$ARGV[$k+1] if /^-flankmiss$/i;
 	$boundary_ctrl=0 if /^-b$/i;
 	$TSD_ctrl=1 if /^-tsdaln$/i;
+	$model=uc $ARGV[$k+1] if /^-m$|^-model$/i;
 	$miu=$ARGV[$k+1] if /^-u$/i;
 	@motif=(split /\s+/, $1) if $argv=~/-motif\s+\[([atcgnx ]+)\]/i;
-	$threads=$ARGV[$k+1] if /^-t|-threads/i;
+	$threads=$ARGV[$k+1] if /^-t$|^-threads$/i;
 	$blastplus=$ARGV[$k+1] if /^-blastplus$/i;
 	die $version if /^-v$/i;
 	$k++;
@@ -76,6 +79,7 @@ $a_cutoff-=0.10 if $boundary_ctrl==0;
 
 open List, "<$List" or die "ERROR: No candidate list file!\n$usage";
 open FA, "<$FA" or die "ERROR: No candidate sequence file!\n$usage";
+die "Error: You specified -model $model, but only K2P, JC69, or pdist models are supported!\n" unless $model =~ /K2P|JC69|PDIST/i;
 
 ##Store LTR information in hash
 my %scn :shared;
@@ -188,15 +192,16 @@ sub Identifier() {
 	my $motif1="$seq[0]"."$seq[1]";
 	my $motif2="$seq[-2]"."$seq[-1]";
 	my $candidate_seq=">$name\\n$ltr"; #just candidate LTR including internal region, no extended sequences
-
-	my $exec="timeout -s KILL $timeout ${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -outfmt 6";
+	my $exec="timeout -s KILL $timeout ${blastplus}blastn -subject <(echo -e \"$candidate_seq\") -query <(echo -e \"$candidate_seq\") -dust no -outfmt \"6 qseqid sseqid sstart send slen qstart qend qlen length nident btop\" -parse_deflines";
 	my @Blast=();
 	for (my $try=0; $try<10; $try++){ #it's possible that sequence wrote in memory is rewritten by other programs and caused blast error, this step will try 10 times to guarantee the blast is run correctly
 		@Blast=qx(bash -c '$exec' 2> /dev/null) if defined $ltr;
 		last if $? == 0;
 		}
 
-	my ($div, $aln_len, $sim, $mismatch, $q_start, $q_end, $s_start, $s_end, $ls, $le, $rs, $re, $ll, $rl, $cor_adj)=(0,0,0,1,0,0,0,0,0,0,0,0,0,0,0);
+	my ($div, $aln_len, $sim, $mismatch, $age, $cor_adj) = (0,0,1,0,0,0);
+	my ($q_start, $q_end, $qlen, $s_start, $s_end, $slen, $ls, $le, $rs, $re, $ll, $rl)=(0,0,0,0,0,0,0,0,0,0,0,0);
+	my ($nident, $btop, $qseqid, $sseqid) = (0, '', '', '');
 	my $adjust="NO";
 	$decision="false" if $#Blast==0;
 
@@ -207,7 +212,10 @@ sub Identifier() {
 		$Blast[$i]=~s/^\s+//;
 		$decision="false" if $i>8;
 		last if $i>8;
-		($sim, $aln_len, $mismatch, $q_start, $q_end, $s_start, $s_end)=(split /\s+/,  $Blast[$i])[2,3,4,6,7,8,9];
+		# print "$Blast[$i]\n"; #test
+		# Chr1:106472..118130|Chr1:106522..118080 Chr1:106472..118130|Chr1:106522..118080 1       3085    11559   8475    11559   11559   3085    3084    2955CA129
+
+		($qseqid, $sseqid, $s_start, $s_end, $slen, $q_start, $q_end, $qlen, $aln_len, $nident, $btop) = (split /\s+/,  $Blast[$i]); #btop=Blast trace-back operations, contains alignment info
 		$cor_adj=$info[0]-1;
 		($ls, $le, $rs, $re)=($info[3]-$cor_adj, $info[4]-$cor_adj, $info[6]-$cor_adj, $info[7]-$cor_adj);
 		($q_start, $q_end)=($q_end, $q_start) if $q_start>$q_end;
@@ -222,19 +230,52 @@ sub Identifier() {
 			last;
 			}
 		}
-
 	$decision="false" if $pair==0;
-##element age estimation by T=K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
-###Use the Jukes-Cantor formula K= -3/4*ln(1-4*d/3) to adjust K for non-coding sequences, where d is estimated from identity ($sim) excluding indels.
-	$div=$mismatch/($sim*$aln_len/100 + $mismatch);
-	$info[9]=sprintf ("%.4f", 1-$div);
-	my $JK=1;
-	if ($sim>=0.34){
-		$JK=-3/4*log(1-4*$div/3); #low identity sequence could not be adjusted by the JK formula
-		} else {
-		$JK=$div;
+
+	# count variants
+	$btop =~ s/\d+//g; #remove all matches
+	my $len_snp = length $btop;
+	next unless $len_snp % 2 == 0; #expect string is even length
+	
+	# count transitions and transversions
+	my $n_transition = 0; #A<->G; C<->T
+	my $n_transversion = 0; #A<->C; A<->T; G<->C; G<->T
+	my $n_indel = 0; #[AGCT] <-> -
+	while ($btop =~ s/([ATCG-][ATCG-])//i){
+		my $snp = $1;
+		$n_transition++ if $snp =~ /(AG)|(GA)|(CT)|(TC)/i;
+		$n_transversion++ if $snp =~ /(AC)|(CA)|(AT)|(TA)|(GC)|(CG)|(GT)|(TG)/i;
+		$n_indel++ if $snp =~ /\-/;
 		}
-	$info[19]=sprintf ("%.0f", $JK/(2*$miu));
+
+	# estimate evolutionary distance
+	my $tot_len = $n_transition + $n_transversion + $nident; #SNP only, indel not counted
+	my $raw_d = ($n_transition+$n_transversion) / $tot_len; #percent SNP
+	my $JC69_d = 1; #the Jukes-Cantor model K= -3/4*ln(1-4*d/3) adjusts for non-coding sequences, d=$raw_d
+	if ($raw_d < 0.66){ #highly diverged sequence could not be adjusted by the JC69 model
+		$JC69_d = -3/4*log(1-4*$raw_d/3); #log=ln
+		} else {
+		$JC69_d = $raw_d;
+		}
+	my $P = $n_transition / $tot_len; #fraction of transition
+	my $Q = $n_transversion / $tot_len; #fraction of transversion
+	my $K2P_d = -1/2*log((1-2*$P-$Q)*sqrt(1-2*$Q)); #The Kimura 2-parameter model controls difference b/t transition and transversion rates
+        
+	#estimate divergence time T = K/2u, where K stands for divergence rate, and u is mutation rate (per bp per ya)
+	my $raw_T = sprintf ("%.0f", $raw_d/(2*$miu));
+	my $JC69_T = sprintf ("%.0f", $JC69_d/(2*$miu));
+	my $K2P_T = sprintf ("%.0f", $K2P_d/(2*$miu));
+	$raw_d = sprintf ("%.4f", $raw_d);
+	$JC69_d = sprintf ("%.4f", $JC69_d);
+	$K2P_d = sprintf ("%.4f", $K2P_d);
+
+	# reassign value to the array
+	($div, $age) = ($K2P_d, $K2P_T) if $model eq "K2P";
+	($div, $age) = ($JC69_d, $JC69_T) if $model eq "JC69";
+	($div, $age) = ($raw_d, $raw_T) if $model eq "PDIST";
+	$info[9]=sprintf ("%.4f", 1-$div);
+	$info[19]=sprintf ("%.0f", $age);
+	#print "$pair\t$K2P_d, $K2P_T, $JC69_d, $JC69_T, $raw_d, $raw_T\n"; #test
 
 	if ($s_end != $le){
 		my $i=1;
