@@ -192,6 +192,7 @@ sub Identifier() {
 
 ##Coarse boundary correction - after correction, coordinates may still have 1-2 bp shifted from the real case
 	my $ltr=substr $seq, $ltr_start-$seq_start, $ltr_end-$ltr_start+1;
+	my $seq_len = length $ltr;
 	my @seq=(split '', $ltr);
 	my $motif1="$seq[0]"."$seq[1]";
 	my $motif2="$seq[-2]"."$seq[-1]";
@@ -254,6 +255,7 @@ sub Identifier() {
 
 	# estimate evolutionary distance
 	my $tot_len = $n_transition + $n_transversion + $nident; #SNP only, indel not counted
+	$tot_len = $seq_len if $tot_len == 0; #EDTA issue 564
 	my $raw_d = ($n_transition+$n_transversion) / $tot_len; #percent SNP
 	my $JC69_d = 1; #the Jukes-Cantor model K= -3/4*ln(1-4*d/3) adjusts for non-coding sequences, d=$raw_d
 	if ($raw_d < 0.66){ #highly diverged sequence could not be adjusted by the JC69 model

@@ -38,4 +38,4 @@ grep -v TE_ID "$RM_out.intact" | perl "$script_dir/solo_intact_ratio.pl" "$RM_ou
 echo "6. Overall solo:intact ratio:"
 sh "$script_dir/total_solo_intact_calc.sh" "$RM_out.SI.ratio"
 
-echo "Done!"
+echo "Done!\n"
