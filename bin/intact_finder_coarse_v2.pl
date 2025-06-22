@@ -124,7 +124,7 @@ foreach my $consensus (keys %rm_intact) {
 #         - Begin and end with an LTR segment (non-INT).
 #         - Have gaps between consecutive segments <300 bp.
 #         - Have first and last segments on the same strand.
-#         - Have matching LTR IDs (after stripping any “-int” suffix).
+#         - Have matching LTR IDs (after stripping any “-int” suffix) - this can be relaxed.
 #         - Have divergence (field[1]) difference between the LTRs <4.
 #         - Contain an allowed number of internal segments (default: 1 to 3).
 #         - Total length less than 100kb
