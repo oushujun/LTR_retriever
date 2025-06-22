@@ -110,6 +110,7 @@ if (defined $ANNO){
 		my ($id, $order, $superfamily, $strand)=(split)[0,1,2,3];
 		#id is like: Chr1:106472..118130|Chr1:106522..118080
 		$id=~s/.*\|.*:([0-9]+\.\.[0-9]+)$/$1/;
+		next unless defined $scn{$id};
 
 		# convert order to two categories
 		$order = "LTR" if grep { $_ eq $order } @yesLTR;
@@ -146,6 +147,8 @@ while (<FA>){
 	next if $seq eq '';
 	$seq=~s/\s+//g;
 	$seq=uc $seq;
+	my $id = $1 if $name =~ /.*:(\S+)/;
+	next unless defined $scn{$id};
 	$queue->enqueue([$name, $seq]);
 	}
 close FA;
@@ -167,6 +170,7 @@ foreach (threads -> list()){
 ##print out entries that could not pass initial screening criteria to scn.adj
 foreach my $key (sort{$a cmp $b}(keys %scn)){
 	foreach (0..$#{$scn{$key}}){
+		#	next unless defined $scn{$key};
 		print SCN "$scn{$key}[$_]  ";
 		}
 	print SCN "\n";
