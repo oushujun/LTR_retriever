@@ -2,10 +2,17 @@
 use strict;
 use warnings;
 
-# Usage: perl bed_intersect_wao_fixed.pl A.bed B.bed
+# Shujun Ou (shujun.ou.1@gmail.com) and Qwen3-235B-A22B
+# 06/22/2025
+# Description: This is a perl implementation of the bedtools intersect wao function.
+# Features: 
+# 	1. automatically sort input bed files.
+# 	2. use 20 intervals as buffers
+# 	3. has a linear time complexity of O(N+M)
+# Usage: perl bed_intersect_wao_fixed.pl A.bed B.bed > result
 
-my $fileA = shift or die "Usage: $0 <A.bed> <B.bed>\n";
-my $fileB = shift or die "Usage: $0 <A.bed> <B.bed>\n";
+my $fileA = shift or die "Usage: $0 <A.bed> <B.bed> > result\n";
+my $fileB = shift or die "Usage: $0 <A.bed> <B.bed> > result\n";
 
 # Constants
 my $LOOKBACK = 20;  # number of previous B lines to keep
