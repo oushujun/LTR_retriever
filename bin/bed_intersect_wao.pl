@@ -1,157 +1,84 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 
-# Shujun Ou (shujun.ou.1@gmail.com) and Qwen3-235B-A22B
-# 06/22/2025
-# Description: This is a perl implementation of the bedtools intersect wao function.
-# Features: 
-# 	1. automatically sort input bed files.
-# 	2. use 20 intervals as buffers
-# 	3. has a linear time complexity of O(N+M)
-# Usage: perl bed_intersect_wao_fixed.pl A.bed B.bed > result
+# check args
+die "Usage: $0 <A.bed> <B.bed> > result\n" unless @ARGV == 2;
+my ($fileA, $fileB) = @ARGV;
 
-my $fileA = shift or die "Usage: $0 <A.bed> <B.bed> > result\n";
-my $fileB = shift or die "Usage: $0 <A.bed> <B.bed> > result\n";
+# peek first non-track line in B to count columns
+open my $peekB, '<', $fileB or die "open $fileB: $!";
+my $firstB;
+while (defined($firstB = <$peekB>)) {
+    next if $firstB =~ /^track/;
+    chomp $firstB;
+    last;
+}
+close $peekB;
+my $nBcols = scalar split /\t/, $firstB;
 
-# Constants
-my $LOOKBACK = 20;  # number of previous B lines to keep
+# open sorted streams
+open my $A, "-|", "sort -k1,1 -k2,2n $fileA" or die "sort A: $!";
+open my $B, "-|", "sort -k1,1 -k2,2n $fileB" or die "sort B: $!";
 
-# Open sorted streams
-open my $fhA, "-|", "sort -k1,1 -k2,2n $fileA" or die "Cannot open sorted stream for $fileA: $!";
-open my $fhB, "-|", "sort -k1,1 -k2,2n $fileB" or die "Cannot open sorted stream for $fileB: $!";
+# in‐memory buffer of “active” B intervals: [chr, start, end, \@fields]
+my @buffer;
+my $lineB = <$B>;
+chomp $lineB if defined $lineB;
 
-# Read first lines
-my $lineA = <$fhA>;
-my $lineB = <$fhB>;
-
-# Circular buffer for last $LOOKBACK B intervals
-my @b_buffer;
-
-while (defined $lineA) {
-    chomp($lineA);
+while (defined(my $lineA = <$A>)) {
+    chomp $lineA;
     next if $lineA =~ /^track/;
     my @a = split /\t/, $lineA;
-    my ($chromA, $startA, $endA) = @a[0,1,2];
+    my ($chrA, $stA, $enA) = @a[0,1,2];
 
-    my $found_overlap = 0;
+    # 1) purge any buffered B intervals that are on the wrong chr or end ≤ A.start
+    @buffer = grep { $_->[0] eq $chrA && $_->[2] > $stA } @buffer;
 
-    # Save current position in B file
-    my $pos_before_scan = tell($fhB);
-
-    # Try matching A with buffered B lines
-    foreach my $i (0 .. $#b_buffer) {
-        my ($startB, $endB, $lineB) = @{$b_buffer[$i]};
-        my $overlap_start = $startA > $startB ? $startA : $startB;
-        my $overlap_end   = $endA < $endB   ? $endA   : $endB;
-        my $overlap_len   = $overlap_end > $overlap_start ? $overlap_end - $overlap_start : 0;
-
-        if ($overlap_len > 0) {
-            my @b_fields = split /\t/, $lineB;
-            print join("\t", @a, @b_fields, $overlap_len), "\n";
-            $found_overlap = 1;
-        }
-    }
-
-    # Now scan forward through B
+    # 2) read ahead in B until we pass A.end or hit a later chr
     while (defined $lineB) {
-        chomp($lineB);
-        next if $lineB =~ /^track/;
         my @b = split /\t/, $lineB;
-        my ($chromB, $startB, $endB) = @b[0,1,2];
+        my ($chrB, $stB, $enB) = @b[0,1,2];
 
-        # Chromosome mismatch
-        if ($chromA lt $chromB) {
-            last;
-        } elsif ($chromA gt $chromB) {
-            $lineB = <$fhB>;
-            next;
+        last if $chrB gt $chrA
+             || ($chrB eq $chrA && $stB >= $enA);
+
+        # only buffer intervals on same chr that could overlap
+        if ($chrB eq $chrA && $enB > $stA) {
+            push @buffer, [ $chrB, $stB, $enB, \@b ];
         }
 
-        # No overlap on start/end
-        if ($endA <= $startB) {
-            last;
-        } elsif ($endB <= $startA) {
-            save_to_buffer();
-            $lineB = <$fhB>;
-            next;
-        }
-
-        # Overlap found!
-        my $overlap_start = $startA > $startB ? $startA : $startB;
-        my $overlap_end   = $endA < $endB   ? $endA   : $endB;
-        my $overlap_len   = $overlap_end - $overlap_start;
-
-        print join("\t", @a, @b, $overlap_len), "\n";
-        $found_overlap = 1;
-
-        save_to_buffer();
-        if ($endB < $endA) {
-            $lineB = <$fhB>;
-        } else {
-            last;
-        }
+        $lineB = <$B>;
+        chomp $lineB if defined $lineB;
     }
 
-    # If no match, rewind B and check again
-    unless ($found_overlap) {
-        seek($fhB, $pos_before_scan, 0);
-        $lineB = <$fhB>;
+    # 3) scan buffer for real overlaps
+    my $found = 0;
+    for my $ent (@buffer) {
+        # each $ent = [ chr, start, end, \@b_fields ]
+        next unless $ent->[0] eq $chrA;
+        my ($stB, $enB, $bf) = @{$ent}[1,2,3];
 
-        my @backup_lines;
-        for (1..$LOOKBACK) {
-            last unless defined $lineB;
-            push @backup_lines, $lineB;
-            $lineB = <$fhB>;
-        }
+        # half-open overlap
+        my $ov_s = $stA > $stB ? $stA : $stB;
+        my $ov_e = $enA < $enB ? $enA : $enB;
+        next if $ov_e <= $ov_s;
 
-        seek($fhB, $pos_before_scan, 0);
-        $lineB = <$fhB>;
-
-        while (defined $lineB) {
-            chomp($lineB);
-            next if $lineB =~ /^track/;
-            my @b = split /\t/, $lineB;
-            my ($chromB, $startB, $endB) = @b[0,1,2];
-
-            if ($chromA eq $chromB) {
-                my $overlap_start = $startA > $startB ? $startA : $startB;
-                my $overlap_end   = $endA < $endB   ? $endA   : $endB;
-                my $overlap_len   = $overlap_end > $overlap_start ? $overlap_end - $overlap_start : 0;
-
-                if ($overlap_len > 0) {
-                    my @b_fields = split /\t/, $lineB;
-                    print join("\t", @a, @b_fields, $overlap_len), "\n";
-                    $found_overlap = 1;
-                }
-            }
-
-            $lineB = <$fhB>;
-        }
-
-        # Restore file pointer after rewind
-        foreach my $l (@backup_lines) {
-            $lineB = $l;
-            last;
-        }
+        $found = 1;
+        my $ov_len = $ov_e - $ov_s;
+        print join("\t", @a, @$bf, $ov_len), "\n";
     }
 
-    # Output dummy line if no overlap
-    unless ($found_overlap) {
-        print join("\t", @a, ('.') x 3, (-1) x 3, '.', 0), "\n";
+    # 4) if no overlaps, emit the “wao” dummy line
+    unless ($found) {
+        print join("\t",
+            @a,
+            ('.') x $nBcols,
+            0,
+        ), "\n";
     }
-
-    $lineA = <$fhA>;
 }
 
-close $fhA;
-close $fhB;
+close $A;
+close $B;
 
-# Subroutines
-
-sub save_to_buffer {
-    my @b = split /\t/, $lineB;
-    my ($startB, $endB) = @b[1,2];
-    push @b_buffer, [ $startB, $endB, $lineB ];
-    shift @b_buffer if @b_buffer > $LOOKBACK;
-}
