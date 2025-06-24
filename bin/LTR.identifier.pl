@@ -170,7 +170,7 @@ foreach (threads -> list()){
 ##print out entries that could not pass initial screening criteria to scn.adj
 foreach my $key (sort{$a cmp $b}(keys %scn)){
 	foreach (0..$#{$scn{$key}}){
-		#	next unless defined $scn{$key};
+		next unless defined $scn{$key};
 		print SCN "$scn{$key}[$_]  ";
 		}
 	print SCN "\n";
