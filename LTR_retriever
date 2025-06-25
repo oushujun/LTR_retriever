@@ -859,16 +859,28 @@ if ($trunc>0){
 `awk '{print \$1"\\t"\$1}\' $index.ltrTE.veryfalse.list > $index.ltrTE.veryfalse`;
 `perl $script_path/bin/call_seq_by_list.pl $index.ltrTE.veryfalse -C $genome > $index.ltrTE.veryfalse.fa`;
 `cat $index.ltrTE.stg2 $index.ltrTE.veryfalse.fa > $index.ltrTE.mask.lib`;
-`${blastplus}makeblastdb -in $index.ltrTE.mask.lib -dbtype nucl`;
-my $info=`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc 2>/dev/null`;
-`rm $index.ltrTE.mask.lib.* 2>/dev/null`;
-`cp $index.ltrTE.trunc $index.ltrTE.trunc.masked` if $info=~/No repetitive sequences were detected/;
 
-#file checking
-die "ERROR: RepeatMasker is not running properly!
+# execute Repeatmasker to identify novel sequences in truncated LTR-RTs
+`${blastplus}makeblastdb -in $index.ltrTE.mask.lib -dbtype nucl`;
+my $info='';
+$info=`${repeatmasker}RepeatMasker -e ncbi -q -pa $threads -no_is -norna -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc 2>/dev/null`;
+print "Status: $?\n";
+if ($info=~/No repetitive sequences were detected/) {
+	`cp $index.ltrTE.trunc $index.ltrTE.trunc.masked`;
+	} 
+elsif ($? != 0 || !defined $info || $info eq '') {
+	my $jobs = 1;
+	$jobs = int($threads / 4) < 8 ? int($threads / 4) : 8; # cap at maximum 8 parallel jobs to limit memory consumption
+	$info=`perl $script_path/bin/run_RM_split.pl --input $index.ltrTE.trunc --lib $index.ltrTE.mask.lib --jobs $jobs --cpus 4 --chunk_size 1000000 --out_prefix $index.ltrTE.trunc 2>/dev/null`;
+	`rm RM_split 2>/dev/null` if $verbose == 0;
+	}
+elsif ($? != 0 || !defined $info || $info eq '') {
+	die "ERROR: RepeatMasker is not running properly!
 	Please check the file $index.ltrTE.mask.lib and $index.ltrTE.trunc and test run:
-		RepeatMasker -e ncbi -q -pa $threads -no_is -norna -nolow -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
+		RepeatMasker -e ncbi -q -pa $threads -no_is -norna -div 40 -lib $index.ltrTE.mask.lib -cutoff 225 $index.ltrTE.trunc
 	Please report errors to https://github.com/oushujun/LTR_retriever/issues\nProgram halt!\n" unless -s "$index.ltrTE.trunc.masked";
+	}
+`rm $index.ltrTE.mask.lib.* 2>/dev/null`;
 
 `perl $script_path/bin/cleanup.pl -nr 0.8 -minlen $minlen -trf 1 -trf_path $trf -cleanN 1 -f $index.ltrTE.trunc.masked > $index.ltrTE.trunc.cln`;
 `cat $index.ltrTE.stg2 $index.ltrTE.trunc.cln > $index.ltrTE.stg3.cln`;
