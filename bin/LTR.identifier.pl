@@ -171,6 +171,7 @@ foreach (threads -> list()){
 foreach my $key (sort{$a cmp $b}(keys %scn)){
 	foreach (0..$#{$scn{$key}}){
 		next unless defined $scn{$key};
+		next unless defined $scn{$key}[$_];
 		print SCN "$scn{$key}[$_]  ";
 		}
 	print SCN "\n";
