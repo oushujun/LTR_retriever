@@ -149,7 +149,11 @@ foreach my $line (@list){
 			}
 		$base_num = $seq =~ tr/[acgtACGT]/[acgtACGT]/;
 		unless ($base_num == 0 and $rmvoid==1){ ###print out target sequence
-			print ">$chr:$start..$stop|$loc\n" if $header == 1;
+			if ($header == 1){
+				my $loc_coords = $loc;
+				$loc_coords =~ s/^.*://; # strip chr: prefix, keep start..end
+				print ">$chr:$start..$stop|$loc_coords\n";
+				}
 			print "$seq\n";
 			}
 		}

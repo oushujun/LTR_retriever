@@ -2,6 +2,7 @@
 use warnings;
 use strict;
 use File::Basename;
+use File::Spec;
 
 ##Supported dependent program versions (or up): GenomeTools/1.5.1, BLAST+/2.2.25, BLAST/2.2.25, HMMER/3.1b1, RepeatMasker/3.3.0, CDHIT/4.5.6, Tandem Repeats Finder 4.07b, and Perl 5.0.0
 
@@ -335,52 +336,48 @@ my $stg1_count = 0;
 my $total_candidate = 0;
 my $uniq_candidate = 0;
 my $pass_count = 0;
+## Encode/decode support for genome sequence IDs
+my $seqid_codec = "$script_path/bin/seqid_codec.pl";
+my $seqid_mapfile = '';
+# Check for existing mapping file (resume support)
+if (-s "$genome.mod.seqid.map") {
+	$seqid_mapfile = File::Spec->rel2abs("$genome.mod.seqid.map");
+} elsif (-s "$genome.seqid.map") {
+	$seqid_mapfile = File::Spec->rel2abs("$genome.seqid.map");
+}
+
 chomp ($date=`date`);
 print "$date\tLTR_retriever is starting from the $step step.\n";
 goto $step;
 
 Init:
-##check the length of genome sequence IDs, if longer than 13bp, chop it.
-my $id_mode=0; #record the mode of id conversion.
-my $id_len=`grep \\> $genome|perl -ne 'chomp; s/>//g; my \$len=length \$_; \$max=\$len if \$max<\$len; print "\$max\\n"'`;
-$id_len=~s/\s+$//;
-$id_len=(split /\s+/, $id_len)[-1];
+## Encode genome sequence IDs if needed
+my $id_mode=0; #always 0 with new encoding; kept for backward compatibility with convert_ltr_finder.pl
 my $raw_id=`grep \\> $genome|wc -l`;
 my $old_id=`grep \\> $genome|sort -u|wc -l`;
 
 ##check if duplicated sequences found
 if ($raw_id>$old_id){
 	$date=`date`;
-	die "$date\tDuplicated sequence found in the provided genome! Please remove the duplicated sequece and regenerate input candidates for LTR_retriever\n";
+	die "$date\tDuplicated sequence found in the provided genome! Please remove the duplicated sequence and regenerate input candidates for LTR_retriever\n";
 	}
 
-if ($id_len>13){
-	chomp ($date=`date`);
-	print "$date\tThe longest sequence ID in the genome contains $id_len characters, which is longer than the limit (13)\n";
-	print "\t\t\t\tTrying to reformat seq IDs...\n\t\t\t\tAttempt 1...\n";
-	`perl -lne 'chomp; if (s/^>+//) {s/^\\s+//; \$_=(split)[0]; s/(.{1,13}).*/>\$1/g;} print "\$_"' $genome > $genome.mod`;
-	my $new_id=`grep \\> $genome.mod|sort -u|wc -l`;
-	chomp ($date=`date`);
-	if ($old_id==$new_id){
-		$id_mode=1;
-		$index="$genome.mod";
-		$genome="$genome.mod";
-		print "$date\tSeq ID conversion successful!\n\n";
-		} else {
-		print "\t\t\t\tAttempt 2...\n";
-		`perl -ne 'chomp; if (/^>/) {\$_=">\$1" if /([0-9]+)/;} print "\$_\n"' $genome > $genome.mod`;
-		$new_id=`grep \\> $genome.mod|sort -u|wc -l`;
-		if ($old_id==$new_id){
-			$id_mode=2;
-			$index="$genome.mod";
-			$genome="$genome.mod";
-			print "$date\tSeq ID conversion successful!\n\n";
-			} else {
-			`rm $genome.mod`;
-			die "$date\tERROR: Fail to convert seq IDs to ≤ 13 characters! Please provide a genome with shorter seq IDs.\n\n";
-			}
-		}
+`perl $seqid_codec encode_fasta $genome $genome.mod.seqid.map $genome.mod`;
+if (-s "$genome.mod"){
+	$index="$genome.mod";
+	$genome="$genome.mod";
+	if (-s "$genome.seqid.map"){
+		$seqid_mapfile = File::Spec->rel2abs("$genome.seqid.map");
+		chomp ($date=`date`);
+		print "$date\tGenome seq IDs encoded (mapping: $seqid_mapfile)\n\n";
+	} else {
+		chomp ($date=`date`);
+		print "$date\tGenome seq IDs cleaned (no encoding needed)\n\n";
 	}
+}
+my $new_id=`grep \\> $genome|sort -u|wc -l`;
+die "ERROR: Seq ID conversion failed (expected $old_id unique IDs, got $new_id)\n"
+	unless $old_id == $new_id;
 
 # salvaging the Init step
 if (-s "$index.ltrTE.stg1" and $salvage == 1){
@@ -391,6 +388,13 @@ if (-s "$index.ltrTE.stg1" and $salvage == 1){
 	`perl $script_path/bin/convert_ltr_finder.pl $infinder $id_mode > $index.retriever.scn` if -s $infinder;
 	`perl $script_path/bin/convert_MGEScan.pl $inmgescan >> $index.retriever.scn` if -s $inmgescan;
 	`cat $inharvest >> $index.retriever.scn` if -s $inharvest;
+
+	# Encode chr names in scn to match encoded genome IDs
+	if ($seqid_mapfile ne '' and -s $seqid_mapfile) {
+		`cp $index.retriever.scn $index.retriever.scn.ori`;
+		`perl $seqid_codec encode_text $index.retriever.scn.ori $seqid_mapfile $index.retriever.scn`;
+	}
+
 	die "\nERROR: No candidate is found in the file(s) you specified.\n\n" unless `grep -c -v \'#\' $index.retriever.scn`>0;
 	`perl $script_path/bin/get_range.pl $index.retriever.scn $genome -f -g -max_ratio $max_ratio`;
 	`cat $index.retriever.scn.full|sort -fu >$index.retriever.scn.full.uniq; mv $index.retriever.scn.full.uniq $index.retriever.scn.full`;
@@ -500,6 +504,13 @@ print "$date\tModule 7: Start to analyze non-TGCA LTR-RT candidates...\n";
 
 my $index2="$index.nmtf";
 `cp $nonTGCA $index2.retriever.scn`;
+
+# Encode chr names in non-TGCA scn
+if ($seqid_mapfile ne '' and -s $seqid_mapfile) {
+	`cp $index2.retriever.scn $index2.retriever.scn.ori`;
+	`perl $seqid_codec encode_text $index2.retriever.scn.ori $seqid_mapfile $index2.retriever.scn`;
+}
+
 $total_candidate=`grep -v -c \'#\' $index2.retriever.scn`;
 $total_candidate=~s/\s+//g;
 $total_candidate=0 if $total_candidate!~/[0-9]+/;
@@ -717,6 +728,38 @@ chomp ($date=`date`);
 print "$date\tNo LTR-RT was found in your data.\n\n";
 }
 
+# Decode output files if this LTR_retriever instance performed encoding
+if ($seqid_mapfile ne '' and -s $seqid_mapfile) {
+	chomp ($date=`date`);
+	print "$date\tDecoding sequence IDs in output files...\n";
+
+	# Text files: pass.list, gff3, etc.
+	for my $f ("$genome.pass.list", "$genome.nmtf.pass.list",
+		   "$genome.pass.list.gff3") {
+		next unless -s $f;
+		`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
+	}
+
+	# FASTA files: library files
+	for my $f ("$genome.LTRlib.redundant.fa", "$index.LTRlib.fa",
+		   "$index.nmtf.LTRlib.fa") {
+		next unless -s $f;
+		`perl $seqid_codec decode_fasta $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
+	}
+
+	# Annotation outputs (if -anno mode)
+	if ($annotation == 1) {
+		for my $f ("$genome.out", "$genome.out.fam.size.list",
+			   "$genome.out.superfam.size.list",
+			   "$genome.out.LTR.distribution.txt",
+			   "$genome.out.gff3", "$genome.LTR.gff3",
+			   "$genome.out.LAI") {
+			next unless -s $f;
+			`perl $seqid_codec decode_text $f $seqid_mapfile $f.decoded && mv $f.decoded $f`;
+		}
+	}
+}
+
 `perl $script_path/bin/cleanOutput.pl $genome $LINE $DNA $PlantP` if $verbose==0;
 chomp ($date=`date`);
 print "$date\tAll analyses were finished!\n";
@@ -796,7 +839,7 @@ if (-s "$index.retriever.scn.extend.fa.rexdb.cls.tsv" and $salvage == 1){
 	} else {
 	`$TEsorter $index.retriever.scn.extend.fa --disable-pass2 -p $threads 2>/dev/null`;
 	`touch $index.retriever.scn.extend.fa.rexdb.cls.tsv` unless -s "$index.retriever.scn.extend.fa.rexdb.cls.tsv";
-	`awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv | perl -nle 's/([0-9]+\\.\\.[0-9]+)_(.*:[0-9]+\\.\\.[0-9]+)/\$1\\|\$2/; print \$_' >> $index.retriever.scn.extend.fa.aa.anno 2>/dev/null`;
+	`awk '{print \$1"\\t"\$2"\\t"\$3"\\t"\$6"\\t"\$7}' $index.retriever.scn.extend.fa.rexdb.cls.tsv | perl -nle 's/([0-9]+\\.\\.[0-9]+)_(?:\\S+:)?([0-9]+\\.\\.[0-9]+)/\$1\\|\$2/; print \$_' >> $index.retriever.scn.extend.fa.aa.anno 2>/dev/null`;
 	}
 
 # identify intact LTR retrotransposons
@@ -805,7 +848,7 @@ if  (-s "$index.defalse" and $salvage == 1){
 	# Step 1: Process defalse and extended fasta files
 	`cp $index.defalse $index.defalse.bak`;
 	`perl -nle 'next unless /^\\S+:\\d+/; my (\$seq, \$s, \$e) = (/(\\S+):(\\d+)\\.\\.(\\d+)\\s+/); (\$s, \$e) = (\$e, \$s) if \$s > \$e; print "\$seq\\t\$s\\t\$e\\tprocessed" if defined \$seq' $index.defalse > $index.defalse.bed`;
-	`perl -nle 'next unless /^>/; my (\$seq, \$s, \$e) = (/.*\\|(\\S+):(\\d+)\\.\\.(\\d+)/); (\$s, \$e) = (\$e, \$s) if \$s > \$e; print "\$seq\\t\$s\\t\$e\\tall" if defined \$seq' $index.retriever.scn.extend.fa > $index.retriever.scn.extend.fa.bed`;
+	`perl -nle 'next unless /^>/; my (\$seq) = (/^>([^:\\s]+):/); my (\$s, \$e) = (/\\|(?:\\S+:)?(\\d+)\\.\\.(\\d+)/); (\$s, \$e) = (\$e, \$s) if \$s > \$e; print "\$seq\\t\$s\\t\$e\\tall" if defined \$seq' $index.retriever.scn.extend.fa > $index.retriever.scn.extend.fa.bed`;
 	# Step 2: Output unprocessed extended fasta
 	`perl $script_path/bin/bed_intersect_wao.pl $index.retriever.scn.extend.fa.bed $index.defalse.bed > $index.retriever.scn.extend.fa.processed.bed`;
 	`perl $script_path/bin/filter_extend.fa_by_defalse.pl $index.retriever.scn.extend.fa.processed.bed $index.retriever.scn.extend.fa > $index.retriever.scn.extend.fa.remained`;

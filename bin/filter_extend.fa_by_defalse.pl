@@ -45,9 +45,10 @@ while (my $entry = <$fh>) {
     my ($header, @seq_lines) = split /\n/, $entry;
     my $seq = join('', @seq_lines);
     # extract the "all" region coords from header
-    # header format: >chr:start..end|chr:start..end
-    my ($chrA, $sA, $eA) = $header =~ /\|(\S+):(\d+)\.\.(\d+)$/;
-    next unless defined $chrA;
+    # header format: >chr:start..end|start..end (or legacy >chr:start..end|chr:start..end)
+    my ($chrA) = $header =~ /^>([^:\s]+):/;
+    my ($sA, $eA) = $header =~ /\|(?:\S+:)?(\d+)\.\.(\d+)$/;
+    next unless defined $chrA and defined $sA;
     # normalize
     ($sA, $eA) = ($eA, $sA) if $sA > $eA;
     my $keyA = join ":", $chrA, $sA, $eA;

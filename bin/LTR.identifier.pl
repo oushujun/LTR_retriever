@@ -109,7 +109,7 @@ if (defined $ANNO){
 		s/^\s+//;
 		my ($id, $order, $superfamily, $strand)=(split)[0,1,2,3];
 		#id is like: Chr1:106472..118130|Chr1:106522..118080
-		$id=~s/.*\|.*:([0-9]+\.\.[0-9]+)$/$1/;
+		$id=~s/.*\|(?:\S+:)?([0-9]+\.\.[0-9]+)$/$1/;
 		next unless defined $scn{$id};
 
 		# convert order to two categories
@@ -147,8 +147,11 @@ while (<FA>){
 	next if $seq eq '';
 	$seq=~s/\s+//g;
 	$seq=uc $seq;
-	my $id = $1 if $name =~ /.*:(\S+)/;
-	next unless defined $scn{$id};
+	my $id;
+	if ($name =~ /\|(?:\S+:)?([0-9]+\.\.[0-9]+)$/) {
+		$id = $1;
+	}
+	next unless defined $id and defined $scn{$id};
 	$queue->enqueue([$name, $seq]);
 	}
 close FA;
@@ -186,7 +189,7 @@ sub Identifier() {
 	my ($name, $seq)=(@{$_}[0], @{$_}[1]);
 	my $decision="raw"; #conclusion of whether the element is a LTR
 	my ($chr, $seq_start, $seq_end, $ltr_start, $ltr_end);
-	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $5, $6) if $name=~/^(\S+):([0-9]+)..([0-9]+)\|(\S+):([0-9]+)..([0-9]+)/;  #eg: Chr4:10009589..10017157|Chr4:10009609..10017137 or 10.dna.chromosome.ch:100016935..100026312|10.dna.chromosome.ch:100016935..100026312
+	($chr, $seq_start, $seq_end, $ltr_start, $ltr_end)=($1, $2, $3, $4, $5) if $name=~/^(\S+):([0-9]+)\.\.([0-9]+)\|(?:\S+:)?([0-9]+)\.\.([0-9]+)/;  #eg: Chr4:10009589..10017157|10009609..10017137 or 10.dna.chromosome.ch:100016935..100026312|100016935..100026312
 	my $id="$ltr_start..$ltr_end";
 	next if $id eq '';
 	my @info = @{$scn{$id}};
