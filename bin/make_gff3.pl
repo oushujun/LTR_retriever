@@ -26,7 +26,7 @@ print GFF "##gff-version 3\n##date $date
 ##seqid source sequence_ontology start end score strand phase attributes\n";
 
 #defined sequence ontology
-my %SO = (repeat_region => "SO:0000657", long_terminal_repeat => "SO:0000286", target_site_duplication => "SO:0000434", primer_binding_site => "SO:0005850", "LTR_retrotransposon" => "SO:0000186", "Copia_LTR_retrotransposon" => "SO:0002264", "Gypsy_LTR_retrotransposon" => "SO:0002265");
+my %SO = (repeat_region => "SO:0000657", long_terminal_repeat => "SO:0000286", target_site_duplication => "SO:0000434", primer_binding_site => "SO:0005850", "LTR_retrotransposon" => "SO:0000186", "Copia_LTR_retrotransposon" => "SO:0002264", "Gypsy_LTR_retrotransposon" => "SO:0002265", "Bel_Pao_LTR_retrotransposon" => "SO:0002266");
 
 $/="\n>";
 my $chr_info='';
@@ -64,6 +64,7 @@ while (<List>){
 	my $so = "LTR_retrotransposon";
 	$so = "Copia_LTR_retrotransposon" if $supfam eq "Copia";
 	$so = "Gypsy_LTR_retrotransposon" if $supfam eq "Gypsy";
+	$so = "Bel_Pao_LTR_retrotransposon" if $supfam =~ /Bel.Pao/;
 	if ($TSD eq "NA"){
 		$element_start=$lLTR_start;
 		$element_end=$rLTR_end;
