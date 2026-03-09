@@ -47,8 +47,8 @@ while (<BED>){
 	if (exists $class{$TE_class}){
 		$so = $class{$TE_class}
 		} else {
-		print STDERR "\nWarning: $TE_class not found in the TE_SO database, will use the general term 'repeat_region\tSO:0000657' to replace it.\n";
-		$so = "repeat_region";
+		print STDERR "\nWarning: $TE_class not found in the TE_SO database, will use the generic term 'repeat_fragment\tSO:0001050' to replace it.\n";
+		$so = "repeat_fragment";
 		}
 	$extra = '' unless defined $extra;
 	$extra = '' if $extra eq 'NA' or $extra eq '.';
@@ -57,7 +57,7 @@ while (<BED>){
 		} else {
 		$extra = ";$extra";
 		}
-	$info = "ID=${ID_name}_$i;Name=$TE_ID;Classification=$TE_class;Sequence_ontology=$SO{$so};Identity=$iden;Method=${method}$extra";
+	$info = "ID=${ID_name}_$i;Name=$TE_ID;classification=$TE_class;sequence_ontology=$SO{$so};identity=$iden;method=${method}$extra";
 	print "$chr\t$annotator\t$so\t$element_start\t$element_end\t$score\t$strand\t$phase\t$info\n";
 	$i++;
 	}
