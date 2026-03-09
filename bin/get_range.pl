@@ -10,7 +10,8 @@ my $usage="to out put some information from the ltrharvest_screen.scn/ltrdigest_
 
 my $version="
 	Version:
-		v2.0 Shujun Ou	12-27-2023 Remove RepeatMasker support for simplification. Clean up code. 
+		v2.1 Shujun Ou	03-06-2026 Add -w parameter to output whole-element coordinates (no split into LTR/INT regions)
+		v2.0 Shujun Ou	12-27-2023 Remove RepeatMasker support for simplification. Clean up code.
 		v1.9 Shujun Ou	03-17-2016 Add -fl parameter to output LTR regions with 50 bp two-end-extended coordinates, also change -x to 50bp extension.
 		v1.8 Shujun Ou	04-16-2015 Add -g parameter to take whole genome file as input, instead of the *ltrTE.fa file from LTRharvest
 		v1.7 Shujun Ou	04-08-2015 Add -int parameter to output the internal region coordinates to the fasta name
@@ -36,6 +37,7 @@ my $longer=0; #0 for no right and left LTR length comparison, 1 will output the 
 my $full=0; #0 will not output full length loci. 1 will output the full range loci.
 my $in=0; #0 will not output internal region to the list. 1 will output lLTR, rLTR and internal region in separate lines.
 my $int=0; #0 will not output internal region coordinates to the sequence ID. 1 will output start and end position of internal region in the fasta name
+my $whole=0; #0 will output split LTR/INT regions (default). 1 will output whole-element coordinates (no split).
 my $genome=0; #0 means $ARGV[1] is not genome file; 1 means $ARGV[1] is the genome file with the sequence order same as the LTRharvest sequence number
 #my $select=0; #0 will output all regions, 1 will output specific regions ([1], [IN] or [2]) that indicated at the first column
 
@@ -49,6 +51,7 @@ foreach my $para (@ARGV){
 	$in=1 if ($para=~/^-i$/i);
 	$IN=0 if ($para=~/^-N$/i);
 	$int=1 if ($para=~/^-int$/i);
+	$whole=1 if ($para=~/^-w$/i);
 	$genome=1 if $para=~/^-g$/i;
 	$max_iLratio=$ARGV[$k+1] if $para=~/^-max_ratio$/i;
 	$k++;
@@ -168,15 +171,23 @@ while (<TBL>){
 		}
 
 	if ($mark==1 and defined $chr and $extend!=1 and $int==0){
-		print LTRlist "$chr:$element_start..$element_end\[1]\t$chr:$lLTR_start..$lLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "left"));
-		print LTRlist "$chr:$element_start..$element_end\[2]\t$chr:$rLTR_start..$rLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "right"));
-		print LTRlist "$chr:$element_start..$element_end\[IN]\t$chr:$int_str..$int_end\n" if $in==1;
+		if ($whole==1){
+			print LTRlist "$chr:$element_start..$element_end\t$chr:$element_start..$element_end\n";
+		} else {
+			print LTRlist "$chr:$element_start..$element_end\[1]\t$chr:$lLTR_start..$lLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "left"));
+			print LTRlist "$chr:$element_start..$element_end\[2]\t$chr:$rLTR_start..$rLTR_end\n" if ($longer==0 or ($longer==1 && $long eq "right"));
+			print LTRlist "$chr:$element_start..$element_end\[IN]\t$chr:$int_str..$int_end\n" if $in==1;
+		}
 		}
 	
 	if ($mark==1 and defined $chr and $extend!=1 and $int==1){
-		print LTRlist "$chr:$element_start..$element_end\[1]($int_str..$int_end-$similarity)\t$chr:$lLTR_start..$lLTR_end\n";
-		print LTRlist "$chr:$element_start..$element_end\[2]($int_str..$int_end-$similarity)\t$chr:$rLTR_start..$rLTR_end\n";
-		}	
+		if ($whole==1){
+			print LTRlist "$chr:$element_start..$element_end($int_str..$int_end-$similarity)\t$chr:$element_start..$element_end\n";
+		} else {
+			print LTRlist "$chr:$element_start..$element_end\[1]($int_str..$int_end-$similarity)\t$chr:$lLTR_start..$lLTR_end\n";
+			print LTRlist "$chr:$element_start..$element_end\[2]($int_str..$int_end-$similarity)\t$chr:$rLTR_start..$rLTR_end\n";
+		}
+		}
 }
 
 close Extend if $extend==1;
