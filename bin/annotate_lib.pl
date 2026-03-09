@@ -35,14 +35,24 @@ while (<Lib>){
 	($chr=$1, $id=$2, $region=$3) if $id=~/^(.*):([0-9]+\.\.[0-9]+)\|(.*)$/;
 	$region="LTR" if $region=~/LTR_[1-2]/;
 	$region="INT" if $region=~/LTR_IN/;
+	my $is_whole = ($region=~/^[0-9]+\.\.[0-9]+$/) ? 1 : 0; # whole element: region is coordinates
 	my ($direction, $fam)=("?", "unknown");
-	($direction, $fam)=@{$info{$id}}[0,1] if defined $info{$id};
+	# Normalize coordinate order for lookup (headers may have descending coords for minus-strand)
+	my $lookup_id = $id;
+	if ($lookup_id =~ /^(\d+)\.\.(\d+)$/ && $1 > $2) {
+		$lookup_id = "$2..$1";
+	}
+	($direction, $fam)=@{$info{$lookup_id}}[0,1] if defined $info{$lookup_id};
 	if ($direction eq "-"){
 		$seq=~tr/ATGCatgc/TACGtacg/;
 		$seq=reverse $seq;
 		}
 
-	print ">$chr:${id}_$region#LTR/$fam\n$seq\n";
+	if ($is_whole){
+		print ">$chr:${id}#LTR/$fam\n$seq\n";
+	} else {
+		print ">$chr:${id}_$region#LTR/$fam\n$seq\n";
+	}
 	}
 close Lib;
 close List;
