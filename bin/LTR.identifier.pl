@@ -17,6 +17,7 @@ LTR.identifier.pl
 LTR.identifier: Alignment assisted examination of LTR candidates
 Author: Shujun Ou (shujun.ou.1\@gmail.com), Department of Horticulture, Michigan State University, East Lansing, MI, 48823, USA
 Version:
+	4.9 batch the per-candidate blastn into adaptively-sized pooled chunks run in parallel 2026/06/30
 	4.8 Add the pdist and K2P model 2025/03/23
 	4.7 Incorporate TEsorter results 2023/05/01
 	4.6 Improvement: only consider SNPs for age estimation 2019/01/25
