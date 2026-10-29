@@ -291,8 +291,17 @@ $repeatmasker="$repeatmasker/" if $repeatmasker ne '' and $repeatmasker !~ /\/$/
 die "Error: RepeatMasker is not found in the RepeatMasker path $repeatmasker!\n" unless -X "${repeatmasker}RepeatMasker";
 `cp $script_path/database/dummy060817.fa ./dummy060817.fa.$rand`;
 `${blastplus}makeblastdb -in ./dummy060817.fa.$rand -dbtype nucl`;
-my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>/dev/null`;
-die "Error: The RMblast engine is not installed in RepeatMasker!\n" unless $RM_test=~s/(done|No repetitive sequences were detected)//gi;
+my $RM_test=`${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy060817.fa.$rand -lib dummy060817.fa.$rand 2>dummy060817.fa.$rand.err`;
+unless ($RM_test=~/(done|No repetitive sequences were detected)/i){
+	my $RM_err=`cat dummy060817.fa.$rand.err`;
+	`rm dummy060817.fa.$rand* 2>/dev/null`;
+	die "Error: The RMblast engine is not installed in RepeatMasker!
+RepeatMasker runs the RMblast set in its own configuration, not the one in -blastplus. This test failed:
+	${repeatmasker}RepeatMasker -e ncbi -q -pa 1 -no_is -norna -nolow dummy.fa -lib dummy.fa
+RepeatMasker reported:
+$RM_test$RM_err
+If RMblast is installed, please rerun the RepeatMasker configure with -rmblast_dir to set it.\n";
+	}
 `rm dummy060817.fa.$rand* 2>/dev/null`;
 
 #cd-hit-est
