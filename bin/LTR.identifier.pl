@@ -751,6 +751,8 @@ sub estimate_chunk_size {
 ##Worker: pull a chunk, write its queries and subjects (tagged by job index) to per-worker temp
 ##files, run one blastn (all queries vs all subjects), then split the output back to each job -
 ##keeping only that job's self hits (qseqid==sseqid) so the result equals its standalone blast.
+##If the pooled run fails (e.g., one job hits the timeout), the chunk's jobs are rerun one by one
+##with the per-job retries, so a failure only affects that job instead of the whole chunk.
 sub blast_chunk_worker {
 	my ($cq) = @_;
 	local $/ = "\n";
@@ -759,15 +761,14 @@ sub blast_chunk_worker {
 	my $sfile = "$tmpdir/c$tid.s.fa";
 	while (defined(my $chunk = $cq->dequeue())){
 		my ($spec, $data) = @$chunk;
-		open(my $qfh, '>', $qfile) or die "ERROR: $qfile: $!\n";
-		open(my $sfh, '>', $sfile) or die "ERROR: $sfile: $!\n";
-		foreach my $d (@$data){ print $qfh ">$d->[0]\n$d->[1]\n"; print $sfh ">$d->[0]\n$d->[2]\n"; }
-		close $qfh; close $sfh;
-		my $cmd = "timeout -s KILL $timeout ${blastplus}blastn -subject $sfile -query $qfile $spec 2> /dev/null";
-		my @out=();
-		for (my $try=0; $try<10; $try++){ #retry guards against transient blast failures
-			@out=qx($cmd);
-			last if $? == 0;
+		my ($ok, @out) = &run_blast($data, $spec, $qfile, $sfile, 1);
+		unless ($ok){
+			print STDERR "Warning: a pooled blastn of ".scalar(@$data)." jobs failed (e.g., timed out), rerunning them one by one.\n";
+			@out = ();
+			foreach my $d (@$data){
+				my (undef, @one) = &run_blast([$d], $spec, $qfile, $sfile, 10);
+				push @out, @one;
+				}
 			}
 		# keep each job's hits against its own subject (qseqid==sseqid), in blastn output order
 		my %byjob;
@@ -779,6 +780,22 @@ sub blast_chunk_worker {
 		lock(%BLAST_CACHE);
 		foreach my $d (@$data){ $BLAST_CACHE{$d->[3]} = shared_clone($byjob{$d->[0]} // []); }
 		}
+}
+
+##Write the jobs (tagged by job index) to the query/subject files and run blastn on them, trying up
+##to $tries times to guard against transient blast failures. Returns (success, output lines).
+sub run_blast {
+	my ($jobs, $spec, $qfile, $sfile, $tries) = @_;
+	open(my $qfh, '>', $qfile) or die "ERROR: $qfile: $!\n";
+	open(my $sfh, '>', $sfile) or die "ERROR: $sfile: $!\n";
+	foreach my $d (@$jobs){ print $qfh ">$d->[0]\n$d->[1]\n"; print $sfh ">$d->[0]\n$d->[2]\n"; }
+	close $qfh; close $sfh;
+	my @out=();
+	for (my $try=0; $try<$tries; $try++){
+		@out=qx(timeout -s KILL $timeout ${blastplus}blastn -subject $sfile -query $qfile $spec 2> /dev/null);
+		return (1, @out) if $? == 0;
+		}
+	return (0, @out);
 }
 
 ##Inlined from bin/align_flanking.pl: overall aligned length + identity of two flanking
