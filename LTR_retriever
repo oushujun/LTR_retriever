@@ -609,6 +609,8 @@ End:
 my $w_flag = $wholeelement ? "-w" : "-i";
 if (`grep -c -v \'#\' $genome.nmtf.pass.list`>0){
 	`perl $script_path/bin/get_range.pl $index.retriever.all.scn $genome.nmtf.pass.list $w_flag -N`;
+	`touch $index.ltrTE`; #not generated if no intact TGCA LTR-RT is found
+	`touch $index2.ltrTE` if defined $index2;
 	`perl $script_path/bin/output_by_list.pl 1 $index.ltrTE 2 $index.retriever.all.scn.list -FA -MSU0 -MSU1 > $index.ltrTE.nmtf`;
 	`perl $script_path/bin/output_by_list.pl 1 $index2.ltrTE 2 $index.retriever.all.scn.list -FA -MSU0 -MSU1 >> $index.ltrTE.nmtf` if defined $index2;
 	`perl $script_path/bin/annotate_lib.pl $index.retriever.all.scn $index.ltrTE.nmtf > $index.nmtf.prelib`;
