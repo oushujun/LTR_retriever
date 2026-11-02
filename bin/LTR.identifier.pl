@@ -244,8 +244,8 @@ foreach my $i (sort {$a<=>$b} keys %DEFALSE){ print $DEFALSE{$i}; }
 foreach my $key (sort{$a cmp $b}(keys %scn)){
 	foreach (0..$#{$scn{$key}}){
 		next unless defined $scn{$key};
-		next unless defined $scn{$key}[$_];
-		print SCN "$scn{$key}[$_]  ";
+		my $field = defined $scn{$key}[$_] ? $scn{$key}[$_] : "NA"; #keep column positions, salvaged entries have no TSD or motif
+		print SCN "$field  ";
 		}
 	print SCN "\n";
 	}
