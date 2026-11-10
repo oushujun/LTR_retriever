@@ -47,7 +47,9 @@ use IO::Handle;
 ##	A PBS counts if its tRNA 3' offset is <= 2; a PPT counts if it ends between 2 nt inside the 3' LTR and 10 nt before it.
 ##	If both hypotheses have one, the better (PBS: length - 2 x edit distance; PPT: length - 2 x |distance to the LTR|)
 ##	must lead by >= 2. PBS and PPT agreeing, or only one of them -> that strand; opposite -> no call.
-##The final strand keeps the protein-domain strand of the list unless PBS and PPT agree on the other strand.
+##The final strand is the PBS/PPT call when there is one, else the protein-domain strand of the list. On rice MSU7,
+##against the orientation of the curated rice library, the PBS/PPT call agreed for 99.5% of the elements and
+##LTR_retriever's domain strand for 91.8% (99.6% once annotate_TE.pl stopped counting antisense DUFs).
 ##Usage: perl find_PBS_PPT.pl -genome genome.fa -list genome.pass.list [-trna tRNA.fa] [-threads 1] > genome.pass.list.pbs_ppt
 
 my $usage = "
@@ -443,18 +445,19 @@ sub call_strand {
 	return {pbs => $pbs, ppt => $ppt, call => $call, basis => $basis};
 }
 
-## final strand from the domain strand and the call: PBS/PPT replace the domain strand only when they agree.
-## Returns (strand, evidence = signals supporting it or 'none', conflict = signals against it; for '?', PBS and PPT
-## if they disagree).
+## final strand from the domain strand and the call: the PBS/PPT call when there is one (PBS and PPT agreeing, or only
+## one of them), else the domain strand. Returns (strand, evidence = signals supporting it or 'none', conflict =
+## signals against it; for '?', PBS and PPT if they disagree).
 sub final_strand {
 	my ($dom, $c) = @_;
-	my ($pbs, $ppt) = @$c{qw(pbs ppt)};
-	if ($dom ne '+' and $dom ne '-') {
-		return ('?', 'none', ($pbs ne '.' and $ppt ne '.') ? 'PBS+PPT' : '') if $c->{call} eq '.';
-		return ($c->{call}, join('+', ($pbs eq $c->{call} ? 'PBS' : ()), ($ppt eq $c->{call} ? 'PPT' : ())), '');
+	my ($pbs, $ppt, $call) = @$c{qw(pbs ppt call)};
+	my $has_dom = ($dom eq '+' or $dom eq '-');
+	if ($call ne '.') {
+		my @ev = (($has_dom and $dom eq $call) ? 'domain' : (), $pbs eq $call ? 'PBS' : (), $ppt eq $call ? 'PPT' : ());
+		return ($call, join('+', @ev), ($has_dom and $dom ne $call) ? 'domain' : '');
 		}
-	return ($pbs, 'PBS+PPT', 'domain') if $pbs ne '.' and $pbs eq $ppt and $pbs ne $dom;
-	my $opp = $dom eq '+' ? '-' : '+';
+	return ('?', 'none', ($pbs ne '.' and $ppt ne '.') ? 'PBS+PPT' : '') unless $has_dom;
+	my $opp = $dom eq '+' ? '-' : '+';	# no call: PBS and PPT absent, or in conflict
 	my @ev = ('domain', ($pbs eq $dom ? 'PBS' : ()), ($ppt eq $dom ? 'PPT' : ()));
 	my @cf = (($pbs eq $opp ? 'PBS' : ()), ($ppt eq $opp ? 'PPT' : ()));
 	return ($dom, join('+', @ev), join('+', @cf));

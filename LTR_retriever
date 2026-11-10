@@ -149,7 +149,7 @@ my $keep_trunc="1"; #1 will recycle information from truncated LTR-RTs; 0 will d
 my $verbose=0; #0 will delete intermediate files after analysis; 1 will not.
 my $annotation=1; #1 will perform whole genome LTR-RT annotation; 0 will not
 my $wholeelement=0; #0 will split LTR-RTs into LTR and INT regions in the library (default); 1 will keep whole elements
-my $pbsppt=1; #1 will assign strands by the PBS and PPT (and override protein domains when both disagree with them); 0 will not
+my $pbsppt=1; #1 will assign strands by the PBS and PPT (over protein domains when they disagree); 0 will not
 
 my $LINE="$script_path/database/Tpases020812LINE";
 my $DNA="$script_path/database/Tpases020812DNA";
@@ -246,7 +246,13 @@ For LTR_retriever, please cite:
 For LAI, please cite:
 
 	Ou S, Chen J, Jiang N (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. 2018;46(21):e126.
+";
+print "
+For the PBS and PPT search (strand assignment), which follows LTRdigest, please also cite:
 
+	Steinbiss S, Willhoeft U, Gremme G, Kurtz S (2009). Fine-grained annotation and classification of de novo predicted LTR retrotransposons. Nucleic Acids Res. 37(21):7002-7013.
+" if $pbsppt;
+print "
 Parameters: @ARGV\n\n\n";
 
 chomp (my $date=`date`);
@@ -1004,7 +1010,7 @@ if ($pbsppt and `grep -c -v \'#\' $index.ltrTE.pass.list`>0){
 				}
 			}
 		close $pp;
-		print "$date\tStrands from the PBS and PPT: $set of $no_dom intact LTR-RTs without a protein-domain strand;\n\t\t\t\t$flip protein-domain strands replaced by agreeing PBS and PPT\n\n";
+		print "$date\tStrands from the PBS and PPT: $set of $no_dom intact LTR-RTs without a protein-domain strand;\n\t\t\t\t$flip protein-domain strands replaced by the PBS/PPT strand\n\n";
 		}
 	}
 
