@@ -1193,6 +1193,7 @@ sub getLTR {
 my $index=$_[0];
 `perl $script_path/bin/get_range.pl $index.retriever.scn $genome -N -g -max_ratio $max_ratio`;
 `perl $script_path/bin/call_seq_by_list.pl $index.retriever.scn.list -C $genome itself > $index.ltrTE.LTR`;
-`perl -i -nle 's/>(.*)\\\|(.*)/>\$2/g;print "\$_"' $index.ltrTE.LTR`;
+#>chr:LTR_start..LTR_end|start..end[1] -> >chr:start..end[1], the IDs get_range.pl -x reads back for each element
+`perl -i -nle 's/>(.*):[0-9]+\\.\\.[0-9]+\\|(.*)/>\$1:\$2/;print "\$_"' $index.ltrTE.LTR`;
 }
 
