@@ -19,6 +19,8 @@ LTR_retriever is a command line program (in Perl) for accurate identification of
 
 By default, the program will generate whole-genome LTR-RT annotation and the LTR Assembly Index (LAI) for evaluations of the assembly continuity of the input genome. Users can also run LAI separately (see `Usage`).
 
+The strand of each intact LTR-RT is assigned by its primer binding site (PBS) and polypurine tract (PPT), searched with the algorithms of [LTRdigest](https://doi.org/10.1093/nar/gkp759) reimplemented in LTR_retriever (no GenomeTools needed), and by its protein domains when the PBS and PPT give no strand.
+
 
 ### Installation
 
@@ -83,7 +85,8 @@ Click to download executables for [LTR_FINDER_parallel](https://github.com/oushu
 The output of LTR_retriever includes:
 1. Intact LTR-RTs with coordinate and structural information
 	- Summary tables (.pass.list)
-	- GFF3 format output (.pass.list.gff3)
+	- GFF3 format output (.pass.list.gff3), including the PBS (primer_binding_site) and PPT (RR_tract) of each element and the evidence of its strand (strand_evidence, strand_conflict)
+	- PBS, PPT, and strand evidence of both strands of each element (.pass.list.pbs_ppt)
 2. LTR-RT library
 	- All non-redundant LTR-RTs (.LTRlib.fa)
 	- All non-TGCA LTR-RTs (.nmtf.LTRlib.fa)
@@ -111,6 +114,10 @@ To run LTR_retriever:
 
 	/your_path_to/LTR_retriever -genome genome.fa -inharvest genome.fa.rawLTR.scn -threads 10 [options]
 
+Strands of intact LTR-RTs come from the PBS and PPT when they are found (searched against the mature tRNAs in `database/tRNA.fa`), and from protein domains otherwise; a protein-domain strand that disagrees with the PBS and PPT is flagged (`strand_conflict=domain`) in the GFF3. Use `-trna` to provide your own tRNA sequences (with the 3' CCA), or `-nopbsppt` to assign strands by protein domains only. The PBS and PPT search can also run on its own:
+
+	perl /your_path_to/LTR_retriever/bin/find_PBS_PPT.pl -genome genome.fa -list genome.fa.pass.list -threads 10 > genome.fa.pass.list.pbs_ppt
+
 To run LAI:
 
 	/your_path_to/LAI -genome genome.fa -intact genome.fa.pass.list -all genome.fa.out [options]
@@ -136,3 +143,9 @@ If you find LTR_retriever useful, please cite:
 If you find LAI useful, please cite:
 
 `Ou S., Chen J. and Jiang N. (2018). Assessing genome assembly quality using the LTR Assembly Index (LAI). Nucleic Acids Res. gky730.` [open access](https://doi.org/10.1093/nar/gky730)
+
+The PBS and PPT search reimplements the algorithms of LTRdigest, part of [GenomeTools](https://genometools.org/) (ISC licence; its copyright and permission notices are in `bin/find_PBS_PPT.pl`). If you use the strand assignment, please also cite:
+
+`Steinbiss S., Willhoeft U., Gremme G. and Kurtz S. (2009). Fine-grained annotation and classification of de novo predicted LTR retrotransposons. Nucleic Acids Res. 37(21): 7002-7013.` [open access](https://doi.org/10.1093/nar/gkp759)
+
+The tRNA library (`database/tRNA.fa`) is built from the tRNA gene sets distributed with [LTR_FINDER](https://doi.org/10.1093/nar/gkm286) (tRNAscan-SE predictions of rice, wheat, Arabidopsis, fruit fly, and yeast) with the 3' CCA added.
