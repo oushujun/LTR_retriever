@@ -7,6 +7,7 @@
 #		$ hmmsearch --tblout hmmsearch.tbl --notextw --cpu 5 -E 0.05 --domE 0.05 --noali TE.hmm input.aa.fa > hmmsearch.scn
 ##Author:      Shujun Ou (oushujun@msu.edu) 
 ##Versions:    v1.0	06/16/2016
+##             v1.1	11/09/2026	domains of unknown function found antisense in LTR-RTs no longer vote for the strand
 
 
 use warnings;
@@ -19,6 +20,11 @@ my %LTR=qw(PF00665.23 LTR PF03732.14 LTR PF14223.3 LTR PF07727.11 LTR PF13650.3 
 my %gypsy=qw(PF13650.3 gypsy PF13975.3 gypsy PF08284.8 gypsy PF00385.21 gypsy PF09337.7 gypsy PF13456.3 gypsy PF04195.9 gypsy PF03578.12 gypsy PF00075.21 gypsy PF05754.11 gypsy PF04094.11 gypsy PF05585.9 gypsy PF06882.9 gypsy PF00077.17 gypsy PF10536.6 gypsy PF00078.24 gypsy PF09668.7 gypsy PF02160.12 gypsy PF16025.2 gypsy PF11835.5 gypsy PF04582.9 gypsy PF05377.8 gypsy PF17150.1 gypsy PF10046.6 gypsy PF12384.5 gypsy PF12353.5 gypsy PF07197.9 gypsy PF15450.3 gypsy PF04513.9 gypsy PF08149.8 gypsy PF03732.14 gypsy PF00665.23 gypsy);
 
 my %copia=qw(PF07727.11 copia PF13961.3 copia PF14244.3 copia PF03564.12 copia PF13976.3 copia PF14223.3 copia PF08847.8 copia PF14787.3 copia PF13917.3 copia);
+
+#Domains of unknown function that LTR-RTs carry on the antisense strand (or on either strand): they classify an element
+#but do not vote for its strand. Share of hits on the PBS/PPT strand in rice MSU7 LTR-RTs whose PBS and PPT agree:
+#DUF834 4.1% (584 hits), DUF3673 0% (15), DUF390 29% (7), DUF1263 42% (12); the other LTR-RT domains 98-100%.
+my %nostrand=map {$_ => 1} qw(PF05754 PF12425 PF04094 PF06882);
 
 my %TE;
 my %hmm;
@@ -61,6 +67,8 @@ while (<File>){
 	$TE{$TE}[2]++ if $family eq "Copia";
 
 #count strand type of the TE
+	(my $acc=$hmm)=~s/\.[0-9]+$//;
+	next if exists $nostrand{$acc};
 	$TE{$TE}[3]++ if  $strand eq "+";
 	$TE{$TE}[4]++ if  $strand eq "-";
 	}
